@@ -11980,7 +11980,7 @@
       "name": "Sean Wood",
       "firstName": "Sean",
       "lastName": "Wood",
-      "tier": 2,
+      "tier": 1,
       "company": "Human Pilots",
       "position": "Founder",
       "linkedin": "",
@@ -11990,11 +11990,12 @@
       "functionFlag": true,
       "positionFlag": false,
       "knowsMe": false,
-      "status": "follow_up",
+      "status": "network_closely",
       "recruiter": false,
-      "followUp": true,
+      "followUp": false,
       "lastContact": "2026-05-08",
-      "addedDate": "2026-04-20"
+      "addedDate": "2026-04-20",
+      "followUpDate": ""
     },
     {
       "id": 1446,
@@ -42761,7 +42762,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-06-08T16:54:02.358Z",
+    "lastSync": "2026-06-08T16:54:11.259Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 10
