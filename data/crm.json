@@ -42050,7 +42050,7 @@
       "name": "Hope Turner",
       "firstName": "Hope",
       "lastName": "Turner",
-      "tier": 1,
+      "tier": 2,
       "company": "Zillow",
       "position": "Talent Success:  Executive Talent Management & Development",
       "linkedin": "https://www.linkedin.com/in/hope-turner-b36742119",
@@ -42060,11 +42060,12 @@
       "functionFlag": true,
       "positionFlag": false,
       "knowsMe": true,
-      "status": "follow_up",
+      "status": null,
       "recruiter": false,
-      "followUp": true,
+      "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-06-05"
+      "addedDate": "2026-06-05",
+      "followUpDate": ""
     },
     {
       "id": 16,
@@ -42754,7 +42755,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-06-08T16:52:26.034Z",
+    "lastSync": "2026-06-08T16:52:33.979Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 10
