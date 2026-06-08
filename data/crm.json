@@ -266,7 +266,7 @@
       "notes": "Apr 30, 2026: Connection through Andres. my intro to him: \"his career has run at the intersection of AI and people - first as a consultant at IBM helping Fortune 500s figure out where AI could actually move the needle, then most recently at Snap where he built agents and infused AI into HR processes and systems. He'd love to chat with you about how AI is scaling at Uber.\"\nApr 30, 2026: 1. ask him directly what \"intelligent operations\" means in practice at Uber. Is it dispatch optimization? Support automation? Workforce tooling? Let him define the problem space before you position yourself. You'll pitch better once you know what he actually owns.\n2. Is Uber further along in identifying where AI should scale, or still working through that prioritization?\n3. When you're rolling out intelligent systems globally, where does the human adoption piece break down?\n4. Is there someone on your team focused on AI enablement or workforce transformation I should talk to?\nApr 30, 2026: AI rolls out - Nov 2022 - how can i use this to make my life easier. Text > SQL. QueryGPT. Company-wide July 2023. Feb 2023 - bot writing SQL code. No Snowflake. Query co-pilot. #1 text > SQL tool. Unified Cognitive Intelligence Stack. 1) Root Cause Analysis --> what are the internal metrics; Glean - sub-task in the tools. Prompt - 5 or 6 separate glean searches. 2) You Profile - leveraging AI embeddings to microsegment customers. has 6.5 people currently. 1.5 focused on enablement. Joao flying teaching how to use Claude Code. Adoption of baseline AI tools. New tool - Wild. one week - 10% company. Showing a shiny thing of uranium. Get to that Aha moment. He's wary of Taylor Swift.\nHis team will be growing. 6.5 people now. 1.5 of them focused on Enablement/Adoption. Has a guy flying to Paris to train a group.\nWe meshed well. I was able to figure out his team's 3 main pillars. He'll connect me with his future brother in law who is doing work for the Stanley McCrystal group. Someone who has no fluff.\nJun 8, 2026: Sent follow up email.",
       "companyFlag": false,
       "functionFlag": true,
-      "positionFlag": false,
+      "positionFlag": true,
       "knowsMe": false,
       "status": "network_closely",
       "recruiter": false,
@@ -42763,7 +42763,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-06-08T17:00:49.184Z",
+    "lastSync": "2026-06-08T17:00:57.503Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 10
