@@ -544,6 +544,53 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   </div>
 </div>
 
+<!-- RESUME TAILORING MODAL -->
+<div class="modal-overlay" id="resumeTailoringModal" onclick="if(event.target===this)closeResumeTailoringModal()">
+  <div class="modal" style="width:680px;max-height:90vh">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <h2 style="margin:0">✨ Resume Tailoring</h2>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-primary btn-sm" id="rtCopyBtn" onclick="copyResumeTailoring()" style="display:none">Copy All</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeResumeTailoringModal()">✕</button>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px" id="rtSubLabel">Upload your resume and get exact, paste-ready suggestions based on this job's JD notes.</div>
+
+    <!-- Upload zone (shown before generation) -->
+    <div id="rtUploadZone">
+      <div id="rtDropZone" style="border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--surface2);margin-bottom:14px"
+        onclick="document.getElementById('rtFileInput').click()"
+        ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+        ondragleave="this.style.borderColor='var(--border)'"
+        ondrop="handleRtDrop(event)">
+        <div style="font-size:28px;margin-bottom:8px">📄</div>
+        <div style="font-size:13px;font-weight:500;margin-bottom:4px">Drop your resume here</div>
+        <div style="font-size:12px;color:var(--muted)">PDF or plain text (.txt) — or click to browse</div>
+      </div>
+      <input type="file" id="rtFileInput" accept=".pdf,.txt" style="display:none" onchange="handleRtFile(this)">
+      <div id="rtFileChosen" style="display:none;font-size:12px;color:#2ecc71;margin-bottom:12px;padding:6px 10px;background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.2);border-radius:7px"></div>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn btn-primary" id="rtGenerateBtn" onclick="generateResumeTailoring()" style="display:none">✨ Generate Recommendations</button>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div id="rtLoading" style="display:none;padding:24px 0;text-align:center">
+      <div class="dot-pulse" style="justify-content:center"><span></span><span></span><span></span></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:10px">Analyzing your resume against the JD...</div>
+    </div>
+
+    <!-- Error -->
+    <div id="rtError" style="display:none;color:#e05c5c;font-size:13px;padding:8px 0"></div>
+
+    <!-- Output -->
+    <div id="rtOutput" style="display:none">
+      <div id="rtResultsContainer" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:18px;font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap;max-height:480px;overflow-y:auto"></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:10px">Recommendations are based only on what's in your resume. Copy and paste directly — no fabrication.</div>
+    </div>
+  </div>
+</div>
+
 <div class="body-wrap">
 
 <!-- CONTACTS SIDEBAR -->
@@ -1080,6 +1127,23 @@ function renderAppDetail(a) {
     <button class="rt-btn" onmousedown="event.preventDefault();document.execCommand('underline')"><u>U</u></button>
     <button class="rt-btn" onmousedown="event.preventDefault();document.execCommand('insertUnorderedList')">• List</button>
   </div>`;
+  // ── JD NOTES BLOCK (declared before overviewHTML so it can be referenced inline) ──
+  const jdNotesHTML = `
+    <div style="margin-bottom:20px">
+      <div class="sec-row">
+        <div>
+          <div class="sec-title" style="margin:0">📄 JD Notes &amp; Context</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">JD highlights, domain gaps, prep notes</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="openResumeTailoringModal(${a.id})" style="color:#a084ca;border-color:rgba(160,132,202,0.4)">✨ Tailor Resume</button>
+      </div>
+      <div style="margin-top:6px" class="rt-wrap">
+        ${rtToolbar}
+        <div class="rich-field" style="min-height:100px" id="jdNotesField_${a.id}" contenteditable="true" data-ph="JD highlights, domain gaps, key requirements, prep notes..." onblur="updateApp(${a.id},'notes',this.innerHTML)">${a.notes||''}</div>
+      </div>
+    </div>
+  `;
+
   const overviewHTML = `
     <div class="app-meta-row">
       <div class="meta-card">
@@ -1099,6 +1163,7 @@ function renderAppDetail(a) {
         ${a.jobUrl ? `<a href="${esc(a.jobUrl)}" target="_blank" class="link-btn" style="font-size:12px">🔗 View Posting</a>` : `<input class="inline-edit" placeholder="https://..." onblur="updateApp(${a.id},'jobUrl',this.value)">`}
       </div>
     </div>
+    ${jdNotesHTML}
     <div style="margin-bottom:20px">
       <div class="sec-row">
         <div>
@@ -1142,13 +1207,6 @@ function renderAppDetail(a) {
           ${rtToolbar}
           <div class="rich-field compact" contenteditable="true" data-ph="Why I want this company / role..." onblur="updateApp(${a.id},'whyThem',this.innerHTML)">${a.whyThem||''}</div>
         </div>
-      </div>
-    </div>
-    <div>
-      <div class="sec-title">JD Notes &amp; Context</div>
-      <div style="margin-top:6px" class="rt-wrap">
-        ${rtToolbar}
-        <div class="rich-field" style="min-height:100px" contenteditable="true" data-ph="JD highlights, domain gaps, prep notes..." onblur="updateApp(${a.id},'notes',this.innerHTML)">${a.notes||''}</div>
       </div>
     </div>
   `;
@@ -2441,6 +2499,187 @@ function openRoundThankYouInEmail(appId, roundId) {
 }
 
 function closeThankYouModal() { document.getElementById('thankYouModal').classList.remove('open'); _tyState = null; }
+
+// ─── RESUME TAILORING ─────────────────────────────────────────────
+let _rtAppId = null;
+let _rtResumeText = '';
+
+function openResumeTailoringModal(appId) {
+  _rtAppId = appId;
+  _rtResumeText = '';
+  // Reset UI
+  document.getElementById('rtUploadZone').style.display = 'block';
+  document.getElementById('rtDropZone').style.borderColor = 'var(--border)';
+  document.getElementById('rtFileChosen').style.display = 'none';
+  document.getElementById('rtFileChosen').textContent = '';
+  document.getElementById('rtGenerateBtn').style.display = 'none';
+  document.getElementById('rtLoading').style.display = 'none';
+  document.getElementById('rtError').style.display = 'none';
+  document.getElementById('rtOutput').style.display = 'none';
+  document.getElementById('rtCopyBtn').style.display = 'none';
+  document.getElementById('rtFileInput').value = '';
+  const a = apps.find(x => x.id === appId);
+  document.getElementById('rtSubLabel').textContent = a
+    ? `${a.company} — ${a.role}: upload your resume for paste-ready suggestions matched to this JD.`
+    : 'Upload your resume and get exact, paste-ready suggestions based on this job\'s JD notes.';
+  document.getElementById('resumeTailoringModal').classList.add('open');
+}
+
+function closeResumeTailoringModal() {
+  document.getElementById('resumeTailoringModal').classList.remove('open');
+  _rtAppId = null;
+  _rtResumeText = '';
+}
+
+function handleRtDrop(e) {
+  e.preventDefault();
+  document.getElementById('rtDropZone').style.borderColor = 'var(--border)';
+  const file = e.dataTransfer.files[0];
+  if (file) processRtFile(file);
+}
+
+function handleRtFile(input) {
+  const file = input.files[0];
+  if (file) processRtFile(file);
+}
+
+function processRtFile(file) {
+  const allowed = ['application/pdf', 'text/plain'];
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!allowed.includes(file.type) && ext !== 'txt' && ext !== 'pdf') {
+    toast('Please upload a PDF or .txt file');
+    return;
+  }
+  if (ext === 'pdf' || file.type === 'application/pdf') {
+    // Read PDF as base64 for the API
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      _rtResumeText = e.target.result; // base64 data URL
+      _rtResumeText = '__PDF__' + _rtResumeText.split(',')[1]; // tag it as PDF base64
+      showRtFileChosen(file.name);
+    };
+    reader.readAsDataURL(file);
+  } else {
+    // Plain text
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      _rtResumeText = e.target.result;
+      showRtFileChosen(file.name);
+    };
+    reader.readAsText(file);
+  }
+}
+
+function showRtFileChosen(name) {
+  const fc = document.getElementById('rtFileChosen');
+  fc.textContent = '✓ ' + name + ' loaded';
+  fc.style.display = 'block';
+  document.getElementById('rtGenerateBtn').style.display = 'inline-flex';
+}
+
+async function generateResumeTailoring() {
+  if (!_rtResumeText) { toast('Upload a resume first'); return; }
+  const a = apps.find(x => x.id === _rtAppId);
+  if (!a) { toast('Application not found'); return; }
+
+  const jdNotes = (a.notes || '').replace(/<[^>]+>/g, '').trim();
+  if (!jdNotes) {
+    toast('Add some JD Notes & Context first so I have something to match against');
+    return;
+  }
+
+  const apiKey = localStorage.getItem('anthropic_api_key');
+  if (!apiKey) { toast('Add your Anthropic API key in Settings first'); return; }
+
+  // Switch to loading state
+  document.getElementById('rtUploadZone').style.display = 'none';
+  document.getElementById('rtLoading').style.display = 'block';
+  document.getElementById('rtError').style.display = 'none';
+  document.getElementById('rtOutput').style.display = 'none';
+
+  try {
+    let messages;
+    const systemPrompt = `You are a resume coach helping a job applicant tailor their resume to a specific job description.
+
+RULES:
+- Only work with what is explicitly in the resume. Do not invent accomplishments, tools, roles, or skills that are not there.
+- Your job is to surface, reframe, reorder, and sharpen what already exists — not fabricate.
+- Order recommendations by importance (highest JD match / biggest impact first).
+- For each recommendation, show the ORIGINAL line/bullet from the resume (labeled "Original:") and the SUGGESTED replacement (labeled "Suggested:"), plus a brief note on why it lands better for this role.
+- If a recommendation is about adding or elevating emphasis (not rewriting), say so clearly.
+- Use plain text only. No markdown headers. Separate each recommendation with a blank line and a numbered label like "1. [Section: Experience at IBM]".
+- Be concise and direct. Aim for 5-8 high-impact recommendations.
+- End with a one-paragraph "Resume Fit Summary" assessing overall alignment.`;
+
+    if (_rtResumeText.startsWith('__PDF__')) {
+      const base64 = _rtResumeText.replace('__PDF__', '');
+      messages = [{
+        role: 'user',
+        content: [
+          {
+            type: 'document',
+            source: { type: 'base64', media_type: 'application/pdf', data: base64 }
+          },
+          {
+            type: 'text',
+            text: `Here is the job description context for the role of "${a.role}" at ${a.company}:\n\n${jdNotes}\n\nPlease provide tailored resume recommendations based on the resume in the attached PDF.`
+          }
+        ]
+      }];
+    } else {
+      messages = [{
+        role: 'user',
+        content: `Here is my resume:\n\n${_rtResumeText}\n\n---\n\nHere is the job description context for the role of "${a.role}" at ${a.company}:\n\n${jdNotes}\n\nPlease provide tailored resume recommendations.`
+      }];
+    }
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        system: systemPrompt,
+        messages
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || `API error ${response.status}`);
+    }
+
+    const data = await response.json();
+    const output = data.content?.find(b => b.type === 'text')?.text || '';
+
+    document.getElementById('rtLoading').style.display = 'none';
+    document.getElementById('rtOutput').style.display = 'block';
+    document.getElementById('rtResultsContainer').textContent = output;
+    document.getElementById('rtCopyBtn').style.display = 'inline-flex';
+
+  } catch (err) {
+    document.getElementById('rtLoading').style.display = 'none';
+    const errEl = document.getElementById('rtError');
+    errEl.textContent = 'Error: ' + err.message;
+    errEl.style.display = 'block';
+    // Show upload zone again so they can retry
+    document.getElementById('rtUploadZone').style.display = 'block';
+  }
+}
+
+function copyResumeTailoring() {
+  const text = document.getElementById('rtResultsContainer').textContent;
+  navigator.clipboard.writeText(text).then(() => toast('Copied ✓')).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove(); toast('Copied ✓');
+  });
+}
 
 // ─── JUMP SEARCH ──────────────────────────────────────────────────
 function onJumpSearch() {
