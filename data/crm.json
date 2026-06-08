@@ -1,28 +1,6 @@
 {
   "contacts": [
     {
-      "id": 2018,
-      "name": "Melissa Murphy",
-      "firstName": "Melissa",
-      "lastName": "Murphy",
-      "tier": 3,
-      "company": "Itasca",
-      "position": "Head of AI Enablement",
-      "linkedin": "https://www.linkedin.com/in/melissacmurphy/",
-      "email": "melissa@itascainnovation.ai",
-      "notes": "May 29, 2026: connected from Adam Allred. Talking June 19. I sent her my Maslow for comment.",
-      "companyFlag": true,
-      "functionFlag": true,
-      "positionFlag": false,
-      "knowsMe": false,
-      "status": "call_scheduled",
-      "recruiter": false,
-      "followUp": false,
-      "lastContact": "2026-05-29",
-      "addedDate": "2026-05-29",
-      "followUpDate": ""
-    },
-    {
       "id": 2017,
       "name": "Peta-Gay Clarke",
       "firstName": "Peta-Gay",
@@ -41,8 +19,7 @@
       "recruiter": false,
       "followUp": true,
       "lastContact": "2026-05-15",
-      "addedDate": "2026-05-13",
-      "followUpDate": "2026-06-26"
+      "addedDate": "2026-05-13"
     },
     {
       "id": 2016,
@@ -273,8 +250,7 @@
       "recruiter": false,
       "followUp": true,
       "lastContact": "",
-      "addedDate": "2026-05-01",
-      "followUpDate": "2026-06-26"
+      "addedDate": "2026-05-01"
     },
     {
       "id": 2005,
@@ -307,16 +283,17 @@
       "position": "Director of Programs",
       "linkedin": "https://www.linkedin.com/in/amelia-rosenman/",
       "email": "",
-      "notes": "Experience Institute leads a whole bunch of workplace learning. One thing we've been doing lately is supporting companies with the people-side and behavior-change aspects of AI adoption. While we focus on the people part, it also helps to be a step ahead of our clients on the technical side.\n\nWe’ve been lucky enough to work with an AI whiz for the past 6 months, but they’ve moved on to another gig, so we’re keeping our eye out for someone who might be interested in lending us their technical expertise from time to time. They would join our “bench” of facilitators and help us both build and lead sessions.\n\nThe combo we’re looking for is: Someone who’s constantly learning new capabilities of AI + someone comfortable sharing some of that learning out loud (virtual workshop settings). There is no guarantee of a certain amount of work.\nMay 22, 2026: sent her a recording of my linkedin live",
+      "notes": "Experience Institute leads a whole bunch of workplace learning. One thing we've been doing lately is supporting companies with the people-side and behavior-change aspects of AI adoption. While we focus on the people part, it also helps to be a step ahead of our clients on the technical side.\n\nWe’ve been lucky enough to work with an AI whiz for the past 6 months, but they’ve moved on to another gig, so we’re keeping our eye out for someone who might be interested in lending us their technical expertise from time to time. They would join our “bench” of facilitators and help us both build and lead sessions.\n\nThe combo we’re looking for is: Someone who’s constantly learning new capabilities of AI + someone comfortable sharing some of that learning out loud (virtual workshop settings). There is no guarantee of a certain amount of work.\nMay 22, 2026: sent her a recording of my linkedin live\nJun 5, 2026: \"Sorry for my delay - I wanted to get a chance to watch it before I wrote you back and then time got away from me. I really appreciate how you took folks \"under the hood\" of the app you built. Both in the way you explained it and the screen share, you made the work seem approachable and exciting.<br><br>I'm so glad we had the chance to connect, Andre, and I'd love to keep the conversation going. I may have mentioned to you that June is going to be basically a wash, between some personal travel and work travel/delivery. When I come back to earth after the July 4th holiday, I'll get back in touch and let you know if we have any projects in our sales pipeline that we might be able to collaborate on with you.<br><br>Really appreciate you taking the time to share this with me!\"",
       "companyFlag": true,
       "functionFlag": true,
       "positionFlag": false,
       "knowsMe": false,
-      "status": "network",
+      "status": "follow_up",
       "recruiter": false,
-      "followUp": false,
-      "lastContact": "2026-05-22",
-      "addedDate": "2026-04-30"
+      "followUp": true,
+      "lastContact": "2026-06-05",
+      "addedDate": "2026-04-30",
+      "followUpDate": "2026-07-11"
     },
     {
       "id": 2003,
@@ -328,17 +305,16 @@
       "position": "Head of HR Strategy",
       "linkedin": "https://www.linkedin.com/in/mark-dyu-cfa-718a3825/",
       "email": "",
-      "notes": "From Ron: He got the job a month or two ago, will be building a team. He’s a core business strategy guy, led home lending strategy for a while and recently took on HR. 90% of his work is gonna be in AIs impacts in the workforce\n\nFriend in LA\n\nPast prior iterations - corporate strategy to HR. No HR strategy. Ron and team took on\nSupporting head of HR.\nRecently - former boss, took on head of global strategy for the firm. Consolidating all Matts in this role - all the roles under him. \n\nHR transformation.\n\nCall for Ma\n\nBeen on CCB strategy. \n\nInterests are similar to HR team - Matts team in general.\n\nReimagine / reengineer processes end to end. Where it makes sense to deploy AI. \n\nLot of work kicking off - redeployment\n\nLots of energy around HR Leadership Table. No ones figured it out? Healthy anxiety. Constant push/pull - centrally vs federated. \n\nBroader transformation agenda - Offsite.\n1. What role does the HR function play in workforce transformation?\n2. Once we form a stance we all align on, how does HR function transform? \n\nBut what’s the goal?\n\nDifferent business domain by domain. Drive productivity and efficiency. Growing volumes - net reduction. More volume, scaling/growth play then efficiency. \n\nHR - one thing for sure. Business workforce will transform. \n\nHows the roll out gone?\n\nLearning & Development. Training. Performance Management. \n\nL&D - 13 roles. \nWhat is the role, what does the role need to be?? \n\nHow do you use it?\nMay 15, 2026: invited to linkedin live\nMay 26, 2026: did not respond to LI live",
+      "notes": "From Ron: He got the job a month or two ago, will be building a team. He’s a core business strategy guy, led home lending strategy for a while and recently took on HR. 90% of his work is gonna be in AIs impacts in the workforce\n\nFriend in LA\n\nPast prior iterations - corporate strategy to HR. No HR strategy. Ron and team took on\nSupporting head of HR.\nRecently - former boss, took on head of global strategy for the firm. Consolidating all Matts in this role - all the roles under him. \n\nHR transformation.\n\nCall for Ma\n\nBeen on CCB strategy. \n\nInterests are similar to HR team - Matts team in general.\n\nReimagine / reengineer processes end to end. Where it makes sense to deploy AI. \n\nLot of work kicking off - redeployment\n\nLots of energy around HR Leadership Table. No ones figured it out? Healthy anxiety. Constant push/pull - centrally vs federated. \n\nBroader transformation agenda - Offsite.\n1. What role does the HR function play in workforce transformation?\n2. Once we form a stance we all align on, how does HR function transform? \n\nBut what’s the goal?\n\nDifferent business domain by domain. Drive productivity and efficiency. Growing volumes - net reduction. More volume, scaling/growth play then efficiency. \n\nHR - one thing for sure. Business workforce will transform. \n\nHows the roll out gone?\n\nLearning & Development. Training. Performance Management. \n\nL&D - 13 roles. \nWhat is the role, what does the role need to be?? \n\nHow do you use it?\nMay 15, 2026: invited to linkedin live",
       "companyFlag": false,
       "functionFlag": true,
       "positionFlag": true,
       "knowsMe": false,
-      "status": "network",
+      "status": "follow_up",
       "recruiter": false,
-      "followUp": false,
-      "lastContact": "2026-05-26",
-      "addedDate": "2026-04-28",
-      "followUpDate": ""
+      "followUp": true,
+      "lastContact": "2026-05-15",
+      "addedDate": "2026-04-28"
     },
     {
       "id": 2002,
@@ -772,15 +748,14 @@
       "email": "",
       "notes": "May 7, 2026: Kids 9 and 3.5. Out in No Cal - for 12+ years. been working on this for 9 months. helping people prepare for hazards. Pivoted to B2B - model to have employees offer it as a benefit. Replit/Lovable. GUI - best for vibe coding. Connect him to Tarra. aiadventureclub\nMay 15, 2026: invited to linkedin live. tarra connection was fruitful",
       "companyFlag": false,
-      "functionFlag": true,
+      "functionFlag": false,
       "positionFlag": false,
       "knowsMe": false,
-      "status": "network",
+      "status": "follow_up",
       "recruiter": false,
-      "followUp": false,
+      "followUp": true,
       "lastContact": "2026-05-15",
-      "addedDate": "2026-04-21",
-      "followUpDate": ""
+      "addedDate": "2026-04-21"
     },
     {
       "id": 1981,
@@ -6289,22 +6264,21 @@
       "name": "Jennifer Boden",
       "firstName": "Jennifer",
       "lastName": "Boden",
-      "tier": 2,
+      "tier": 1,
       "company": "AT&T",
       "position": "SVP, HR Technology and Insights",
       "linkedin": "https://www.linkedin.com/in/jennifer-boden-ba60861",
       "email": "",
-      "notes": "May 1, 2026: texted her asking for counsel\nMay 22, 2026: Jenn Boden — Snap, VP People (CPO org, reports to Scott). Key strategic partner on all perf/promo design. Met regularly (Feb through Aug+). Core philosophy: everything in perf is interconnected — comp, rating, feedback, feedforward; 'too much riding on it to change one part.' Advocates bi-annual ratings with quarterly check-ins (not full reviews). Biggest concerns: Manager+ fatigue is real; muscle to manage out is hard to build and easy to lose; non-tech promo is not rigorous enough. Director+ promos: Scott has personal ownership, always white-gloved. Insight: made her sad that too many Director+ promo decisions weren't being put in writing. Suggested exploring AI to analyze past decisions and promo packets. Worked on HR sub-team structure, talent reviews, non-tech promo redesign. Added Andre to her team calls. Monthly 1:1s established.\nMay 26, 2026: Did not actually set up time with me.",
+      "notes": "May 1, 2026: texted her asking for counsel\nMay 22, 2026: Jenn Boden — Snap, VP People (CPO org, reports to Scott). Key strategic partner on all perf/promo design. Met regularly (Feb through Aug+). Core philosophy: everything in perf is interconnected — comp, rating, feedback, feedforward; 'too much riding on it to change one part.' Advocates bi-annual ratings with quarterly check-ins (not full reviews). Biggest concerns: Manager+ fatigue is real; muscle to manage out is hard to build and easy to lose; non-tech promo is not rigorous enough. Director+ promos: Scott has personal ownership, always white-gloved. Insight: made her sad that too many Director+ promo decisions weren't being put in writing. Suggested exploring AI to analyze past decisions and promo packets. Worked on HR sub-team structure, talent reviews, non-tech promo redesign. Added Andre to her team calls. Monthly 1:1s established.",
       "companyFlag": false,
       "functionFlag": true,
       "positionFlag": true,
       "knowsMe": true,
-      "status": null,
+      "status": "follow_up",
       "recruiter": false,
-      "followUp": false,
-      "lastContact": "2026-05-26",
-      "addedDate": "2026-04-21",
-      "followUpDate": ""
+      "followUp": true,
+      "lastContact": "2026-05-01",
+      "addedDate": "2026-04-21"
     },
     {
       "id": 1718,
@@ -6500,12 +6474,12 @@
       "name": "Jessica Blackstock",
       "firstName": "Jessica",
       "lastName": "Blackstock",
-      "tier": 1,
+      "tier": 2,
       "company": "Snap Inc.",
       "position": "Learning and Development Manager",
       "linkedin": "https://www.linkedin.com/in/jessicablackstock",
       "email": "",
-      "notes": "May 22, 2026: Jessica Blackstock — Snap L&D. Andre's onboarding buddy. Based in LA, at Snap since 2021. Grew up in Oklahoma. No kids (wants them), husband. Went to Cabo for birthday. Has Olympics tickets. Key Snap cultural insight: 'wildly relational place — understand people's goals before pitching ideas.' L&D strength: relationships and onboarding. Pain point: team has low skills for diagnosing/facilitating programs (massive gap since Becky was more of a 'doer'). Loves Aperture facilitation and leadership teaming work.",
+      "notes": "May 22, 2026: Jessica Blackstock — Snap L&D. Andre's onboarding buddy. Based in LA, at Snap since 2021. Grew up in Oklahoma. No kids (wants them), husband. Went to Cabo for birthday. Has Olympics tickets. Key Snap cultural insight: 'wildly relational place — understand people's goals before pitching ideas.' L&D strength: relationships and onboarding. Pain point: team has low skills for diagnosing/facilitating programs (massive gap since Becky was more of a 'doer'). Loves Aperture facilitation and leadership teaming work.\nJun 2, 2026: Knicks/Thunder. World Cup.&nbsp;<div>HR Management Institute talk with Becky.</div><div>What was I good at? What could I do better?</div><div><br></div><div>Her advice as I go on my own: 1) Very clear on value prop - stayed in that lane. 2) Stay 1 as long as you can. Payroll, invoice. Didn’t have to make sure my paycheck. Administrative burden - offload that. Humans, bots, tools. Don't have Irrational financial goals</div><div><br>\tWhat do yI do really well and fast?<br>\tActionable data, process piece. Like spending time in the weeds. As much as you would have liked. The graph. Usable data. Did a due diligence - to have something. Spend time/enjoy - data piece and the parts. More usable for more people. <br><br>What could have gone better (not all my fault, but still)<br>\tImperative to do more than one thing - detriment. What ways of working do you like to work? Might not - how can i ship something, get something out. Change it down the line. Multiple things to service. Really efficient, say no to things. Doing this, go do it. Thats what i do. <br><br>Follow what the business needs more - promo/succession - less critiqued &gt; then it shifts - when someone’s still in the weeds - can’t spend as much time as more. Tenor of the place. What do people think i do - So Lean. Subconscious. Inherited process - thats been built. Painful part has been done. Now we just manage. What else are we doing. <br><br>Ran - and not designed.&nbsp;<br></div>",
       "companyFlag": false,
       "functionFlag": true,
       "positionFlag": false,
@@ -6513,7 +6487,7 @@
       "status": null,
       "recruiter": false,
       "followUp": false,
-      "lastContact": "",
+      "lastContact": "2026-06-02",
       "addedDate": "2026-04-21"
     },
     {
@@ -7014,12 +6988,11 @@
       "functionFlag": true,
       "positionFlag": false,
       "knowsMe": false,
-      "status": "network",
+      "status": "follow_up",
       "recruiter": false,
-      "followUp": false,
+      "followUp": true,
       "lastContact": "2026-05-05",
-      "addedDate": "2026-04-21",
-      "followUpDate": ""
+      "addedDate": "2026-04-21"
     },
     {
       "id": 1684,
@@ -10076,17 +10049,16 @@
       "position": "Director Human Resources",
       "linkedin": "https://www.linkedin.com/in/ninagebauer",
       "email": "",
-      "notes": "Apr 21, 2026: hosted her and mountaintop fellows in march 2026 at snap. \"I also noticed that our shared passion for people and HR isn't our only common ground - we're both parents of a boy! Our son is already enjoying the Snap book you gifted him. :)\"\nApr 28, 2026: \"As we scale our company, I would love to further stay in touch and if you are open to it I could need your Coaching. Please do let me know if you would be open to that and if we can jump on a call. Happy to talk more about my company and myself. \"\n\"So glad you remember our chat! I've scheduled a meeting for next Tuesday and am looking forward to exploring how we can work together, and learning what would be most valuable for you.\"\nApr 28, 2026: struggle with global unity. enjoy local autonomy. different cultures in german. global unity. 15 leader in Germany. 30 - Ghana. Will add Canada. London. Regular meetings - exec committee, broader leadership team. town halls. Thinking of World Cup. teams - and they compete. lunch with someone. What works the best? 1x/yr we meet with all the managers. Productive time. \n\nAlso she asked if i'd be interested in two things:\n\n1) Speaker - high performing culture company. External speaker - session with whole company. Culture <> Performance bit. - a lot of young people. Tech people we are first employer. Also on us to develop a certain mindset. Mindset love to see - Own my career. On me to be interested in feedback, to ask for feedback. If I receive a feedback. Should feel the urge to \n500 employees. Employees own their career and feel that. What works the best. Interaction bit. Speech <> let them do something. Maybe 60-90 mins, with breakouts included. and a follow up.\n\n2) Strategic coaching - talent/hr. Strategic, talent/culture. AI - Natalie.\nApr 29, 2026: i sent her an offer/proposal. She replied on May 5 and said she'd review with her C suite and get back to me within two weeks.\nMay 26, 2026: i followed up and shared my LI Live",
-      "companyFlag": true,
+      "notes": "Apr 21, 2026: hosted her and mountaintop fellows in march 2026 at snap. \"I also noticed that our shared passion for people and HR isn't our only common ground - we're both parents of a boy! Our son is already enjoying the Snap book you gifted him. :)\"\nApr 28, 2026: \"As we scale our company, I would love to further stay in touch and if you are open to it I could need your Coaching. Please do let me know if you would be open to that and if we can jump on a call. Happy to talk more about my company and myself. \"\n\"So glad you remember our chat! I've scheduled a meeting for next Tuesday and am looking forward to exploring how we can work together, and learning what would be most valuable for you.\"\nApr 28, 2026: struggle with global unity. enjoy local autonomy. different cultures in german. global unity. 15 leader in Germany. 30 - Ghana. Will add Canada. London. Regular meetings - exec committee, broader leadership team. town halls. Thinking of World Cup. teams - and they compete. lunch with someone. What works the best? 1x/yr we meet with all the managers. Productive time. \n\nAlso she asked if i'd be interested in two things:\n\n1) Speaker - high performing culture company. External speaker - session with whole company. Culture <> Performance bit. - a lot of young people. Tech people we are first employer. Also on us to develop a certain mindset. Mindset love to see - Own my career. On me to be interested in feedback, to ask for feedback. If I receive a feedback. Should feel the urge to \n500 employees. Employees own their career and feel that. What works the best. Interaction bit. Speech <> let them do something. Maybe 60-90 mins, with breakouts included. and a follow up.\n\n2) Strategic coaching - talent/hr. Strategic, talent/culture. AI - Natalie.\nApr 29, 2026: i sent her an offer/proposal. She replied on May 5 and said she'd review with her C suite and get back to me within two weeks.",
+      "companyFlag": false,
       "functionFlag": true,
       "positionFlag": false,
       "knowsMe": true,
-      "status": "network",
+      "status": "follow_up",
       "recruiter": false,
-      "followUp": false,
-      "lastContact": "2026-05-26",
-      "addedDate": "2026-04-21",
-      "followUpDate": ""
+      "followUp": true,
+      "lastContact": "2026-04-29",
+      "addedDate": "2026-04-21"
     },
     {
       "id": 1538,
@@ -10350,17 +10322,16 @@
       "position": "Founder",
       "linkedin": "https://www.linkedin.com/in/realandrewbarry",
       "email": "",
-      "notes": "Apr 22, 2026: Becky connected us. from linkedin: \"Thanks Andre, let me know if you've ever down to chat. I'd be interested to hear more about your work at Snap, esp from how Becky used to say talent management and L&D are \"two sides of the same coin\" and and manager development sits right alongside performance system\". Was out on spring break for 2 weeks - cape town to visit family. \n\nHas a bunch of common connections. How does he know Becky?\n\nLooking forward to a chat in a couple mins. I'm a just-in-time thinker I'll warn you or I would have sent this further in advance\n\n\n\nQuestions Id love to explore with you (if time :-D)\n\n1. What drove you - way back when - from KPMG to then going and starting out on your own?\n\n2. Any first thoughts on your perspective on the role of L&D in driving/enabling AI adoption?\nApr 22, 2026: KPMG 12 years - moved to US. Curious Lion - figured it out, worn many different skins. On something now permanent. Met with Becky a few times. \n\nHelping them go from tactical > strategic; influence without authority. Seek > Sense > Share. Perspective shifting exercise. Seeking opportunity, POV, communicating to their boss. AI has shifted conversation. Exact skillset to be effective with AI. Frame a problem properly. Know what the outcome needs to look like. Rolled out Claude CoWork - how to use it safely. Now to use effectiveness. capability layer. Way to open the door - to . Forward deployed AI automation experts for L&D deployments. Trying to figure this out. How do we adopt AI. Been given co-work. sell a consulting package. map out the workflows and tools you have and data sources to ingest. 3-4-5 use cases. Help them get it right. What are the workflows when running the program - collect some information from participants. surveys, data points, using that information, update the program, how can you automate all of that, have a chat with an agent all of that data in realtime. if we can help L&D teams figure that out. If we can get this off the ground. Connect him with Dustin.\n\nHe is thinking of using me as a forward deployed engineer. Why don't I think of myself as a forward deployed engineer?\nMay 1, 2026: sent a follow up note asking about Dustin and advice for Every interview. \"Dustin did get back to me and said that they were not looking at capability layer yet, but that we could chat more in the fall. Thanks again for the intro. To answer your question, I think it would be cool to see what others are doing with various tools that I'm using, like Claude Code and OpenClaw and Every's new Plus One Agent - so like cohort courses with others using those tools. Good luck for your interview today!\"\nMay 15, 2026: invited to linkedin live\nMay 26, 2026: sent him the LI Live recording",
-      "companyFlag": true,
+      "notes": "Apr 22, 2026: Becky connected us. from linkedin: \"Thanks Andre, let me know if you've ever down to chat. I'd be interested to hear more about your work at Snap, esp from how Becky used to say talent management and L&D are \"two sides of the same coin\" and and manager development sits right alongside performance system\". Was out on spring break for 2 weeks - cape town to visit family. \n\nHas a bunch of common connections. How does he know Becky?\n\nLooking forward to a chat in a couple mins. I'm a just-in-time thinker I'll warn you or I would have sent this further in advance\n\n\n\nQuestions Id love to explore with you (if time :-D)\n\n1. What drove you - way back when - from KPMG to then going and starting out on your own?\n\n2. Any first thoughts on your perspective on the role of L&D in driving/enabling AI adoption?\nApr 22, 2026: KPMG 12 years - moved to US. Curious Lion - figured it out, worn many different skins. On something now permanent. Met with Becky a few times. \n\nHelping them go from tactical > strategic; influence without authority. Seek > Sense > Share. Perspective shifting exercise. Seeking opportunity, POV, communicating to their boss. AI has shifted conversation. Exact skillset to be effective with AI. Frame a problem properly. Know what the outcome needs to look like. Rolled out Claude CoWork - how to use it safely. Now to use effectiveness. capability layer. Way to open the door - to . Forward deployed AI automation experts for L&D deployments. Trying to figure this out. How do we adopt AI. Been given co-work. sell a consulting package. map out the workflows and tools you have and data sources to ingest. 3-4-5 use cases. Help them get it right. What are the workflows when running the program - collect some information from participants. surveys, data points, using that information, update the program, how can you automate all of that, have a chat with an agent all of that data in realtime. if we can help L&D teams figure that out. If we can get this off the ground. Connect him with Dustin.\n\nHe is thinking of using me as a forward deployed engineer. Why don't I think of myself as a forward deployed engineer?\nMay 1, 2026: sent a follow up note asking about Dustin and advice for Every interview. \"Dustin did get back to me and said that they were not looking at capability layer yet, but that we could chat more in the fall. Thanks again for the intro. To answer your question, I think it would be cool to see what others are doing with various tools that I'm using, like Claude Code and OpenClaw and Every's new Plus One Agent - so like cohort courses with others using those tools. Good luck for your interview today!\"\nMay 15, 2026: invited to linkedin live",
+      "companyFlag": false,
       "functionFlag": true,
       "positionFlag": false,
       "knowsMe": false,
-      "status": "network_closely",
+      "status": "follow_up",
       "recruiter": false,
-      "followUp": false,
-      "lastContact": "2026-05-26",
-      "addedDate": "2026-04-21",
-      "followUpDate": ""
+      "followUp": true,
+      "lastContact": "2026-05-15",
+      "addedDate": "2026-04-21"
     },
     {
       "id": 1525,
@@ -12005,22 +11976,21 @@
       "name": "Sean Wood",
       "firstName": "Sean",
       "lastName": "Wood",
-      "tier": 1,
+      "tier": 2,
       "company": "Human Pilots",
       "position": "Founder",
       "linkedin": "",
       "email": "",
-      "notes": "Apr 24, 2026: most success with mid-market (c-suite) - open to making decisions in a timely manner. uneven running a business - and difficult. training remains a big issue. seen what works and what doesn't. different assumptions on what AI does. Succeeds: consistent exec messaging, accountability (\nApr 24, 2026: tired, burned out. super frustrated with the inconsistency. family, house, regular payments. \"Not selling AI\". Got burned out before. Energy is finite - has to be properly applied. Very direct: the work that professionals have been doing is changing for real. \"Full-time work is not what it was\". Massive gap/opportunity in training space. Data Center (94%), Human Intelligence (6%). Private 1:1's with you. AI Coach. SaaS localized.\nApr 24, 2026: Might have something with lightweight work that can generate some money\nMet July 2024. Married, first kid. Serial entrepreneur — sold a company, went to big company, then founded Human Pilots focused on marketing content generation (low-risk AI use cases: text, images, social). Has a partner focused on Marketing/Sales (Caroline). Inspired by Ray Kurzweil. Shared an IBM retirement party story: 'Don't miss your kids' life.' Philosophy: up to 40 — what you do and how you do it; beyond 40 — purpose and meaning. Sees custom secure GPTs as the big opportunity space. Always looking for sharp, forward-thinking collaborators — expressed openness to working with Andre.\nMay 8, 2026: we're going to do a linkedin live. He is applying to a full time position, just had an interview. We hate LinkedIn.\nMay 28, 2026: He's pursuing Coupa and BetterUp. We debriefed our LinkedIn Live. Will get back together in July to see if there's anotherLI Live we want to do. Notes here:&nbsp;https://fathom.video/share/EZVzwsUnLcqTYwZwBgZMwh5ixvn89LQz",
+      "notes": "Apr 24, 2026: most success with mid-market (c-suite) - open to making decisions in a timely manner. uneven running a business - and difficult. training remains a big issue. seen what works and what doesn't. different assumptions on what AI does. Succeeds: consistent exec messaging, accountability (\nApr 24, 2026: tired, burned out. super frustrated with the inconsistency. family, house, regular payments. \"Not selling AI\". Got burned out before. Energy is finite - has to be properly applied. Very direct: the work that professionals have been doing is changing for real. \"Full-time work is not what it was\". Massive gap/opportunity in training space. Data Center (94%), Human Intelligence (6%). Private 1:1's with you. AI Coach. SaaS localized.\nApr 24, 2026: Might have something with lightweight work that can generate some money\nMet July 2024. Married, first kid. Serial entrepreneur — sold a company, went to big company, then founded Human Pilots focused on marketing content generation (low-risk AI use cases: text, images, social). Has a partner focused on Marketing/Sales (Caroline). Inspired by Ray Kurzweil. Shared an IBM retirement party story: 'Don't miss your kids' life.' Philosophy: up to 40 — what you do and how you do it; beyond 40 — purpose and meaning. Sees custom secure GPTs as the big opportunity space. Always looking for sharp, forward-thinking collaborators — expressed openness to working with Andre.\nMay 8, 2026: we're going to do a linkedin live. He is applying to a full time position, just had an interview. We hate LinkedIn.",
       "companyFlag": true,
       "functionFlag": true,
       "positionFlag": false,
       "knowsMe": false,
-      "status": "call_scheduled",
+      "status": "follow_up",
       "recruiter": false,
-      "followUp": false,
-      "lastContact": "2026-05-28",
-      "addedDate": "2026-04-20",
-      "followUpDate": ""
+      "followUp": true,
+      "lastContact": "2026-05-08",
+      "addedDate": "2026-04-20"
     },
     {
       "id": 1446,
@@ -12599,17 +12569,16 @@
       "position": "Senior Director, Alliance Management & Post-Acquisition Integration",
       "linkedin": "https://www.linkedin.com/in/michael-martin-b171b312",
       "email": "",
-      "notes": "Apr. 19: Reached out to Katie: https://www.linkedin.com/in/katiepodhaizer/ - already followed up with him once\nApr 20, 2026: Best friend. Would love to help. Position ending in 2026. Would love to start something new in AI - seems like he wants to do bio/pharma, makes more money than sports.\nMay 29, 2026: attended my tutorial. built his own CRM. Novartis. Tommy and P Ryan. Hes carrying some stress. sent out 6 networking outreach emails this week. MK's bday\nMay 29, 2026: Moved up his separation to October. Getting well rewarded on severance. Thinking about next move. Talking to a VC. Really interested in my consulting idea. He would be curious about what it looks like to do some of my work - even for free. Lets stay in touch.",
+      "notes": "Apr. 19: Reached out to Katie: https://www.linkedin.com/in/katiepodhaizer/ - already followed up with him once\nApr 20, 2026: Best friend. Would love to help. Position ending in 2026. Would love to start something new in AI - seems like he wants to do bio/pharma, makes more money than sports.",
       "companyFlag": false,
-      "functionFlag": true,
+      "functionFlag": false,
       "positionFlag": false,
       "knowsMe": true,
-      "status": "network_closely",
+      "status": "follow_up",
       "recruiter": false,
-      "followUp": false,
-      "lastContact": "2026-05-29",
-      "addedDate": "2026-04-20",
-      "followUpDate": ""
+      "followUp": true,
+      "lastContact": "2026-04-20",
+      "addedDate": "2026-04-20"
     },
     {
       "id": 1418,
@@ -23394,17 +23363,16 @@
       "position": "Senior Manager, Strategic Initiatives and Transformation, Global Merchant & Network Services",
       "linkedin": "https://www.linkedin.com/in/nicholasbobys",
       "email": "",
-      "notes": "Apr 27, 2026: Reached out saying he suggested we connect, Wants to know more about: Also read your post today about Claude closing the “I want this job but it doesn’t exist” and “wait it exists you just didn’t know how to find it” and I want to learn more\nMay 26, 2026: followed up and sent him the LI Live recording",
+      "notes": "Apr 27, 2026: Reached out saying he suggested we connect, Wants to know more about: Also read your post today about Claude closing the “I want this job but it doesn’t exist” and “wait it exists you just didn’t know how to find it” and I want to learn more",
       "companyFlag": false,
       "functionFlag": false,
       "positionFlag": false,
       "knowsMe": false,
-      "status": null,
+      "status": "follow_up",
       "recruiter": false,
-      "followUp": false,
-      "lastContact": "2026-05-26",
-      "addedDate": "2026-04-20",
-      "followUpDate": ""
+      "followUp": true,
+      "lastContact": "2026-04-27",
+      "addedDate": "2026-04-20"
     },
     {
       "id": 904,
@@ -41779,7 +41747,7 @@
       "recruiter": false,
       "followUp": true,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 1,
@@ -41800,7 +41768,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 2,
@@ -41821,7 +41789,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 3,
@@ -41833,7 +41801,7 @@
       "position": "Director, Organizational Effectiveness and Culture",
       "linkedin": "https://www.linkedin.com/in/dustinschneider",
       "email": "",
-      "notes": "Connected me to Charles D. Shaw and Melissa Strada\nMay 28, 2026: Golden Question: ai consultants are a dime a dozen.&nbsp;<div><br></div><div>L&amp;D is a big space for AI investment. Working on a couple different Ai initiatives - agentic workflow organization. then with Degreed on integrating with Zoom's LLM.&nbsp;</div><div><br></div><div>Preschool graduation coming up.</div>",
+      "notes": "Connected me to Charles D. Shaw and Melissa Strada",
       "companyFlag": true,
       "functionFlag": true,
       "positionFlag": true,
@@ -41841,8 +41809,8 @@
       "status": "network_closely",
       "recruiter": false,
       "followUp": false,
-      "lastContact": "2026-05-28",
-      "addedDate": "2026-05-25"
+      "lastContact": "",
+      "addedDate": "2026-06-05"
     },
     {
       "id": 4,
@@ -41863,7 +41831,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 5,
@@ -41884,7 +41852,7 @@
       "recruiter": false,
       "followUp": true,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 6,
@@ -41905,7 +41873,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 7,
@@ -41926,7 +41894,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 8,
@@ -41947,7 +41915,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 9,
@@ -41968,7 +41936,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 10,
@@ -41989,7 +41957,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 11,
@@ -42001,7 +41969,7 @@
       "position": "Experience Strategist, Creative Director",
       "linkedin": "https://www.linkedin.com/in/caroline-trudeau",
       "email": "",
-      "notes": "May 22: Love@Work. Something there to work on with her; Boss\nApr 22, 2026: How do i contract with you? Package myself in a way that someone will buy you. Took 3 years to get to the one pager that the '26 offering on the website. Light package - invitation to to transact. Try your lines on. Lots of things that may not be right. Is this the response I want to generate. Have to put it out. Do not be ambiguous. Just being ocnnected is no longer enough. Clarity on gifts - what i want to do - how im going to do it. Contractor/Freelancer to WHO INVESTING AND DEVELOPING leaders.\nMay 2024: Has 4 interns starting May 31 needing product business case training. $250K culture innovation opportunity at the FAA. Building Palco — a culture product using a secure LLM to capture and derive insights from employee sentiment. BMW of NA as a client — improving employee experience through tools. Asked Andre to meet with interns, do a strategy jam session, and be on call for paid engagements.\n\nJanuary 2025 (onboarding tips pre-Snap): Walk-around deck — capture early ideas, observations, and recommendations; distill into a clean 90/180-day narrative. New-to-team warmth — create a one-page bio/user manual: favorite product feature, first-week must-knows, top 5 work style preferences, how you prefer to receive feedback, what motivates you, meeting preferences. Push vs. Pull dynamic — invite people to know you rather than driving an agenda.\nMay 22, 2026: Caroline Trudeau — Talent Strategy Consultant/Coach (pageightco). Met pre-Snap for onboarding coaching, reconnected during and after tenure. Key pre-Snap advice: walk-around deck (capture early observations, distill into 90/180-day narrative); user manual (bio + work style preferences + feedback style). Post-Snap: exploring ASU job, moving to Arizona. Did a powerful session on presenting to Evan: 3-part structure (what the team is saying → what I think → commitments by when). Used Gallup/Walkaround Deck frameworks.",
+      "notes": "May 22: Love@Work. Something there to work on with her; Boss\nApr 22, 2026: How do i contract with you? Package myself in a way that someone will buy you. Took 3 years to get to the one pager that the '26 offering on the website. Light package - invitation to to transact. Try your lines on. Lots of things that may not be right. Is this the response I want to generate. Have to put it out. Do not be ambiguous. Just being ocnnected is no longer enough.&nbsp; Gave me confidence to go be LIAIGuy. Clarity on gifts - what i want to do - how im going to do it. Contractor/Freelancer to WHO INVESTING AND DEVELOPING leaders.\nMay 2024: Has 4 interns starting May 31 needing product business case training. $250K culture innovation opportunity at the FAA. Building Palco — a culture product using a secure LLM to capture and derive insights from employee sentiment. BMW of NA as a client — improving employee experience through tools. Asked Andre to meet with interns, do a strategy jam session, and be on call for paid engagements.\n\nJanuary 2025 (onboarding tips pre-Snap): Walk-around deck — capture early ideas, observations, and recommendations; distill into a clean 90/180-day narrative. New-to-team warmth — create a one-page bio/user manual: favorite product feature, first-week must-knows, top 5 work style preferences, how you prefer to receive feedback, what motivates you, meeting preferences. Push vs. Pull dynamic — invite people to know you rather than driving an agenda.\nMay 22, 2026: Caroline Trudeau — Talent Strategy Consultant/Coach (pageightco). Met pre-Snap for onboarding coaching, reconnected during and after tenure. Key pre-Snap advice: walk-around deck (capture early observations, distill into 90/180-day narrative); user manual (bio + work style preferences + feedback style). Post-Snap: exploring ASU job, moving to Arizona. Did a powerful session on presenting to Evan: 3-part structure (what the team is saying → what I think → commitments by when). Used Gallup/Walkaround Deck frameworks.",
       "companyFlag": false,
       "functionFlag": false,
       "positionFlag": true,
@@ -42010,7 +41978,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 12,
@@ -42031,7 +41999,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 13,
@@ -42052,7 +42020,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 14,
@@ -42073,7 +42041,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 15,
@@ -42094,7 +42062,7 @@
       "recruiter": false,
       "followUp": true,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 16,
@@ -42115,7 +42083,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 17,
@@ -42136,7 +42104,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 18,
@@ -42157,7 +42125,7 @@
       "recruiter": false,
       "followUp": true,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 19,
@@ -42178,7 +42146,7 @@
       "recruiter": false,
       "followUp": true,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 20,
@@ -42199,7 +42167,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 21,
@@ -42220,7 +42188,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 22,
@@ -42241,7 +42209,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 23,
@@ -42262,7 +42230,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 24,
@@ -42283,7 +42251,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 25,
@@ -42304,7 +42272,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 26,
@@ -42325,7 +42293,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 27,
@@ -42346,7 +42314,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 28,
@@ -42367,7 +42335,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 29,
@@ -42388,7 +42356,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     },
     {
       "id": 30,
@@ -42409,7 +42377,7 @@
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-05-25"
+      "addedDate": "2026-06-05"
     }
   ],
   "apps": [
@@ -42418,16 +42386,42 @@
       "questionsToAsk": "",
       "companyNews": "",
       "myStory": "",
-      "statusLog": [
+      "statusLog": [],
+      "id": 10,
+      "company": "Anthropic",
+      "role": "Performance and Talent Program Manager",
+      "status": "applied",
+      "appliedDate": "2026-06-08",
+      "payRange": "175K-245K",
+      "jobUrl": "https://job-boards.greenhouse.io/anthropic/jobs/5239809008?gh_src=LinkedIn",
+      "reference": "",
+      "whyMe": "",
+      "whyThem": "",
+      "notes": "About Anthropic<br>Anthropic’s mission is to create reliable, interpretable, and steerable AI systems. We want AI to be safe and beneficial for our users and for society as a whole. Our team is a quickly growing group of committed researchers, engineers, policy experts, and business leaders working together to build beneficial AI systems.<br><br>About the role<br>We are seeking an experienced People Programs Manager to join our Performance &amp; Talent Programs team. This role will own the design and end-to-end execution of Anthropic's performance programs — performance pulses, biannual review cycles, promotions, and the continuous feedback practices that connect them — producing the year-round performance signal that feeds our talent intelligence layer and upholds our performance bar as we scale. This is a senior individual contributor role reporting to the Head of Performance &amp; Talent Programs, and a great fit for a true builder who has both seen performance management excellence at scale and is excited to roll up their sleeves in a rapidly scaling, high-ambiguity environment.<br><br>Key responsibilities<br>Own end-to-end execution of Anthropic's cyclical performance programs (performance pulses, promotions, biannual review cycles) and the continuous feedback practices between them<br>Ensure these programs scale durably and uphold Anthropic's performance bar and talent density as the company grows<br>Design programs to produce useful performance signal year-round and feed it into the talent intelligence layer to inform succession, critical talent identification, and deployment decisions<br>Partner cross-functionally with People Services on cycle execution, People Products on program tooling, and People Analytics on connecting performance data to broader people data and insights<br>Iterate on program frameworks (calibration, rating constructs, feedback formats, promotion criteria) based on data, manager feedback, and Anthropic's evolving needs<br>Lead program redesigns and change management, including stakeholder alignment, rollout planning, and communications<br>Develop and deliver enablement that helps managers and People Partners run each cycle confidently and consistently<br>Minimum qualifications<br>Systems thinker who treats performance programs as a signal-generating system, caring as much about data quality and downstream usefulness as about cycles landing on time<br>Demonstrated experience shaping performance tooling (Workday, Lattice, CultureAmp, or homegrown) and partnering with People Analytics, with comfort getting into the data yourself<br>Experience building manager enablement that changes behavior, and supporting leaders through performance, promotion, and talent conversations<br>Strong program management skills and operational rigor, with a track record of running complex multi-month cycles and keeping dozens of stakeholders in sync<br>Exceptional communicator, particularly in writing, who thrives in ambiguity and evolving scope<br>Preferred qualifications<br>7+ years of experience designing, running, and owning performance management, talent review, or promotion programs, preferably through periods of rapid headcount growth<br>The annual compensation range for this role is listed below. <br><br>For sales roles, the range provided is the role’s On Target Earnings (\"OTE\") range, meaning that the range includes both the sales commissions/sales bonuses target and annual base salary for the role.<br><br>Annual Salary:<br><br>$175,000 - $245,000 USD",
+      "rounds": [
         {
-          "date": "May 26, 2026",
-          "text": "ben already found options internally."
+          "interviewerTitle": "",
+          "roundPrep": "",
+          "interviewerBackground": "",
+          "id": 1,
+          "type": "Application",
+          "interviewer": "",
+          "date": "2026-06-08",
+          "status": "complete",
+          "notes": ""
         }
-      ],
+      ]
+    },
+    {
+      "questionsToRehearse": "",
+      "questionsToAsk": "",
+      "companyNews": "",
+      "myStory": "",
+      "statusLog": [],
       "id": 9,
       "company": "Datadog",
       "role": "Senior Talent Partner",
-      "status": "closed",
+      "status": "applied",
       "appliedDate": "2026-05-17",
       "payRange": "$180K - $260K",
       "jobUrl": "https://careers.datadoghq.com/detail/7607540/?gh_jid=7607540",
@@ -42577,7 +42571,7 @@
     {
       "questionsToRehearse": "Questions\nWhat differentiates candidates who get hired and are successful at the Director/Senior Director level from those who don’t? \nHow is BTS structured across practices and geographies, and where does this role sit within that structure?\nWhat are the internal AI tools available?\nHow is success measured in the first 6–12 months for this role?\nWhat’s the balance between client facilitation/delivery and business development/account growth?\nHow does BTS typically grow client relationships and expand accounts over time?",
       "questionsToAsk": "",
-      "companyNews": "*(Note: The \"BTS\" relevant to this consulting role is **BTS Group AB** — the global strategy execution and leadership development consultancy, Nasdaq Stockholm-listed — not the K-pop group.)*\n\n---\n\n## 📰 Key Headlines\n\n- **2025 was a down year financially.** \nBTS Group AB reported full-year net sales slipping to MSEK 2,703 and EBITA down 25%, as currency headwinds, restructuring tied to AI-driven rationalization, and lower North America sales weighed on margins.\n\n\n- **North America turnaround underway.** \nTo reverse the negative trend in BTS North America, a new profitability and growth strategy was implemented, a new management team was appointed, and a reorganization was carried out.\n\n\n- **Annual Report 2025 just published (April 30, 2026).** \nBTS Group AB, a leading global consultancy specializing in strategy execution, change, and people development, released its Annual Report, with CEO Jessica Skon focusing on AI-enabled reinvention.\n\n\n---\n\n## 🎯 Role-Relevant Developments\n\n- **AI is reshaping internal operations — \"BTS as client zero.\"** \n50% of practices and functional teams reinvented their workflows, reducing total cost by SEK 28M in 2025; North America FTEs were reduced 12% due to AI efficiency gains.\n BTS projects \nSEK 74 million in total annual savings group-wide from AI efficiency programs.\n\n\n- **Anthropic partnership signals new client positioning.** \nAnthropic chose BTS as a go-to-market enablement partner, reinforcing the firm's role as an integrator for large enterprises seeking to consolidate vendors around scalable AI solutions.\n\n\n- **Strategy execution thinking is evolving.** BTS's own thought leadership now argues that \nstrategy no longer unfolds neatly from vision to execution — disruption is constant, complexity is accelerating, and overly scripted strategy becomes brittle.\n\n\n- **2026 is a \"must deliver\" year.** \nManagement guided to year-over-year growth for the group and North America in Q1 2026, with North America's EBITDA expected to rise at least 15%.\n\n\n---\n\n## 💡 Interview Talking Points\n\n1. **Frame your value around the turnaround.** The North America business has a new team and new strategy — come in with a POV on how a Sr. Director of Strategy Execution can accelerate that rebound and build durable client growth.\n\n2. **AI fluency is non-negotiable.** \nBTS shifted from bespoke simulations to an AI-driven Strategy Execution framework in early 2025.\n Show you understand how AI changes both *how BTS delivers* and *what clients need*.\n\n3. **Speak to the margin recovery imperative.** \n2025 saw flat revenue and a 25% EBITDA slide — 2026's promised rebound is a \"must deliver\" scenario, raising the bar to convert AI investments into durable profit growth.\n A Sr. Director who can drive execution efficiency *and* client impact is exactly the profile needed.\n\n4. **Know the geographic split.** \nEurope grew 10% and Other Markets grew 9% currency-adjusted — the challenges were limited to North America.\n If the role is North America-based, own that context directly.",
+      "companyNews": "",
       "myStory": "",
       "statusLog": [],
       "id": 4,
@@ -42673,18 +42667,9 @@
     {
       "questionsToRehearse": "# 5-7 Interview Questions for Andre Moskowitz\n## Executive Director, Functional AI &amp; Process Excellence – Market Access | Novartis\n\n---\n\n## 1. **You've built AI adoption within Snap's HR function, but Market Access in pharma is operationally and regulated very differently—pricing tiers, payer contracts, rebate mechanics, formulary negotiations. Walk me through how you'd approach learning this domain quickly enough to credibly lead AI strategy in your first 90 days.**\n\n**Answer Framework:**\n- **Lead with Big 4 loan audit deal**: \"I've navigated complex regulated domains before. The $20M loan audit project required me to master banking compliance, audit logic, and regulatory guardrails in parallel—I didn't wait to be an expert before shaping the AI strategy; I built domain fluency *while* designing the solution architecture.\"\n- **Reference IBM consulting model**: \"At IBM, I consulted across Financial Services, Insurance, Automotive, and Oil &amp; Gas. Each had proprietary jargon and compliance regimes. My pattern is: (1) immerse with functional experts (payers, pricing, contracting teams), (2) map the current state workflow in week 2–3, (3) identify 2–3 high-confidence AI wedges by week 4, (4) validate use cases with stakeholders iteratively.\"\n- **Acknowledge the gap honestly**: \"I won't pretend to know rebate operations or formulary mechanics on day one. But I've learned that the *governance and scaling* principles are transferable—how you define success metrics, manage stakeholder alignment, pilot responsibly, and measure impact. Those are universal.\"\n- **Flip to curiosity**: Ask about the biggest current pain point in Market Access—this signals you're ready to listen and will dig into the domain intentionally.\n\n---\n\n## 2. **At Snap, you shipped three AI tools adopted by 1,000+ managers in two weeks. That's impressive velocity, but it also raises a question: how do you ensure AI solutions in a highly regulated environment like pharma—where payer relationships and pricing decisions carry legal and compliance risk—don't move so fast they outpace governance?**\n\n**Answer Framework:**\n- **Don't defensive**: Acknowledge the tension. \"Snap's velocity worked because HR tools have lower regulatory friction. Pharma's different—a bad pricing algorithm or a payer communication flagged as non-compliant could damage relationships and trigger audits. Speed ≠ recklessness.\"\n- **Highlight governance maturity at Snap**: \"We *did* build guardrails. The three tools had audit trails, role-based access controls, and we locked down the user interface so managers couldn't misuse the outputs. We failed fast *within boundaries*.\"\n- **Reference the $20M deal**: \"The loan audit taught me the opposite muscle—working with legal, compliance, and audit teams to design AI that *could* withstand regulatory scrutiny from day one. That's the Market Access playbook.\"\n- **Propose your framework**: \"At Novartis, I'd pilot with a 'crawl-walk-run' approach: (1) start with lower-risk use cases (e.g., rebate analytics, proposal summarization), (2) build the governance playbook in parallel with product, (3) scale to higher-stakes decisions (pricing strategy, payer negotiation support) only after we've validated the control environment and stakeholder confidence.\"\n- **Name the dual accountability**: \"I report to both the VP of Payer and Pricing Strategy *and* the Head of AI Innovation. That dual",
       "questionsToAsk": "How did this role come about? 1 ED across every function. Group has been around for a year&nbsp;<div>What does this role own? Connector between technical AI team and market access team\nWhat is success for this role?\nIs this role more deep technical expertise, or about driving adoption/change management? Its a bit about both. \nWhat have you loved most and kept you there? been there 6 years.&nbsp;</div><div>Does a really good job of zooming out. always at the forefront. development. Keeps you engaged.&nbsp;</div><div>&nbsp;Next Steps - hiring manager, set up for an individual interview. Then - meet with a panel interview stakeholders day to day basis. \n\nbrand new role - ED - Functional AI\nfocuses on market access group. reports in. Also dotted line into Head of AI/Innovation. Bringing the AI ideas and use cases. How can we do this better, faster, and more enabled. Remote - 20% or less travel into East Hanover. \n\nAI - process issue. \nwhat do i know about Market Access\n\npushback stakeholder. \n\nCulture - ethics, values, integrity. discussion - about an ethical challenge. \n\n250-300 target comp; target bonus - 30%, target equity - 45%, long term incentives - 3 year vesting periods. 1/3 after each year. </div>",
-      "companyNews": "Here is your pre-interview brief, tight and prioritized:\n\n---\n\n## 📰 Key Headlines\n\n- \n**Novartis signed a Most Favored Nation (MFN) pricing deal** with the Trump administration (Dec 2025), committing to match lowest prices charged in other developed countries for Medicaid and cash-pay customers via TrumpRx.gov — one of 14 major pharma companies to do so.\n [Novartis.com](https://www.novartis.com/news/media-releases/novartis-and-us-government-reach-agreement-lowering-drug-prices-us) | [Drug Discovery Trends](https://www.drugdiscoverytrends.com/drug-companies-sign-most-favored-nation-deals-then-raise-prices-anyway/)\n\n- \n**Strong 2025 full-year results**: CEO Vas Narasimhan reported \"high single-digit sales growth and core margin expansion despite significant US generic entries.\"\n [Novartis.com](https://www.novartis.com/news/media-releases/novartis-delivered-high-single-digit-sales-growth-achieved-40-core-margin-and-further-advanced-pipeline-2025)\n\n- \n**Mid-term guidance raised** to +5–6% cc sales CAGR for 2025–2030, backed by 30+ high-value pipeline assets and 15+ submission-enabling readouts expected in two years.\n [Novartis.com](https://www.novartis.com/news/media-releases/novartis-projects-5-6-cc-sales-cagr-2025-2030-long-term-growth-backed-30-potential-high-value-pipeline-assets)\n\n- \n**$30B in M&A in 2025 alone**, including a pending $12B acquisition of RNA drug developer Avidity Biosciences.\n [Pharmaphorum](https://pharmaphorum.com/news/patent-losses-hit-novartis-hard-ceo-has-plan)\n\n---\n\n## 🎯 Role-Relevant Developments\n\n- \n**New pricing/access architecture**: Novartis committed to launching future medicines with comparable prices across high-income countries, building direct-to-patient platforms via TrumpRx, and applying to the GENEROUS Medicaid model — all reshaping market access workflows.\n [Novartis.com](https://www.novartis.com/us-en/news/media-releases/novartis-and-us-government-reach-agreement-lowering-drug-prices-us)\n\n- \n**MFN impact modeled into guidance**: Narasimhan said Novartis has \"fully factored in\" the MFN policy impact into its 5-year plan and has \"gotten even better at modeling the MFN impact\" — signaling a need for sophisticated AI-driven pricing analytics.\n [Precision Medicine Online](https://www.precisionmedicineonline.com/precision-oncology/novartis-cautions-drug-pricing-negotiations-could-stall-future-ex-us-launches)\n\n- \n**Company strategic priority**: \"Unleashing the power of our people, scaling data science and technology\" is listed as a top-3 company pillar alongside accelerating growth and delivering returns.\n [Novartis SEC Filing](https://www.sec.gov/Archives/edgar/data/0001114448/000137036825000012/nvs-20250630-99_1.htm)\n\n- \n**AI modernization at scale**: Novartis launched a comprehensive data and AI modernization journey with AWS and Accenture, targeting acceleration of drug development by at least 6 months per clinical trial.\n [ZenML](https://www.zenml.io/llmops-database/ai-driven-clinical-trial-transformation-with-next-generation-data-platform)\n\n- \n**AI in market access is an emerging frontier**: LLMs and ML now offer the potential to forecast HTA agency decisions and streamline systematic literature reviews and HTA submissions — a direct mandate for this role.\n [PubMed](https://pubmed.ncbi.nlm.nih.gov/40167461/)\n\n- \n**Pricing/reimbursement pressure flagged in annual filings**: Novartis explicitly cited intensified pressure in the US and Europe, IRA-driven Medicare negotiations, and international reference pricing as risks to future economics.\n [StockTitan](https://www.stocktitan.net/sec-filings/NVS/20-f-novartis-ag-files-annual-report-foreign-issuer-16bb5e81536b.html)\n\n---\n\n## 💡 Interview Talking Points\n\n1. **MFN = process transformation urgency**: The Dec 2025 MFN deal fundamentally changes launch sequencing and global pricing strategy. An ED of Functional AI & Process Excellence in Market Access can directly enable the \"better MFN modeling\" Narasimhan publicly referenced — using AI to run real-time scenario analytics across markets.\n\n2. **Pipeline volume demands process scale**: With \n15+ submission-enabling readouts expected in two years\n, the volume of HTA dossiers and access submissions is set to surge — a clear case for AI-powered process excellence to avoid bottlenecks. [Novartis.com](https://www.novartis.com/news/media-releases/novartis-projects-5-6-cc-sales-cagr-2025-2030-long-term-growth-backed-30-potential-high-value-pipeline-assets)\n\n3. **\"Scaling data science\" is a",
+      "companyNews": "Here's your pre-interview intel brief, organized for maximum utility:\n\n---\n\n## 📰 Key Headlines\n\n- **Q1 2025 blowout results:** \nNovartis reported double-digit sales growth of 15% and core operating income growth of 27% for Q1 2025.\n \nThe company raised its full-year 2025 guidance, forecasting net sales to grow by high single digits and core operating income to increase by low double-digits.\n\n\n- **$23B US investment & 7 new facilities:** \nNovartis announced a new active pharmaceutical ingredients facility in North Carolina — its seventh new facility planned within a year of its announced $23 billion investment in US-based manufacturing, research and development.\n\n\n- **US drug pricing deal (Dec 2025):** \nNovartis reached an agreement with the US government to lower the price of innovative medicines and voluntarily agreed to launch future medicines with comparable prices across high-income countries.\n\n\n---\n\n## 🎯 Role-Relevant Developments\n\n- **AI scaled enterprise-wide:** \nNovartis is executing a multi-pronged, deeply integrated strategy to achieve a dominant position in the application of AI within the pharmaceutical sector.\n \nAs part of its strategic partnership with Microsoft, Novartis is bringing AI to the desktop of every associate — what they call \"the enablement of citizen data scientists\" — so that non-data scientists can achieve higher-quality, faster decision-making.\n\n\n- **New Innovation Lab (GARAGE) launched at US HQ:** \nLaunched at the US East Hanover campus in April 2025, the GARAGE provides a physical space for everyone across Novartis to collaborate on problem-solving.\n \nEven before its official launch, the team hosted a GenAI hackathon — the first enterprise hackathon sponsored by the US President — and a CAR-T hackathon, each bringing together cross-functional teams for a three-day deep dive into a real-world challenge.\n\n\n- **AI process redesign as a core principle:** \nIntegrating AI agents into processes required fundamental process redesign, not superficial additions — creating opportunities to eliminate legacy inefficiencies while building workforce confidence through upskilling initiatives.\n\n\n- **Value-based contracting under pricing pressure:** \nNovartis's 2025 Form 20-F highlights strategic risks from global pricing and reimbursement pressure, including US measures such as the Inflation Reduction Act and \"maximum fair price\" agreements, and notes the loss of US exclusivity for Entresto in July 2025.\n Novartis has pioneered outcomes-based models: \nBlue Cross Blue Shield is working with Novartis on outcomes-based reimbursement for Kymriah, a CAR-T therapy — the insurer only pays if the patient responds positively within a specified time.\n\n\n---\n\n## 💡 Interview Talking Points\n\n1. **Connect AI to market access ROI:** Novartis has a clear \"ruthless prioritization\" mandate — \nthe company established a robust value framework with clear ROI metrics for each use case, driving accountability among leaders and preventing resource fragmentation.\n Frame your work in measurable business value.\n\n2. **Process excellence = redesign, not automation:** Reference Novartis's own philosophy that \nintegrating AI agents into processes required fundamental process redesign, not superficial additions.\n This signals the role expects systems thinking, not just tooling.\n\n3. **Pricing pressure is the burning platform:** With the US pricing deal, IRA pressures, and Entresto exclusivity loss, market access is under acute scrutiny. Show you understand how AI can accelerate HEOR, payer evidence generation, and access strategy.\n\n4. **The GARAGE signals cultural ambition:** \nThe GARAGE is part of Novartis's broader transformation journey — teams are encouraged to bring business challenges into the space, collaborate cross-functionally, and build solutions that scale.\n Emphasize cross-functional AI deployment experience.",
       "myStory": "",
-      "statusLog": [
-        {
-          "date": "May 24, 2026",
-          "text": "Robert said i'm moving on"
-        },
-        {
-          "date": "May 29, 2026",
-          "text": "From Recruiter: There has been a recent organizational shift on our end, as our Patient Support team has been integrated into our Market Access group, which has led us to slightly slow down the hiring timeline as we reassess priorities and structure. I want to be transparent that this may impact the pace of next steps, but please know that you remain very much in consideration."
-        }
-      ],
+      "statusLog": [],
       "id": 2,
       "company": "Novartis",
       "role": "Executive Director, Functional AI & Process Excellence – Market Access",
@@ -42722,7 +42707,7 @@
         {
           "interviewerTitle": "Vice President, Account Management & Pricing Strategy",
           "roundPrep": "<div><div>How does this role operate, what does this role own? Are there other examples of this model working well that you've seen?</div><div>What is it accountable for?</div><div>What are some of the bigger opportunities right now for AI at Novartis?</div></div><div><br></div><div>Why does this role exist?</div><div>What's your favorite use of AI at the company so far?</div><div>How would you describe yourself as a manager? As a leader?</div>",
-          "interviewerBackground": "<div class=\"news-h\">Pre-Interview Brief: Robert Ingebretsen, VP Account Management &amp; Pricing Strategy – Novartis</div><div style=\"height:6px\"></div>---<div style=\"height:6px\"></div><strong>⚠️ Heads up for Andre:</strong> Robert Ingebretsen doesn't have a strong public profile, so this brief is role-informed rather than person-specific. Treat it as a working hypothesis, not confirmed intel. If time permits, check LinkedIn before the call.<div style=\"height:6px\"></div>---<div style=\"height:6px\"></div><div class=\"news-h\">1. Professional Background</div><br>Someone in this seat likely has 10–15+ years in pharma market access, payer strategy, or health economics. His scope — account management *and* pricing strategy — means he sits at the intersection of <strong>commercial execution and strategic positioning</strong>: negotiating with PBMs/payers, building contracting frameworks, and defending formulary placement. At Novartis specifically, this means navigating a complex global portfolio with serious pricing pressure (IRA, rebate reform, biosimilar competition). He's probably analytically sharp but operationally grounded — someone who's had to *own* outcomes, not just advise on them.<div style=\"height:6px\"></div>---<div style=\"height:6px\"></div><div class=\"news-h\">2. Likely Priorities</div><br><div class=\"news-bullet\"><strong>Reducing time-to-insight</strong> on payer and pricing decisions — he doesn't want his team drowning in data pulls</div><br><div class=\"news-bullet\"><strong>Process consistency</strong> across account teams without killing agility</div><br><div class=\"news-bullet\"><strong>AI that actually works in the field</strong> — skeptical of tools that look good in demos but stall in adoption</div><br><div class=\"news-bullet\"><strong>Protecting and proving value</strong> in a high-scrutiny pricing environment (especially post-IRA)</div><br><div class=\"news-bullet\">Making sure any new \"AI/Excellence\" function <strong>serves the business</strong>, not the other way around</div><div style=\"height:6px\"></div>---<div style=\"height:6px\"></div><div class=\"news-h\">3. Talking Points for Andre</div><div style=\"height:6px\"></div><strong>→ AI adoption at scale, fast</strong><br>Andre's 3 AI HR tools at Snap hitting 1K+ managers in 2 weeks is a credibility marker here. Robert likely worries that AI initiatives take 18 months to deploy and never stick. Lead with: *\"I've built tools that reached adoption in weeks, not quarters — that requires designing for the actual user workflow, not the ideal-state workflow.\"*<div style=\"height:6px\"></div><strong>→ IBM Watson / Fortune 500 AI consulting</strong><br>Robert lives in a world where vendors over-promise AI and under-deliver. Andre's background building real AI applications (not just strategy decks) for complex organizations directly addresses this. Frame it as: *\"I've seen where enterprise AI fails — usually it's not the model, it's the process design and change management around it.\"* That's exactly what an \"AI &amp; Process Excellence\" role needs to solve.<div style=\"height:6px\"></div><strong>→ Connecting AI to commercial outcomes</strong><br>Robert is a revenue and access leader — he'll want to know AI serves *his* goals. Andre should proactively tie capability to outcome: e.g., *\"In market access, I'd focus AI on the decisions that are most time-sensitive and highest-stakes — payer modeling, contracting scenarios, rebate impact analysis — so your account teams walk into negotiations better prepared, faster.\"*<div style=\"height:6px\"></div>---<div style=\"height:6px\"></div><div class=\"news-h\">4. Questions He'll Likely Ask</div><div style=\"height:6px\"></div><strong>\"How do you prioritize which processes to automate or augment with AI?\"</strong><br>He's testing whether Andre has a framework or just chases shiny objects. Be ready with a crisp answer (e.g., high-volume + high-variability + data-rich = good AI candidates).<div style=\"height:6px\"></div><strong>\"How have you handled resistance from business teams when rolling out new tools or processes?\"</strong><br>He manages account teams in a high-pressure environment — change management is everything. He wants proof Andre doesn't just build things and throw them over the wall.<div style=\"height:6px\"></div><strong>\"What would your first 90 days look like in this role?\"</strong><br>Classic VP-level filter question. He wants to see that Andre would listen and map before building — but also move with urgency. Have a structured answer: discovery → quick win → roadmap.<div style=\"height:6px\"></div>---<div style=\"height:6px\"></div><strong>Bottom line for Andre:</strong> Robert is a commercial operator, not a tech enthusiast. Win him over by speaking his language — access, payer dynamics, field execution — and positioning AI as a tool that makes *his",
+          "interviewerBackground": "Error fetching background. Check API key.",
           "id": 3,
           "type": "Hiring Manager",
           "interviewer": "Robert Ingebretsen",
@@ -42766,9 +42751,9 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-05-31T03:47:03.812Z",
+    "lastSync": "2026-06-08T03:20:40.531Z",
     "version": "v14",
-    "contactCount": 2019,
-    "appCount": 9
+    "contactCount": 2018,
+    "appCount": 10
   }
 }
