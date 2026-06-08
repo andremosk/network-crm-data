@@ -751,11 +751,12 @@
       "functionFlag": false,
       "positionFlag": false,
       "knowsMe": false,
-      "status": "follow_up",
+      "status": "network",
       "recruiter": false,
-      "followUp": true,
+      "followUp": false,
       "lastContact": "2026-05-15",
-      "addedDate": "2026-04-21"
+      "addedDate": "2026-04-21",
+      "followUpDate": ""
     },
     {
       "id": 1981,
@@ -42759,7 +42760,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-06-08T16:53:43.298Z",
+    "lastSync": "2026-06-08T16:53:53.407Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 10
