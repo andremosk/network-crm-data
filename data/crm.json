@@ -41743,11 +41743,12 @@
       "functionFlag": true,
       "positionFlag": false,
       "knowsMe": true,
-      "status": "follow_up",
+      "status": null,
       "recruiter": false,
-      "followUp": true,
+      "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-06-05"
+      "addedDate": "2026-06-05",
+      "followUpDate": ""
     },
     {
       "id": 1,
@@ -42753,7 +42754,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-06-08T16:52:12.919Z",
+    "lastSync": "2026-06-08T16:52:26.034Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 10
