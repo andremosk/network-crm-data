@@ -41729,11 +41729,12 @@
       "functionFlag": true,
       "positionFlag": true,
       "knowsMe": false,
-      "status": "follow_up",
+      "status": null,
       "recruiter": false,
-      "followUp": true,
+      "followUp": false,
       "lastContact": "2026-06-08",
-      "addedDate": "2026-05-18"
+      "addedDate": "2026-05-18",
+      "followUpDate": ""
     },
     {
       "id": 0,
@@ -42762,7 +42763,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-06-08T16:55:32.642Z",
+    "lastSync": "2026-06-08T16:55:37.525Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 10
