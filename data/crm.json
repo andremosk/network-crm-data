@@ -6988,11 +6988,12 @@
       "functionFlag": true,
       "positionFlag": false,
       "knowsMe": false,
-      "status": "follow_up",
+      "status": "network",
       "recruiter": false,
-      "followUp": true,
+      "followUp": false,
       "lastContact": "2026-05-05",
-      "addedDate": "2026-04-21"
+      "addedDate": "2026-04-21",
+      "followUpDate": ""
     },
     {
       "id": 1684,
@@ -42756,7 +42757,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-06-08T16:52:44.564Z",
+    "lastSync": "2026-06-08T16:52:52.510Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 10
