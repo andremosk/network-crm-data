@@ -42385,7 +42385,7 @@
       "questionsToRehearse": "",
       "questionsToAsk": "",
       "companyNews": "",
-      "myStory": "",
+      "myStory": "Here's a tailored \"Tell me about yourself\" response for Andre:<br><br>---<br><br>I started my career at IBM as a tester, which honestly taught me more about systems thinking than anything else — if you want to understand how something works, try to break it first. From there I moved into AI consulting on the Watson side, working with Fortune 500 clients and helping close a $20M engagement with a Big 4 firm. But what kept pulling me toward the people side was watching organizations struggle not with the technology, but with the humans inside it — how they grow, how they get recognized, how they know where they stand.<br><br>That led me into talent design. At IBM I built the Career Framework that covered over 150,000 professionals and a learning brand that put roughly a thousand consultants through a structured development program. So I've seen what it looks like to build talent infrastructure at real scale — not just the design, but the calibration logic, the enablement layer, the change management that makes it stick.<br><br>At Snap I ran performance and promotion cycles as a Talent Programs Manager, and then I took a turn I didn't expect — I started building AI-powered HR tools: a feedback summarizer, a manager audit engine, a Glean-based agent. Over a thousand managers adopted those tools within two weeks of launch. That experience made something click for me: the most valuable place I can sit is at the intersection of performance programs and the intelligence layer underneath them — where the signal actually gets generated and used.<br><br>Which is exactly what drew me to this role at Anthropic. You're not just running review cycles — you're building a system that produces year-round performance signal and feeds talent decisions at a company where the stakes are genuinely high. That's the problem I want to work on, and I think the combination of what I've built and where I've been puts me in a pretty good position to do it.<br><br>---<br><br>**Runtime estimate:** ~75–80 seconds at a natural conversational pace.",
       "statusLog": [],
       "id": 10,
       "company": "Anthropic",
@@ -42751,7 +42751,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-06-08T03:25:15.183Z",
+    "lastSync": "2026-06-08T03:25:34.587Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 10
