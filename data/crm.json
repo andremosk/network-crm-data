@@ -42132,7 +42132,7 @@
       "name": "BJ Siasoco",
       "firstName": "BJ",
       "lastName": "Siasoco",
-      "tier": 1,
+      "tier": 2,
       "company": "Wildlife Conservation Society",
       "position": "Director, Talent Development and Learning",
       "linkedin": "https://www.linkedin.com/in/bj-r-siasoco/",
@@ -42142,11 +42142,12 @@
       "functionFlag": true,
       "positionFlag": false,
       "knowsMe": false,
-      "status": "follow_up",
+      "status": null,
       "recruiter": false,
-      "followUp": true,
+      "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-06-05"
+      "addedDate": "2026-06-05",
+      "followUpDate": ""
     },
     {
       "id": 20,
@@ -42751,7 +42752,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-06-08T16:12:49.559Z",
+    "lastSync": "2026-06-08T16:51:45.244Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 10
