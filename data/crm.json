@@ -12574,11 +12574,12 @@
       "functionFlag": false,
       "positionFlag": false,
       "knowsMe": true,
-      "status": "follow_up",
+      "status": "network_closely",
       "recruiter": false,
-      "followUp": true,
+      "followUp": false,
       "lastContact": "2026-04-20",
-      "addedDate": "2026-04-20"
+      "addedDate": "2026-04-20",
+      "followUpDate": ""
     },
     {
       "id": 1418,
@@ -42755,7 +42756,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-06-08T16:52:33.979Z",
+    "lastSync": "2026-06-08T16:52:44.564Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 10
