@@ -10328,11 +10328,12 @@
       "functionFlag": true,
       "positionFlag": false,
       "knowsMe": false,
-      "status": "follow_up",
+      "status": "network_closely",
       "recruiter": false,
-      "followUp": true,
+      "followUp": false,
       "lastContact": "2026-05-15",
-      "addedDate": "2026-04-21"
+      "addedDate": "2026-04-21",
+      "followUpDate": ""
     },
     {
       "id": 1525,
@@ -42757,7 +42758,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-06-08T16:52:52.510Z",
+    "lastSync": "2026-06-08T16:53:02.926Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 10
