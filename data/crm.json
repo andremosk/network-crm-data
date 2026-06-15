@@ -1,6 +1,28 @@
 {
   "contacts": [
     {
+      "id": 2018,
+      "name": "Eric Wilson",
+      "firstName": "Eric",
+      "lastName": "Wilson",
+      "tier": 3,
+      "company": "Nucleus Advisors",
+      "position": "Managing Director/Partner",
+      "linkedin": "https://www.linkedin.com/in/eric-wilson-57b58216/",
+      "email": "eric@nucleusadv.com",
+      "notes": "",
+      "companyFlag": false,
+      "functionFlag": false,
+      "positionFlag": false,
+      "knowsMe": false,
+      "status": "call_scheduled",
+      "recruiter": false,
+      "followUp": false,
+      "lastContact": "",
+      "addedDate": "2026-06-15",
+      "followUpDate": ""
+    },
+    {
       "id": 2017,
       "name": "Peta-Gay Clarke",
       "firstName": "Peta-Gay",
@@ -42763,9 +42785,9 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-06-11T15:29:00.535Z",
+    "lastSync": "2026-06-15T13:35:04.889Z",
     "version": "v14",
-    "contactCount": 2018,
+    "contactCount": 2019,
     "appCount": 10
   }
 }
