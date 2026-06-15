@@ -13,7 +13,7 @@
       "notes": "",
       "companyFlag": false,
       "functionFlag": false,
-      "positionFlag": false,
+      "positionFlag": true,
       "knowsMe": false,
       "status": "call_scheduled",
       "recruiter": false,
@@ -42785,7 +42785,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-06-15T13:35:04.889Z",
+    "lastSync": "2026-06-15T13:35:14.888Z",
     "version": "v14",
     "contactCount": 2019,
     "appCount": 10
