@@ -42149,16 +42149,17 @@
       "position": "Senior Vice President & Partner",
       "linkedin": "https://www.linkedin.com/in/megmariner",
       "email": "",
-      "notes": "Will connect me with Salesforce and Datadog",
+      "notes": "Will connect me with Salesforce and Datadog\nJun 16, 2026: has been so helpful with BTS<div><br></div><div>\"Oh ugh. I’m sorry – and you’re right – given our revenue struggles, sellers are a huge priority for the entire team.<br>That said, I’m excited to hear about the shift – feels like the right time to do something you really enjoy! I actually have a friend, Casey Costello, who is doing something similar – happy to put you in touch if you think it’d be helpful?<br>I’d love to see you soon.\"</div>",
       "companyFlag": true,
-      "functionFlag": false,
+      "functionFlag": true,
       "positionFlag": true,
       "knowsMe": true,
-      "status": "follow_up",
+      "status": "network",
       "recruiter": false,
-      "followUp": true,
-      "lastContact": "",
-      "addedDate": "2026-06-05"
+      "followUp": false,
+      "lastContact": "2026-06-16",
+      "addedDate": "2026-06-05",
+      "followUpDate": ""
     },
     {
       "id": 19,
@@ -42785,7 +42786,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-06-15T19:22:12.981Z",
+    "lastSync": "2026-06-16T15:46:36.083Z",
     "version": "v14",
     "contactCount": 2019,
     "appCount": 10
