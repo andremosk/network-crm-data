@@ -1,6 +1,27 @@
 {
   "contacts": [
     {
+      "id": 2019,
+      "name": "Melissa C Murphy",
+      "firstName": "Melissa C",
+      "lastName": "Murphy",
+      "tier": 3,
+      "company": "Itasca Innovation",
+      "position": "Head of AI Enablement",
+      "linkedin": "https://www.linkedin.com/in/melissacmurphy/",
+      "email": "melissa@itascainnovation.ai",
+      "notes": "",
+      "companyFlag": false,
+      "functionFlag": false,
+      "positionFlag": false,
+      "knowsMe": false,
+      "status": null,
+      "recruiter": false,
+      "followUp": false,
+      "lastContact": "",
+      "addedDate": "2026-06-22"
+    },
+    {
       "id": 2018,
       "name": "Eric Wilson",
       "firstName": "Eric",
@@ -42786,9 +42807,9 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-06-22T14:54:26.980Z",
+    "lastSync": "2026-06-22T16:04:20.127Z",
     "version": "v14",
-    "contactCount": 2019,
+    "contactCount": 2020,
     "appCount": 10
   }
 }
