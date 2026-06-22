@@ -1967,15 +1967,15 @@
       "position": "VP of Sales",
       "linkedin": "https://www.linkedin.com/in/sal-gualtieri-06423b46",
       "email": "",
-      "notes": "",
+      "notes": "Jun 22, 2026: reached out. lives in Greenlawn apparently. Has a 4th grader.",
       "companyFlag": false,
       "functionFlag": false,
-      "positionFlag": false,
+      "positionFlag": true,
       "knowsMe": false,
       "status": null,
       "recruiter": false,
       "followUp": false,
-      "lastContact": "",
+      "lastContact": "2026-06-22",
       "addedDate": "2026-04-21"
     },
     {
@@ -42786,7 +42786,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-06-18T02:56:49.575Z",
+    "lastSync": "2026-06-22T14:54:26.980Z",
     "version": "v14",
     "contactCount": 2019,
     "appCount": 10
