@@ -6289,7 +6289,7 @@
       "name": "Julie Nguyen",
       "firstName": "Julie",
       "lastName": "Nguyen",
-      "tier": 1,
+      "tier": 2,
       "company": "Snap Inc.",
       "position": "Senior Learning & Development Specialst",
       "linkedin": "https://www.linkedin.com/in/julienguyenv",
@@ -42808,7 +42808,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-06-23T18:23:57.121Z",
+    "lastSync": "2026-06-23T18:24:12.184Z",
     "version": "v14",
     "contactCount": 2020,
     "appCount": 10
