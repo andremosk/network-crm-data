@@ -2272,7 +2272,33 @@ async function syncToGitHub(commitMessage) {
       headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
     });
     let sha = _ghSyncSHA;
-    if (getRes.ok) { const gd = await getRes.json(); sha = gd.sha; _ghSyncSHA = sha; }
+  if (getRes.ok) {
+  const gd = await getRes.json();
+  sha = gd.sha;
+  _ghSyncSHA = sha;
+
+  try {
+    const remoteText = decodeURIComponent(
+      escape(atob((gd.content || '').replace(/\n/g, '')))
+    );
+    const remoteJson = JSON.parse(remoteText);
+    const remoteCount = remoteJson.contacts?.length || remoteJson.meta?.contactCount || 0;
+    const localCount = contacts.length;
+    const dangerousDrop = remoteCount >= 100 && localCount < remoteCount * 0.5;
+
+    if (dangerousDrop) {
+      updateSyncBar('error', 'Sync blocked');
+      const message =
+        `Sync blocked: local browser has ${localCount} contacts, but GitHub has ${remoteCount}. ` +
+        `This looks like an accidental reset. Import/restore your GitHub backup before syncing.`;
+      console.warn(message);
+      alert(message);
+      return;
+    }
+  } catch (e) {
+    console.warn('Could not run sync safety check:', e);
+  }
+}
     // Commit
     const body = { message: commitMessage || 'Auto-sync', content };
     if (sha) body.sha = sha;
