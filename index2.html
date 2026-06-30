@@ -778,7 +778,7 @@ function saveApps(apps) { localStorage.setItem('andre_apps_v1', JSON.stringify(a
 let contacts = loadContacts();
 let apps = loadApps();
 let currentView = 'contacts';
-let tierFilter = 'all', statusFilter = null;
+let tierFilter = 'all', statusFilter = [];
 let flagFilters = { companyFlag:false, functionFlag:false, positionFlag:false, knowsMe:false, recruiter:false, hasNotes:false };
 let pipelineFilter = 'all';
 let sortKey = null, sortDir = 1;
@@ -842,7 +842,7 @@ function getFiltered() {
   const q = document.getElementById('searchInput').value.toLowerCase().trim();
   return contacts.filter(c => {
     if (tierFilter !== 'all' && c.tier !== tierFilter) return false;
-    if (statusFilter && c.status !== statusFilter) return false;
+    if (statusFilter.length && !statusFilter.includes(c.status)) return false;
     for (const [k,v] of Object.entries(flagFilters)) {
       if (!v) continue;
       if (k === 'hasNotes' && !c.notes) return false;
@@ -924,9 +924,11 @@ function setTier(t,btn) {
 }
 
 function toggleStatus(s) {
-  statusFilter=(statusFilter===s)?null:s;
-  document.querySelectorAll('[id^="sf-"]').forEach(b=>b.classList.remove('active'));
-  if(statusFilter){const b=document.getElementById('sf-'+statusFilter);if(b)b.classList.add('active');}
+  statusFilter = statusFilter.includes(s)
+    ? statusFilter.filter(status => status !== s)
+    : [...statusFilter, s];
+  const btn=document.getElementById('sf-'+s);
+  if(btn) btn.classList.toggle('active',statusFilter.includes(s));
   renderList();
 }
 
