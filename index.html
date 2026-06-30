@@ -38,6 +38,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .btn-primary { background: var(--accent); color: #0f0f0f; }
 .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
 .btn-ghost:hover { color: var(--text); }
+.btn-ghost.active { color: var(--accent); border-color: var(--accent); background: rgba(245,166,35,0.08); }
 .btn-sm { padding: 5px 10px; font-size: 12px; }
 
 /* LAYOUT */
@@ -460,6 +461,10 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
       </div>
     </div>
     <div id="tyContactLabel" style="font-size:12px;color:var(--muted);margin-bottom:14px"></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn btn-ghost btn-sm active" id="tyFlavorQuick" onclick="setThankYouFlavor('quick')">Quick Thank You</button>
+      <button class="btn btn-ghost btn-sm" id="tyFlavorRecap" onclick="setThankYouFlavor('recap')">Meeting Recap</button>
+    </div>
     <div id="tyLoading" style="display:none;padding:20px 0"><div class="dot-pulse"><span></span><span></span><span></span></div></div>
     <div id="tyError" style="display:none;color:#e05c5c;font-size:13px;padding:8px 0"></div>
     <textarea id="thankYouModalTA" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.75;outline:none;resize:vertical;min-height:240px" placeholder="Generating your note..."></textarea>
@@ -743,6 +748,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 let pendingImportData = null;
 let _ghSyncTimer = null;
 let _tyState = null;
+let _tyFlavor = 'quick';
 let jumpIdx = -1;
 
 // ─── QUESTION BANK ───────────────────────────────────────────────
@@ -2441,8 +2447,22 @@ async function genContactThankYou(contactId, noteIdx) {
   document.getElementById('tyContactLabel').textContent = `For: ${c.name}${c.company?' · '+c.company:''}${c.position?' · '+c.position:''}`;
   document.getElementById('thankYouModalTA').value = '';
   document.getElementById('tyError').style.display = 'none';
+  updateThankYouFlavorUI();
   if (!apiKey) { document.getElementById('tyError').textContent = '⚠️ Add ANTHROPIC_API_KEY in Vercel project settings.'; document.getElementById('tyError').style.display = 'block'; return; }
   await _runThankYouGen(c, entry.text, entry.date);
+}
+
+function setThankYouFlavor(flavor) {
+  _tyFlavor = flavor === 'recap' ? 'recap' : 'quick';
+  updateThankYouFlavorUI();
+  if (_tyState) regenThankYou();
+}
+
+function updateThankYouFlavorUI() {
+  const quick = document.getElementById('tyFlavorQuick');
+  const recap = document.getElementById('tyFlavorRecap');
+  if (quick) quick.classList.toggle('active', _tyFlavor === 'quick');
+  if (recap) recap.classList.toggle('active', _tyFlavor === 'recap');
 }
 
 async function regenThankYou() {
@@ -2460,15 +2480,17 @@ async function _runThankYouGen(c, noteText, noteDate) {
   const errEl = document.getElementById('tyError');
   const apiKey = 'server';
   loading.style.display = 'block'; ta.value = ''; errEl.style.display = 'none';
-  const prompt = `Write a brief, warm thank you note from Andre Moskowitz to a networking contact.
-
-WHO ANDRE IS: Talent management and AI enablement leader, job searching. IBM (12 years: talent programs for 150K+ pros, Watson/AI consulting for Fortune 500), Snap (ran performance cycles, shipped AI HR tools for 1,000+ managers). MBA Notre Dame, BA Duke Psychology.
-
-THE CONTACT: ${c.name} at ${c.company||'unknown'}, ${c.position||'unknown'}. Knows Andre's work: ${c.knowsMe?'Yes':'No'}. Closeness tier: ${c.tier}/4.
-
-CONVERSATION NOTE (${noteDate||'recent'}): ${noteText}
-
-WRITE:
+  const formatInstructions = _tyFlavor === 'recap'
+    ? `WRITE:
+- Start with first name + comma on its own line
+- Keep it concise and email-ready: about 120-160 words
+- Open with one warm thank-you sentence
+- Include 2-4 short bullets recapping specific things discussed
+- End with one brief forward-looking line
+- Sign off: Andre
+- Tone: warm, useful, personal, and conversational
+- Do NOT add anything not in the notes`
+    : `WRITE:
 - Start with first name + comma on its own line
 - 2-3 SHORT paragraphs, under 100 words total
 - 1 specific callback to something from the note
@@ -2476,8 +2498,17 @@ WRITE:
 - Sign off: Andre
 - Tone: warm, casual, genuine — zero corporate speak
 - Do NOT add anything not in the notes`;
+  const prompt = `Write ${_tyFlavor === 'recap' ? 'a concise bullet-pointed meeting recap thank you note' : 'a brief, warm thank you note'} from Andre Moskowitz to a networking contact.
+
+WHO ANDRE IS: Talent management and AI enablement leader, job searching. IBM (12 years: talent programs for 150K+ pros, Watson/AI consulting for Fortune 500), Snap (ran performance cycles, shipped AI HR tools for 1,000+ managers). MBA Notre Dame, BA Duke Psychology.
+
+THE CONTACT: ${c.name} at ${c.company||'unknown'}, ${c.position||'unknown'}. Knows Andre's work: ${c.knowsMe?'Yes':'No'}. Closeness tier: ${c.tier}/4.
+
+CONVERSATION NOTE (${noteDate||'recent'}): ${noteText}
+
+${formatInstructions}`;
   try {
-    const res = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 300, messages: [{ role: 'user', content: prompt }] }) });
+    const res = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: _tyFlavor === 'recap' ? 450 : 300, messages: [{ role: 'user', content: prompt }] }) });
     const data = await res.json();
     loading.style.display = 'none';
     if (data.error) { errEl.textContent = 'API Error: '+(data.error.message||'Unknown error'); errEl.style.display = 'block'; return; }
