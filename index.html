@@ -396,8 +396,8 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     <!-- Anthropic API Key -->
     <div class="form-group">
       <label class="form-lbl">Anthropic API Key</label>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.6">Required for AI features. Get your key at <a href="https://console.anthropic.com" target="_blank" style="color:var(--t2)">console.anthropic.com</a>. Stored locally in your browser only.</p>
-      <input class="api-key-input" id="apiKeyInput" type="password" placeholder="sk-ant-...">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.6">AI features now use the <strong style="color:var(--text)">ANTHROPIC_API_KEY</strong> environment variable in Vercel. Nothing is stored in your browser.</p>
+      <input class="api-key-input" id="apiKeyInput" type="password" placeholder="Managed in Vercel" disabled>
       <div class="api-status" id="apiKeyStatus"></div>
     </div>
 
@@ -1496,14 +1496,14 @@ function formatNewsText(text) {
 }
 
 async function genCompanyNews(appId) {
-  const apiKey = localStorage.getItem('andre_crm_apikey') || '';
+  const apiKey = 'server';
   const a = apps.find(x => x.id === appId); if (!a) return;
   const loadEl = document.getElementById('newsLoading_'+appId);
   const errEl = document.getElementById('newsError_'+appId);
   const outEl = document.getElementById('newsOut_'+appId);
   if (!loadEl) return;
   if (!apiKey) {
-    if (errEl) { errEl.textContent = '⚠️ Add your Anthropic API key in ⚙️ Settings.'; errEl.style.display = 'block'; }
+    if (errEl) { errEl.textContent = '⚠️ Add ANTHROPIC_API_KEY in Vercel project settings.'; errEl.style.display = 'block'; }
     return;
   }
   loadEl.style.display = 'block';
@@ -1528,7 +1528,7 @@ Priorities: biggest impact first, then relevance to this specific role/team, the
     let finalText = '';
 
     for (let iter = 0; iter < 6; iter++) {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
         body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1500, tools: [{ type: 'web_search_20250305', name: 'web_search' }], messages })
@@ -1558,20 +1558,20 @@ Priorities: biggest impact first, then relevance to this specific role/team, the
     }
   } catch(e) {
     loadEl.style.display = 'none';
-    if (errEl) { errEl.textContent = 'Error: ' + e.message + '. Check your API key in ⚙️ Settings.'; errEl.style.display = 'block'; }
+    if (errEl) { errEl.textContent = 'Error: ' + e.message + '. Check ANTHROPIC_API_KEY in Vercel.'; errEl.style.display = 'block'; }
   }
 }
 
 // ─── INTERVIEW PREP AI ────────────────────────────────────────────
 async function getInterviewAI(appId, roundId) {
-  const apiKey = localStorage.getItem('andre_crm_apikey') || '';
+  const apiKey = 'server';
   const a = apps.find(x => x.id === appId); if (!a) return;
   const r = a.rounds.find(x => x.id === roundId); if (!r) return;
   const aiBox = document.getElementById('roundAI_'+roundId);
   const aiOut = document.getElementById('roundAIOut_'+roundId);
   if (!aiBox||!aiOut) return;
   aiBox.style.display = 'block';
-  if (!apiKey) { aiOut.innerHTML = '<div style="color:#f5a623;font-size:13px">⚠️ Add your Anthropic API key in ⚙️ Settings.</div>'; return; }
+  if (!apiKey) { aiOut.innerHTML = '<div style="color:#f5a623;font-size:13px">⚠️ Add ANTHROPIC_API_KEY in Vercel project settings.</div>'; return; }
   aiOut.innerHTML = '<div class="dot-pulse"><span></span><span></span><span></span></div>';
   const interviewerInfo = r.interviewer ? `${r.interviewer}${r.interviewerTitle ? ', '+r.interviewerTitle : ''}` : 'Unknown';
   const prompt = `You are an interview prep coach for Andre Moskowitz. He is interviewing for: ${a.role} at ${a.company}.
@@ -1591,22 +1591,22 @@ Give Andre:
 
 Be specific to this company, role, round type, and interviewer title. No generic advice.`;
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] }) });
+    const res = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] }) });
     const data = await res.json();
     if (data.error) { aiOut.innerHTML = `<div style="color:#e05c5c;font-size:13px">API Error: ${esc(data.error.message||'Unknown error')}</div>`; return; }
     const text = data.content?.[0]?.text || 'Unable to generate.';
     aiOut.innerHTML = `<div style="font-size:13px;line-height:1.7;white-space:pre-wrap">${esc(text)}</div>`;
   } catch(e) {
-    aiOut.innerHTML = '<div style="color:#e05c5c;font-size:13px">Error connecting to AI. Check your API key in ⚙️ Settings.</div>';
+    aiOut.innerHTML = '<div style="color:#e05c5c;font-size:13px">Error connecting to AI. Check ANTHROPIC_API_KEY in Vercel.</div>';
   }
 }
 
 // ─── WHY ME GENERATOR ─────────────────────────────────────────────
 async function genWhyMe(appId) {
-  const apiKey = localStorage.getItem('andre_crm_apikey') || '';
+  const apiKey = 'server';
   const a = apps.find(x => x.id === appId); if (!a) return;
   const ta = document.getElementById('whyMeTA_'+appId); if (!ta) return;
-  if (!apiKey) { toast('Add your API key in ⚙️ Settings'); return; }
+  if (!apiKey) { toast('Add ANTHROPIC_API_KEY in Vercel'); return; }
   ta.setAttribute('contenteditable','false'); ta.style.opacity='0.5'; ta.innerHTML = 'Generating...';
   const prompt = `Write exactly 3 tight bullet points for Andre Moskowitz's "Why Me" for the role of "${a.role}" at "${a.company}".
 
@@ -1620,21 +1620,21 @@ Why Them: ${a.whyThem||'(none provided)'}
 
 FORMAT: Exactly 3 bullets. Each bullet = 1 punchy sentence max. Start each line with "• ". First person. No fluff. Hit: proof of outcomes, AI depth, fit to this specific role.`;
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 200, messages: [{ role: 'user', content: prompt }] }) });
+    const res = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 200, messages: [{ role: 'user', content: prompt }] }) });
     const data = await res.json();
     const text = data.content?.[0]?.text || '';
     ta.innerHTML = text.replace(/\n/g,'<br>'); ta.style.opacity='1'; ta.setAttribute('contenteditable','true');
     updateApp(appId, 'whyMe', ta.innerHTML);
     toast('Why Me generated ✓');
-  } catch(e) { ta.innerHTML = ''; ta.style.opacity='1'; ta.setAttribute('contenteditable','true'); toast('Error generating — check API key'); }
+  } catch(e) { ta.innerHTML = ''; ta.style.opacity='1'; ta.setAttribute('contenteditable','true'); toast('Error generating — check Vercel API key'); }
 }
 
 // ─── QUESTIONS TO REHEARSE ────────────────────────────────────────
 async function genQuestionsToRehearse(appId) {
-  const apiKey = localStorage.getItem('andre_crm_apikey') || '';
+  const apiKey = 'server';
   const a = apps.find(x => x.id === appId); if (!a) return;
   const ta = document.getElementById('rehearseTA_'+appId); if (!ta) return;
-  if (!apiKey) { toast('Add your API key in ⚙️ Settings'); return; }
+  if (!apiKey) { toast('Add ANTHROPIC_API_KEY in Vercel'); return; }
   ta.setAttribute('contenteditable','false'); ta.style.opacity='0.5'; ta.innerHTML = 'Generating...';
   const prompt = `Generate 5-7 interview questions that an interviewer is LIKELY TO ASK Andre Moskowitz for the role of "${a.role}" at "${a.company}".
 
@@ -1653,21 +1653,21 @@ Why Me: ${a.whyMe||'None'}
 
 Format as a numbered list. Focus on what THIS role and company would actually probe on. No generic filler questions.`;
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 800, messages: [{ role: 'user', content: prompt }] }) });
+    const res = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 800, messages: [{ role: 'user', content: prompt }] }) });
     const data = await res.json();
     const text = data.content?.[0]?.text || '';
     ta.innerHTML = text.replace(/\n/g,'<br>'); ta.style.opacity='1'; ta.setAttribute('contenteditable','true');
     updateApp(appId, 'questionsToRehearse', ta.innerHTML);
     toast('Questions to rehearse generated ✓');
-  } catch(e) { ta.innerHTML = ''; ta.style.opacity='1'; ta.setAttribute('contenteditable','true'); toast('Error generating — check API key'); }
+  } catch(e) { ta.innerHTML = ''; ta.style.opacity='1'; ta.setAttribute('contenteditable','true'); toast('Error generating — check Vercel API key'); }
 }
 
 // ─── QUESTIONS TO ASK ─────────────────────────────────────────────
 async function genQuestionsToAsk(appId) {
-  const apiKey = localStorage.getItem('andre_crm_apikey') || '';
+  const apiKey = 'server';
   const a = apps.find(x => x.id === appId); if (!a) return;
   const ta = document.getElementById('questionsToAskTA_'+appId); if (!ta) return;
-  if (!apiKey) { toast('Add your API key in ⚙️ Settings'); return; }
+  if (!apiKey) { toast('Add ANTHROPIC_API_KEY in Vercel'); return; }
   ta.setAttribute('contenteditable','false'); ta.style.opacity='0.5'; ta.innerHTML = 'Generating...';
   const prompt = `From the question bank below, select and lightly tailor the 6-8 most strategic questions for Andre Moskowitz to ask when interviewing for "${a.role}" at "${a.company}".
 
@@ -1685,21 +1685,21 @@ Lightly personalize each question to reference the specific role or company wher
 Role context: ${a.notes||'None'}
 Why Andre wants this role: ${a.whyThem||'None'}`;
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 600, messages: [{ role: 'user', content: prompt }] }) });
+    const res = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 600, messages: [{ role: 'user', content: prompt }] }) });
     const data = await res.json();
     const text = data.content?.[0]?.text || '';
     ta.innerHTML = text.replace(/\n/g,'<br>'); ta.style.opacity='1'; ta.setAttribute('contenteditable','true');
     updateApp(appId, 'questionsToAsk', ta.innerHTML);
     toast('Questions to ask generated ✓');
-  } catch(e) { ta.innerHTML = ''; ta.style.opacity='1'; ta.setAttribute('contenteditable','true'); toast('Error generating — check API key'); }
+  } catch(e) { ta.innerHTML = ''; ta.style.opacity='1'; ta.setAttribute('contenteditable','true'); toast('Error generating — check Vercel API key'); }
 }
 
 // ─── MY STORY GENERATOR ───────────────────────────────────────────
 async function genMyStory(appId) {
-  const apiKey = localStorage.getItem('andre_crm_apikey') || '';
+  const apiKey = 'server';
   const a = apps.find(x => x.id === appId); if (!a) return;
   const ta = document.getElementById('myStoryTA_'+appId); if (!ta) return;
-  if (!apiKey) { toast('Add your API key in ⚙️ Settings'); return; }
+  if (!apiKey) { toast('Add ANTHROPIC_API_KEY in Vercel'); return; }
   ta.setAttribute('contenteditable','false'); ta.style.opacity='0.5'; ta.innerHTML = 'Drafting your story...';
   const prompt = `Write a tailored 60-90 second "Tell me about yourself" response for Andre Moskowitz interviewing for "${a.role}" at "${a.company}".
 
@@ -1719,24 +1719,24 @@ WRITE:
 - End with a forward bridge to the role
 - First person. No bullet points. No fluff.`;
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 500, messages: [{ role: 'user', content: prompt }] }) });
+    const res = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 500, messages: [{ role: 'user', content: prompt }] }) });
     const data = await res.json();
     const text = data.content?.[0]?.text || '';
     ta.innerHTML = text.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
     ta.style.opacity='1'; ta.setAttribute('contenteditable','true');
     updateApp(appId, 'myStory', ta.innerHTML);
     toast('Story generated ✓');
-  } catch(e) { ta.innerHTML = ''; ta.style.opacity='1'; ta.setAttribute('contenteditable','true'); toast('Error — check API key'); }
+  } catch(e) { ta.innerHTML = ''; ta.style.opacity='1'; ta.setAttribute('contenteditable','true'); toast('Error — check Vercel API key'); }
 }
 
 // ─── INTERVIEWER BACKGROUND RESEARCHER ────────────────────────────
 async function genInterviewerBg(appId, roundId) {
-  const apiKey = localStorage.getItem('andre_crm_apikey') || '';
+  const apiKey = 'server';
   const a = apps.find(x => x.id === appId); if (!a) return;
   const r = a.rounds.find(x => x.id === roundId); if (!r) return;
   const ta = document.getElementById('intBgTA_'+roundId); if (!ta) return;
   if (!r.interviewer) { toast('Add interviewer name first'); return; }
-  if (!apiKey) { toast('Add your API key in ⚙️ Settings'); return; }
+  if (!apiKey) { toast('Add ANTHROPIC_API_KEY in Vercel'); return; }
   ta.setAttribute('contenteditable','false'); ta.style.opacity='0.5'; ta.innerHTML = 'Researching...';
 
   const prompt = `Provide a quick pre-interview brief on this person for Andre Moskowitz:
@@ -1755,7 +1755,7 @@ Give Andre:
 Keep it tight and actionable. If info is limited for this specific person, lead with that and still provide the most useful profile you can based on their role.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/coach', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 900, messages: [{ role: 'user', content: prompt }] })
@@ -1781,13 +1781,13 @@ Keep it tight and actionable. If info is limited for this specific person, lead 
   }
 }
 async function genThankYou(appId, roundId) {
-  const apiKey = localStorage.getItem('andre_crm_apikey') || '';
+  const apiKey = 'server';
   const a = apps.find(x => x.id === appId); if (!a) return;
   const r = a.rounds.find(x => x.id === roundId); if (!r) return;
   const box = document.getElementById('thankYouBox_'+roundId);
   const ta = document.getElementById('thankYouOut_'+roundId);
   if (!box||!ta) return;
-  if (!apiKey) { toast('Add your API key in ⚙️ Settings'); return; }
+  if (!apiKey) { toast('Add ANTHROPIC_API_KEY in Vercel'); return; }
   box.style.display = 'block';
   ta.value = 'Drafting...'; ta.disabled = true;
   const interviewerInfo = r.interviewer ? `${r.interviewer}${r.interviewerTitle ? ', '+r.interviewerTitle : ''}` : 'the interviewer';
@@ -1808,12 +1808,12 @@ CRITICAL GUIDELINES:
 - Sign off as: Andre
 - If no notes provided, keep it brief and genuine — do not invent specifics`;
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 350, messages: [{ role: 'user', content: prompt }] }) });
+    const res = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 350, messages: [{ role: 'user', content: prompt }] }) });
     const data = await res.json();
     const text = data.content?.[0]?.text || '';
     ta.value = text; ta.disabled = false;
     toast('Thank you note ready ✓');
-  } catch(e) { ta.value = ''; ta.disabled = false; toast('Error — check API key'); }
+  } catch(e) { ta.value = ''; ta.disabled = false; toast('Error — check Vercel API key'); }
 }
 
 function copyThankYou(roundId) {
@@ -2030,18 +2030,18 @@ function addNote(id) {
 }
 
 async function getAI(id) {
-  const apiKey = localStorage.getItem('andre_crm_apikey') || '';
-  if (!apiKey) { document.getElementById('aiOut').innerHTML = '<div style="color:#f5a623;font-size:13px">⚠️ Add your Anthropic API key in ⚙️ Settings.</div>'; return; }
+  const apiKey = 'server';
+  if (!apiKey) { document.getElementById('aiOut').innerHTML = '<div style="color:#f5a623;font-size:13px">⚠️ Add ANTHROPIC_API_KEY in Vercel project settings.</div>'; return; }
   const c = contacts.find(x => x.id === id); if (!c) return;
   const el = document.getElementById('aiOut'); if (!el) return;
   el.innerHTML = '<div class="dot-pulse"><span></span><span></span><span></span></div>';
   const prompt = `You are a career networking coach for Andre Moskowitz, recently laid off from Snap as Manager of Talent Programs. He has 12+ years at IBM (Watson/AI consulting, talent leadership) and Snap. He's seeking AI Enablement, AI Transformation, or Talent Management roles at mid-size tech companies.\n\nContact: ${c.name} | Company: ${c.company||'Unknown'} | Position: ${c.position||'Unknown'} | Tier: ${c.tier} (1=very close, 4=weak tie) | Knows Andre's work: ${c.knowsMe?'Yes':'No'} | Status: ${c.status||'none'}\nPast notes: ${c.notes?c.notes.substring(0,600):'None'}\n\nGive Andre 3-4 specific, actionable suggestions for this conversation. Concise and specific — no generic advice.`;
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] }) });
+    const res = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] }) });
     const data = await res.json();
     if (data.error) { el.innerHTML = `<div style="color:#e05c5c;font-size:13px">API Error: ${esc(data.error.message||'Unknown error')}</div>`; return; }
     el.innerHTML = `<div class="ai-out">${esc(data.content?.[0]?.text||'Unable to generate.')}</div>`;
-  } catch(e) { el.innerHTML = '<div style="color:#e05c5c;font-size:13px">Error connecting to AI. Check your API key in ⚙️ Settings.</div>'; }
+  } catch(e) { el.innerHTML = '<div style="color:#e05c5c;font-size:13px">Error connecting to AI. Check ANTHROPIC_API_KEY in Vercel.</div>'; }
 }
 
 // ─── ADD CONTACT MODAL ────────────────────────────────────────────
@@ -2193,10 +2193,9 @@ function confirmImport() {
 
 // ─── SETTINGS (API KEY + GITHUB SYNC) ────────────────────────────
 function openSettingsModal() {
-  const key = localStorage.getItem('andre_crm_apikey') || '';
-  document.getElementById('apiKeyInput').value = key;
+  document.getElementById('apiKeyInput').value = '';
   const status = document.getElementById('apiKeyStatus');
-  status.innerHTML = key ? '<span style="color:#2ecc71">✓ API key saved</span>' : '<span style="color:var(--muted)">No key saved yet</span>';
+  status.innerHTML = '<span style="color:#2ecc71">✓ API key managed securely in Vercel</span>';
   // Load GitHub settings
   document.getElementById('ghTokenInput').value = localStorage.getItem('gh_token') || '';
   document.getElementById('ghOwnerInput').value = localStorage.getItem('gh_owner') || '';
@@ -2208,8 +2207,6 @@ function openSettingsModal() {
 function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('open'); }
 function saveApiKey() { saveSettings(); } // legacy shim
 function saveSettings() {
-  const key = document.getElementById('apiKeyInput').value.trim();
-  if (key) localStorage.setItem('andre_crm_apikey', key); else localStorage.removeItem('andre_crm_apikey');
   const token = document.getElementById('ghTokenInput').value.trim();
   const owner = document.getElementById('ghOwnerInput').value.trim();
   const repo  = document.getElementById('ghRepoInput').value.trim();
@@ -2435,7 +2432,7 @@ function deleteNote(contactId, idx) {
 // ─── CONTACT THANK YOU NOTE ───────────────────────────────────────
 
 async function genContactThankYou(contactId, noteIdx) {
-  const apiKey = localStorage.getItem('andre_crm_apikey') || '';
+  const apiKey = 'server';
   const c = contacts.find(x => x.id === contactId); if (!c) return;
   const entries = parseNotes(c.notes);
   const entry = entries[noteIdx]; if (!entry) return;
@@ -2444,7 +2441,7 @@ async function genContactThankYou(contactId, noteIdx) {
   document.getElementById('tyContactLabel').textContent = `For: ${c.name}${c.company?' · '+c.company:''}${c.position?' · '+c.position:''}`;
   document.getElementById('thankYouModalTA').value = '';
   document.getElementById('tyError').style.display = 'none';
-  if (!apiKey) { document.getElementById('tyError').textContent = '⚠️ Add your Anthropic API key in ⚙️ Settings.'; document.getElementById('tyError').style.display = 'block'; return; }
+  if (!apiKey) { document.getElementById('tyError').textContent = '⚠️ Add ANTHROPIC_API_KEY in Vercel project settings.'; document.getElementById('tyError').style.display = 'block'; return; }
   await _runThankYouGen(c, entry.text, entry.date);
 }
 
@@ -2453,7 +2450,7 @@ async function regenThankYou() {
   const c = contacts.find(x => x.id === _tyState.contactId); if (!c) return;
   const entries = parseNotes(c.notes);
   const entry = entries[_tyState.noteIdx]; if (!entry) return;
-  const apiKey = localStorage.getItem('andre_crm_apikey') || ''; if (!apiKey) return;
+  const apiKey = 'server'; if (!apiKey) return;
   await _runThankYouGen(c, entry.text, entry.date);
 }
 
@@ -2461,7 +2458,7 @@ async function _runThankYouGen(c, noteText, noteDate) {
   const loading = document.getElementById('tyLoading');
   const ta = document.getElementById('thankYouModalTA');
   const errEl = document.getElementById('tyError');
-  const apiKey = localStorage.getItem('andre_crm_apikey') || '';
+  const apiKey = 'server';
   loading.style.display = 'block'; ta.value = ''; errEl.style.display = 'none';
   const prompt = `Write a brief, warm thank you note from Andre Moskowitz to a networking contact.
 
@@ -2480,7 +2477,7 @@ WRITE:
 - Tone: warm, casual, genuine — zero corporate speak
 - Do NOT add anything not in the notes`;
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 300, messages: [{ role: 'user', content: prompt }] }) });
+    const res = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 300, messages: [{ role: 'user', content: prompt }] }) });
     const data = await res.json();
     loading.style.display = 'none';
     if (data.error) { errEl.textContent = 'API Error: '+(data.error.message||'Unknown error'); errEl.style.display = 'block'; return; }
@@ -2488,7 +2485,7 @@ WRITE:
     toast('Thank you note ready ✓');
   } catch(e) {
     loading.style.display = 'none';
-    errEl.textContent = 'Error connecting to AI. Check your API key in ⚙️ Settings.';
+    errEl.textContent = 'Error connecting to AI. Check ANTHROPIC_API_KEY in Vercel.';
     errEl.style.display = 'block';
   }
 }
@@ -2616,8 +2613,8 @@ async function generateResumeTailoring() {
     return;
   }
 
-  const apiKey = localStorage.getItem('andre_crm_apikey');
-  if (!apiKey) { toast('Add your API key in ⚙️ Settings'); return; }
+  const apiKey = 'server';
+  if (!apiKey) { toast('Add ANTHROPIC_API_KEY in Vercel'); return; }
 
   // Switch to loading state
   document.getElementById('rtUploadZone').style.display = 'none';
@@ -2661,7 +2658,7 @@ RULES:
       }];
     }
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('/api/coach', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
