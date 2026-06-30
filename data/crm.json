@@ -42278,21 +42278,22 @@
       "name": "Becky Karsh",
       "firstName": "Becky",
       "lastName": "Karsh",
-      "tier": 4,
+      "tier": 1,
       "company": "F5",
       "position": "Vice President, Talent & Growth",
       "linkedin": "",
       "email": "",
       "notes": "Apr 21, 2026: Uplift and Conditions for AI adoption.\n\nAt F5, boss left - she's probably looking\n\nAgenda for next catch up\nVent a bit\nWhat would she do in my shoes?\nApr 21, 2026: talking to openloop. Built a website called Braxel. working with Openloop on being a reseller. She also built her own personal website. https://beckykarsh.com/\n\nF5 is boring. \n\nLocal - the AI guy. Package of things you sell. Optimize your ads. \nbuild a website for local business. \n\nLocal scales. She liked the local idea.\n\nAlso sent me a bunch of links for me to apply to. They will be back in NY in June. Jason and her going to Italy before then.\nApr 21, 2026: https://beckykarsh.com/\nMay 22, 2026: Becky Karsh — F5 Networks (previously helped with Snap). Post-Snap check-in. Things are slower at F5; recently had to exit someone. Reports to CLO. Thinking of moving to an AI company. Daughter Penelope at summer camp. Good to use as thought partner on career path and market trends in talent/people leadership.",
       "companyFlag": false,
-      "functionFlag": false,
-      "positionFlag": false,
-      "knowsMe": false,
-      "status": null,
+      "functionFlag": true,
+      "positionFlag": true,
+      "knowsMe": true,
+      "status": "network_closely",
       "recruiter": false,
       "followUp": false,
       "lastContact": "",
-      "addedDate": "2026-06-24"
+      "addedDate": "2026-06-24",
+      "followUpDate": ""
     },
     {
       "id": 25,
@@ -42792,7 +42793,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-06-26T19:39:09.319Z",
+    "lastSync": "2026-06-30T02:57:34.075Z",
     "version": "v14",
     "contactCount": 2020,
     "appCount": 10
