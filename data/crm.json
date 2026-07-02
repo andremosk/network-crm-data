@@ -26372,10 +26372,11 @@
       "followUp": false,
       "lastContact": "",
       "addedDate": "2026-04-20",
-      "clientFitTier": 2,
+      "clientFitTier": 3,
       "connectorFitTier": 4,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "clientFitManual": true
     },
     {
       "id": 965,
@@ -50531,7 +50532,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-02T19:53:42.705Z",
+    "lastSync": "2026-07-02T19:54:15.764Z",
     "version": "v14",
     "contactCount": 2016,
     "appCount": 2
