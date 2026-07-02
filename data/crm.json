@@ -28979,31 +28979,6 @@
       "clientFitModelVersion": 4
     },
     {
-      "id": 861,
-      "name": "Paul Carleton",
-      "firstName": "Paul",
-      "lastName": "Carleton",
-      "tier": 1,
-      "company": "Brown Brothers Harriman",
-      "position": "Lead Operations Specialist",
-      "linkedin": "https://www.linkedin.com/in/paul-carleton-17949539",
-      "email": "",
-      "notes": "",
-      "companyFlag": false,
-      "functionFlag": false,
-      "positionFlag": false,
-      "knowsMe": false,
-      "status": null,
-      "recruiter": false,
-      "followUp": false,
-      "lastContact": "",
-      "addedDate": "2026-04-20",
-      "clientFitTier": 4,
-      "connectorFitTier": 4,
-      "notInterested": false,
-      "clientFitModelVersion": 4
-    },
-    {
       "id": 860,
       "name": "Patrick Cleary",
       "firstName": "Patrick",
@@ -35557,10 +35532,12 @@
       "followUp": false,
       "lastContact": "",
       "addedDate": "2026-04-20",
-      "clientFitTier": 3,
-      "connectorFitTier": 4,
-      "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitTier": 4,
+      "connectorFitTier": 3,
+      "notInterested": true,
+      "clientFitModelVersion": 4,
+      "connectorFitManual": true,
+      "clientFitManual": true
     },
     {
       "id": 598,
@@ -50060,10 +50037,12 @@
       "lastContact": "",
       "addedDate": "2026-06-24",
       "followUpDate": "",
-      "clientFitTier": 3,
-      "connectorFitTier": 4,
+      "clientFitTier": 4,
+      "connectorFitTier": 3,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "clientFitManual": true,
+      "connectorFitManual": true
     },
     {
       "id": 14,
@@ -50563,9 +50542,9 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-02T19:45:54.313Z",
+    "lastSync": "2026-07-02T19:47:57.347Z",
     "version": "v14",
-    "contactCount": 2018,
+    "contactCount": 2017,
     "appCount": 2
   }
 }
