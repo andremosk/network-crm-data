@@ -49740,7 +49740,8 @@
       "clientFitTier": 4,
       "connectorFitTier": 2,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "connectorFitManual": true
     },
     {
       "id": 3,
@@ -50306,10 +50307,11 @@
       "lastContact": "2026-06-30",
       "addedDate": "2026-06-24",
       "followUpDate": "",
-      "clientFitTier": 4,
+      "clientFitTier": 1,
       "connectorFitTier": 1,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "clientFitManual": true
     },
     {
       "id": 25,
@@ -50527,7 +50529,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-02T19:51:35.897Z",
+    "lastSync": "2026-07-02T19:52:28.382Z",
     "version": "v14",
     "contactCount": 2016,
     "appCount": 2
