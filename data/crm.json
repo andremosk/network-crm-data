@@ -32135,10 +32135,11 @@
       "followUp": false,
       "lastContact": "",
       "addedDate": "2026-04-20",
-      "clientFitTier": 2,
+      "clientFitTier": 4,
       "connectorFitTier": 4,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "clientFitManual": true
     },
     {
       "id": 734,
@@ -34794,10 +34795,11 @@
       "followUp": false,
       "lastContact": "",
       "addedDate": "2026-04-20",
-      "clientFitTier": 2,
+      "clientFitTier": 4,
       "connectorFitTier": 4,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "clientFitManual": true
     },
     {
       "id": 627,
@@ -50537,7 +50539,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-02T19:57:25.074Z",
+    "lastSync": "2026-07-02T19:59:04.424Z",
     "version": "v14",
     "contactCount": 2016,
     "appCount": 2
