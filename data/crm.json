@@ -34366,32 +34366,6 @@
       "clientFitModelVersion": 4
     },
     {
-      "id": 645,
-      "name": "Hani M. Moskowitz, Esq.",
-      "firstName": "Hani",
-      "lastName": "M. Moskowitz, Esq.",
-      "tier": 1,
-      "company": "Diaz & Moskowitz, PLLC.",
-      "position": "Partner",
-      "linkedin": "https://www.linkedin.com/in/hanimoskowitz",
-      "email": "",
-      "notes": "my sis",
-      "companyFlag": false,
-      "functionFlag": false,
-      "positionFlag": false,
-      "knowsMe": false,
-      "status": "cant_help",
-      "recruiter": false,
-      "followUp": false,
-      "lastContact": "",
-      "addedDate": "2026-04-20",
-      "clientFitTier": 3,
-      "connectorFitTier": 2,
-      "notInterested": false,
-      "clientFitModelVersion": 4,
-      "clientFitManual": true
-    },
-    {
       "id": 644,
       "name": "Hani Moskowitz",
       "firstName": "Hani",
@@ -50549,9 +50523,9 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-02T19:49:28.816Z",
+    "lastSync": "2026-07-02T19:49:49.495Z",
     "version": "v14",
-    "contactCount": 2017,
+    "contactCount": 2016,
     "appCount": 2
   }
 }
