@@ -34308,11 +34308,12 @@
       "lastContact": "",
       "addedDate": "2026-04-20",
       "clientFitTier": 2,
-      "connectorFitTier": 4,
+      "connectorFitTier": 2,
       "notInterested": false,
       "clientFitModelVersion": 4,
       "clientFitManual": true,
-      "followUpDate": ""
+      "followUpDate": "",
+      "connectorFitManual": true
     },
     {
       "id": 647,
@@ -34384,10 +34385,11 @@
       "followUp": false,
       "lastContact": "",
       "addedDate": "2026-04-20",
-      "clientFitTier": 4,
+      "clientFitTier": 3,
       "connectorFitTier": 2,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "clientFitManual": true
     },
     {
       "id": 644,
@@ -50547,7 +50549,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-02T19:49:01.409Z",
+    "lastSync": "2026-07-02T19:49:28.816Z",
     "version": "v14",
     "contactCount": 2017,
     "appCount": 2
