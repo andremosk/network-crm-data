@@ -37865,10 +37865,11 @@
       "followUp": false,
       "lastContact": "",
       "addedDate": "2026-04-21",
-      "clientFitTier": 2,
+      "clientFitTier": 4,
       "connectorFitTier": 1,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "clientFitManual": true
     },
     {
       "id": 506,
@@ -50561,7 +50562,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-02T19:45:32.723Z",
+    "lastSync": "2026-07-02T19:45:41.309Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 2
