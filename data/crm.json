@@ -34977,9 +34977,10 @@
       "lastContact": "",
       "addedDate": "2026-04-20",
       "clientFitTier": 3,
-      "connectorFitTier": 4,
+      "connectorFitTier": 1,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "connectorFitManual": true
     },
     {
       "id": 621,
@@ -50553,7 +50554,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-02T15:48:49.759Z",
+    "lastSync": "2026-07-02T15:49:02.096Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 2
