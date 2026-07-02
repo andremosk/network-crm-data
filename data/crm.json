@@ -49434,10 +49434,11 @@
       "followUp": true,
       "lastContact": "",
       "addedDate": "2026-05-01",
-      "clientFitTier": 4,
+      "clientFitTier": 1,
       "connectorFitTier": 4,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "clientFitManual": true
     },
     {
       "id": 43,
@@ -50550,7 +50551,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-02T15:03:25.662Z",
+    "lastSync": "2026-07-02T15:47:59.840Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 2
