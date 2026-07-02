@@ -29174,10 +29174,11 @@
       "followUp": false,
       "lastContact": "2026-06-24",
       "addedDate": "2026-04-20",
-      "clientFitTier": 3,
+      "clientFitTier": 4,
       "connectorFitTier": 2,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "clientFitManual": true
     },
     {
       "id": 853,
@@ -50562,7 +50563,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-02T19:45:41.309Z",
+    "lastSync": "2026-07-02T19:45:54.313Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 2
