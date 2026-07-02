@@ -841,18 +841,23 @@ function suggestFitTiers(c) {
   const companyText = company.toLowerCase();
   const noteText = notes.replace(/<[^>]*>/g, ' ').toLowerCase();
   const all = `${title} ${companyText} ${noteText}`;
+  const obviousEnterprise = rxAny(companyText, ['\\boptimum\\b','\\bibm\\b','google','microsoft','amazon','meta','salesforce','accenture','deloitte','bcg','mckinsey','bain','jpmorgan','jp morgan','verizon','starbucks','ralph lauren','snap inc','proofpoint','concentrix','amway','f5']);
+  const explicitClientContext = rxAny(all, ['\\bsmb\\b','small business','mid-?sized','family[- ]owned','local business','regional business','manufactur','distribution','construction','trades','healthcare services','professional services','nonprofit','education','law firm','legal practice','accounting firm']) || rxAny(noteText, ['excel','spreadsheet','manual','handoff','follow-?up','reporting','process','systems? don.?t talk','visibility','automation','undocumented','knowledge lookup','training','guardrails','chatgpt','ai adoption','early with ai']);
 
   let clientScore = 0;
-  if (rxAny(title, ['\\bowner\\b','\\bfounder\\b','\\bco-?founder\\b','\\bpresident\\b','\\bceo\\b','chief executive','\\bcoo\\b','chief operating','\\bcfo\\b','chief financial','general manager','managing partner'])) clientScore += 45;
-  if (rxAny(title, ['vp operations','vice president.*operations','director.*operations','head of operations','chief of staff','head of hr','head of people','chief people','vp sales','vp marketing','practice lead','functional leader'])) clientScore += 35;
-  if (rxAny(all, ['\\bsmb\\b','small business','mid-?sized','family[- ]owned','local business','regional business','manufactur','distribution','construction','trades','healthcare services','professional services','nonprofit','education'])) clientScore += 18;
+  if (rxAny(title, ['\\bowner\\b','\\bfounder\\b','\\bco-?founder\\b','\\bpresident\\b','\\bceo\\b','chief executive','\\bcoo\\b','chief operating','\\bcfo\\b','chief financial','general manager','managing partner'])) clientScore += 34;
+  if (rxAny(title, ['\\bcio\\b','chief information','chief technology','\\bcto\\b','chief digital','chief data'])) clientScore += 38;
+  if (rxAny(title, ['chief member','chief customer','chief revenue'])) clientScore += 30;
+  if (rxAny(title, ['vp operations','vice president.*operations','director.*operations','head of operations','chief of staff','head of hr','head of people','chief people','vp sales','vp marketing','practice lead','functional leader'])) clientScore += 26;
+  if (rxAny(all, ['\\bsmb\\b','small business','mid-?sized','family[- ]owned','local business','regional business','manufactur','distribution','construction','trades','healthcare services','professional services','nonprofit','education','law firm','legal practice','accounting firm'])) clientScore += 20;
   if (rxAny(noteText, ['excel','spreadsheet','manual','handoff','follow-?up','reporting','process','systems? don.?t talk','visibility','automation','undocumented','knowledge lookup','training','guardrails','chatgpt','ai adoption','early with ai'])) clientScore += 24;
+  if (rxAny(companyText, ['law','legal','service','services']) && rxAny(title, ['owner','founder','partner','managing partner','president','chief','director'])) clientScore += 12;
   if (c.companyFlag) clientScore += 8;
   if (c.functionFlag) clientScore += 6;
   if (c.positionFlag) clientScore += 10;
   if (c.recruiter || rxAny(title, ['recruiter','talent acquisition','sourcer'])) clientScore -= 25;
   if (rxAny(title, ['student','intern','assistant professor','professor','software engineer','data scientist','retired'])) clientScore -= 12;
-  if (rxAny(companyText, ['google','microsoft','ibm','amazon','meta','salesforce','accenture','deloitte','bcg','mckinsey','bain'])) clientScore -= 10;
+  if (obviousEnterprise) clientScore = Math.min(clientScore - (explicitClientContext ? 25 : 55), explicitClientContext ? 24 : 8);
 
   let connectorScore = 0;
   if (rxAny(title, ['\\bcpa\\b','accountant','fractional cfo','attorney','lawyer','commercial banker','banker','insurance broker','wealth advisor','financial advisor','benefits broker','business coach','executive coach','eos','hr consultant','people consultant'])) connectorScore += 48;
