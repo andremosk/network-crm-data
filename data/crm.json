@@ -35905,10 +35905,12 @@
       "followUp": false,
       "lastContact": "2026-04-23",
       "addedDate": "2026-04-20",
-      "clientFitTier": 4,
-      "connectorFitTier": 4,
+      "clientFitTier": 1,
+      "connectorFitTier": 2,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "clientFitManual": true,
+      "connectorFitManual": true
     },
     {
       "id": 584,
@@ -50556,7 +50558,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-02T15:49:45.919Z",
+    "lastSync": "2026-07-02T15:50:31.292Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 2
