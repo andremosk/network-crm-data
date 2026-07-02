@@ -22422,9 +22422,10 @@
       "lastContact": "",
       "addedDate": "2026-04-20",
       "clientFitTier": 2,
-      "connectorFitTier": 4,
+      "connectorFitTier": 2,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "connectorFitManual": true
     },
     {
       "id": 1123,
@@ -47958,9 +47959,10 @@
       "lastContact": "",
       "addedDate": "2026-04-21",
       "clientFitTier": 4,
-      "connectorFitTier": 4,
+      "connectorFitTier": 1,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "connectorFitManual": true
     },
     {
       "id": 101,
@@ -50529,7 +50531,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-02T19:52:28.382Z",
+    "lastSync": "2026-07-02T19:53:42.705Z",
     "version": "v14",
     "contactCount": 2016,
     "appCount": 2
