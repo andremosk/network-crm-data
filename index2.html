@@ -788,7 +788,7 @@ function suggestFitTiers(c) {
   const companyText = company.toLowerCase();
   const noteText = notes.replace(/<[^>]*>/g, ' ').toLowerCase();
   const all = `${title} ${companyText} ${noteText}`;
-  const obviousEnterprise = rxAny(companyText, ['\\boptimum\\b','\\bibm\\b','google','microsoft','amazon','\\bmeta\\b','salesforce','accenture','deloitte','bcg','mckinsey','bain','jpmorgan','jp morgan','verizon','starbucks','ralph lauren','snap inc','proofpoint','concentrix','amway','\\bf5\\b']);
+  const obviousEnterprise = rxAny(companyText, ['\\boptimum\\b','\\bibm\\b','google','microsoft','amazon','\\bmeta\\b','salesforce','accenture','deloitte','bcg','mckinsey','bain','jpmorgan','jp morgan','j\\.p\\. morgan','chase','\\bciti\\b','citigroup','citibank','bank of america','wells fargo','goldman sachs','morgan stanley','barclays','capital one','american express','mastercard','\\bvisa\\b','blackrock','blackstone','ubs','deutsche bank','\\bbank\\b','bancorp','verizon','starbucks','ralph lauren','snap inc','proofpoint','concentrix','amway','\\bf5\\b']);
   const techNative = rxAny(companyText, ['\\.ai','ai company','ai platform','saas','software company','tech startup','tech-native','folklabs','human pilots','stealth ai','research labs'])
     || rxAny(title, ['ai founder','ai engineer','ai product','ai platform','machine learning','data scientist'])
     || rxAny(noteText, ['tech-native','tech forward','custom secure gpts','product approach','platform/product','marketing content generation']);
@@ -802,7 +802,7 @@ function suggestFitTiers(c) {
   if (rxAny(title, ['\\bcio\\b','chief information','chief technology','\\bcto\\b','chief digital','chief data'])) clientScore += 38;
   if (rxAny(title, ['chief member','chief customer','chief revenue'])) clientScore += 30;
   if (rxAny(title, ['automation program manager','automation lead','automation manager','business systems','systems manager','process improvement','operations excellence','transformation lead'])) clientScore += 38;
-  if (rxAny(title, ['vp operations','vice president.*operations','director.*operations','head of operations','chief of staff','head of hr','head of people','chief people','vp sales','vp marketing','sales director','director.*sales','marketing director','director.*marketing','practice lead','functional leader'])) clientScore += 26;
+  if (rxAny(title, ['vp\\W+operations','vp operations','vice president.*operations','director.*operations','head of operations','chief of staff','head of hr','head of people','chief people','vp\\W+sales','vp sales','vp\\W+marketing','vp marketing','vice president.*sales','vice president.*marketing','sales director','director.*sales','marketing director','director.*marketing','practice lead','functional leader'])) clientScore += 26;
   if (legacyClientContext) clientScore += 28;
   if (rxAny(all, ['\\bsmb\\b','small business','mid-?sized','local business','regional business','professional services','nonprofit','education'])) clientScore += 18;
   if (rxAny(noteText, ['excel','spreadsheet','manual','handoff','follow-?up','reporting','process','systems? don.?t talk','visibility','automation','undocumented','knowledge lookup','training','guardrails','chatgpt','ai adoption','ai education','early with ai'])) clientScore += 24;
@@ -813,7 +813,7 @@ function suggestFitTiers(c) {
   if (c.positionFlag) clientScore += 10;
   if (c.recruiter || rxAny(title, ['recruiter','talent acquisition','sourcer'])) clientScore -= 25;
   if (studentContext || rxAny(title, ['assistant professor','professor','software engineer','data scientist','retired'])) clientScore -= 35;
-  if (obviousEnterprise) clientScore = Math.min(clientScore - (explicitClientContext ? 25 : 55), explicitClientContext ? 24 : 8);
+  if (obviousEnterprise) clientScore = Math.min(clientScore - 55, 8);
   if (techNative || peerPartnerContext) clientScore = Math.min(clientScore - (explicitClientContext ? 20 : 35), peerPartnerContext ? 8 : 24);
   if (studentContext) clientScore = Math.min(clientScore, 8);
 
