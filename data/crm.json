@@ -29201,10 +29201,11 @@
       "followUp": false,
       "lastContact": "",
       "addedDate": "2026-04-20",
-      "clientFitTier": 4,
+      "clientFitTier": 3,
       "connectorFitTier": 2,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "clientFitManual": true
     },
     {
       "id": 851,
@@ -34280,10 +34281,11 @@
       "followUp": false,
       "lastContact": "2026-04-22",
       "addedDate": "2026-04-20",
-      "clientFitTier": 4,
+      "clientFitTier": 3,
       "connectorFitTier": 4,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "clientFitManual": true
     },
     {
       "id": 648,
@@ -50543,7 +50545,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-02T19:48:12.241Z",
+    "lastSync": "2026-07-02T19:48:49.704Z",
     "version": "v14",
     "contactCount": 2017,
     "appCount": 2
