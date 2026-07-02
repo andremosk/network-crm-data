@@ -833,7 +833,7 @@ const SEED = [{"id":0,"n":"Freek Tanis","t":1,"co":"IBM","pos":"Talent strategy 
 function rxAny(text, words) { return words.some(w => new RegExp(w, 'i').test(text)); }
 function fitTierFromScore(score) { return score >= 55 ? 1 : score >= 30 ? 2 : score >= 10 ? 3 : 4; }
 function normalizeFitTier(v) { const n = Number(v); return [1,2,3,4].includes(n) ? n : null; }
-const CLIENT_FIT_MODEL_VERSION = 4;
+const CLIENT_FIT_MODEL_VERSION = 7;
 function suggestFitTiers(c) {
   const position = c.position || '';
   const company = c.company || '';
@@ -842,22 +842,24 @@ function suggestFitTiers(c) {
   const companyText = company.toLowerCase();
   const noteText = notes.replace(/<[^>]*>/g, ' ').toLowerCase();
   const all = `${title} ${companyText} ${noteText}`;
-  const obviousEnterprise = rxAny(companyText, ['\\boptimum\\b','\\bibm\\b','google','microsoft','amazon','meta','salesforce','accenture','deloitte','bcg','mckinsey','bain','jpmorgan','jp morgan','verizon','starbucks','ralph lauren','snap inc','proofpoint','concentrix','amway','f5']);
-  const techNative = rxAny(all, ['\\bai\\b','\\.ai','ai founder','ai company','ai tool','ai platform','saas','software company','tech startup','product approach','platform/product','marketing content generation','custom secure gpts','tech-native','folklabs','human pilots','stealth ai','research labs']);
+  const obviousEnterprise = rxAny(companyText, ['\\boptimum\\b','\\bibm\\b','google','microsoft','amazon','\\bmeta\\b','salesforce','accenture','deloitte','bcg','mckinsey','bain','jpmorgan','jp morgan','verizon','starbucks','ralph lauren','snap inc','proofpoint','concentrix','amway','\\bf5\\b']);
+  const techNative = rxAny(companyText, ['\\.ai','ai company','ai platform','saas','software company','tech startup','tech-native','folklabs','human pilots','stealth ai','research labs'])
+    || rxAny(title, ['ai founder','ai engineer','ai product','ai platform','machine learning','data scientist'])
+    || rxAny(noteText, ['tech-native','tech forward','custom secure gpts','product approach','platform/product','marketing content generation']);
   const peerPartnerContext = rxAny(noteText, ['peer','collaborator','collaborators','fellow founders','referral path','comparing notes','working with andre']);
   const studentContext = rxAny(title, ['student','intern']) || rxAny(companyText, ['student association','school of business']);
-  const legacyClientContext = rxAny(all, ['belmont','metals','metal','industrial','manufactur','distribution','construction','trades','supplier','supply','warehouse','logistics','service company','family[- ]owned','generational','established','charter school','school','healthcare services','therapy','practice','clinic','law firm','legal practice','accounting firm']);
-  const explicitClientContext = legacyClientContext || rxAny(all, ['\\bsmb\\b','small business','mid-?sized','local business','regional business','professional services','nonprofit','education']) || rxAny(noteText, ['excel','spreadsheet','manual','handoff','follow-?up','reporting','process','systems? don.?t talk','visibility','automation','undocumented','knowledge lookup','training','guardrails','chatgpt','ai adoption','early with ai']);
+  const legacyClientContext = rxAny(all, ['belmont','metals','metal','industrial','manufactur','distribution','construction','trades','supplier','supply','warehouse','logistics','service company','family[- ]owned','generational','established','charter school','school','healthcare services','therapy','practice','clinic','law firm','legal practice','accounting firm','hunter bell','retail shop','retail brand','apparel','fashion brand','consumer brand','boutique','e-?commerce']);
+  const explicitClientContext = legacyClientContext || rxAny(all, ['\\bsmb\\b','small business','smallish','mid-?sized','local business','regional business','professional services','nonprofit','education']) || rxAny(noteText, ['excel','spreadsheet','manual','handoff','follow-?up','reporting','process','systems? don.?t talk','visibility','automation','undocumented','knowledge lookup','training','guardrails','chatgpt','ai adoption','ai education','early with ai']);
 
   let clientScore = 0;
   if (rxAny(title, ['\\bowner\\b','\\bfounder\\b','\\bco-?founder\\b','\\bpresident\\b','\\bceo\\b','chief executive','\\bcoo\\b','chief operating','\\bcfo\\b','chief financial','general manager','managing partner'])) clientScore += 34;
   if (rxAny(title, ['\\bcio\\b','chief information','chief technology','\\bcto\\b','chief digital','chief data'])) clientScore += 38;
   if (rxAny(title, ['chief member','chief customer','chief revenue'])) clientScore += 30;
   if (rxAny(title, ['automation program manager','automation lead','automation manager','business systems','systems manager','process improvement','operations excellence','transformation lead'])) clientScore += 38;
-  if (rxAny(title, ['vp operations','vice president.*operations','director.*operations','head of operations','chief of staff','head of hr','head of people','chief people','vp sales','vp marketing','practice lead','functional leader'])) clientScore += 26;
+  if (rxAny(title, ['vp operations','vice president.*operations','director.*operations','head of operations','chief of staff','head of hr','head of people','chief people','vp sales','vp marketing','sales director','director.*sales','marketing director','director.*marketing','practice lead','functional leader'])) clientScore += 26;
   if (legacyClientContext) clientScore += 28;
   if (rxAny(all, ['\\bsmb\\b','small business','mid-?sized','local business','regional business','professional services','nonprofit','education'])) clientScore += 18;
-  if (rxAny(noteText, ['excel','spreadsheet','manual','handoff','follow-?up','reporting','process','systems? don.?t talk','visibility','automation','undocumented','knowledge lookup','training','guardrails','chatgpt','ai adoption','early with ai'])) clientScore += 24;
+  if (rxAny(noteText, ['excel','spreadsheet','manual','handoff','follow-?up','reporting','process','systems? don.?t talk','visibility','automation','undocumented','knowledge lookup','training','guardrails','chatgpt','ai adoption','ai education','early with ai'])) clientScore += 24;
   if (rxAny(title, ['\\bmember\\b']) && legacyClientContext) clientScore += 18;
   if (rxAny(companyText, ['law','legal','service','services']) && rxAny(title, ['owner','founder','partner','managing partner','president','chief','director'])) clientScore += 12;
   if (c.companyFlag) clientScore += 8;
