@@ -64,13 +64,13 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .main-panel { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 
 /* CONTACTS LIST */
-.list-header { display: grid; grid-template-columns: 2fr 1.5fr 1.5fr 80px 120px 100px; gap: 0; padding: 0 16px; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+.list-header { display: grid; grid-template-columns: 2fr 1.35fr 1.35fr 74px 74px 74px 126px; gap: 0; padding: 0 16px; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
 .list-header-cell { padding: 9px 8px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); font-weight: 600; cursor: pointer; user-select: none; }
 .list-header-cell:hover { color: var(--text); }
 .list-body { flex: 1; overflow-y: auto; }
 .list-body::-webkit-scrollbar { width: 4px; }
 .list-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-.list-row { display: grid; grid-template-columns: 2fr 1.5fr 1.5fr 80px 120px 100px; gap: 0; padding: 0 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; align-items: center; min-height: 44px; position: relative; }
+.list-row { display: grid; grid-template-columns: 2fr 1.35fr 1.35fr 74px 74px 74px 126px; gap: 0; padding: 0 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; align-items: center; min-height: 44px; position: relative; }
 .list-row:hover { background: var(--surface2); }
 .list-row.selected { background: rgba(23,107,93,0.07); border-right: 2px solid var(--accent); }
 .list-cell { padding: 8px 8px; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -171,6 +171,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .link-btn:hover { text-decoration: underline; }
 .tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; cursor: pointer; border: 1px solid; }
 .tag-on { color: var(--accent); border-color: var(--accent); background: rgba(23,107,93,0.08); }
+.tag-alert { color: #b91c1c; border-color: #ef4444; background: rgba(239,68,68,0.09); }
 .tag-off { color: var(--muted); border-color: var(--border); }
 .d-meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 22px; }
 .meta-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
@@ -179,6 +180,8 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .tier-sel { display: flex; gap: 5px; }
 .tier-opt { width: 26px; height: 26px; border-radius: 6px; border: 2px solid transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
 .tier-opt.sel { border-color: var(--text); }
+.fit-controls { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.fit-pill { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 7px; font-size: 13px; font-weight: 700; }
 .sec-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 600; margin-bottom: 10px; }
 .note-ts { font-size: 11px; font-weight: 600; color: var(--muted); text-align: center; text-transform: uppercase; letter-spacing: 0.6px; margin: 14px 0 5px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
 .note-ts:first-child { margin-top: 0; }
@@ -355,7 +358,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   </div>
   <div class="topbar-stat"><div class="stat-num" id="statShowing">0</div><div class="stat-lbl">Showing</div></div>
   <div class="topbar-stat"><div class="stat-num" id="statTotal">0</div><div class="stat-lbl">Total</div></div>
-  <div class="topbar-stat" id="stat3wrap"><div class="stat-num" id="stat3">0</div><div class="stat-lbl" id="stat3lbl">Tier 1</div></div>
+  <div class="topbar-stat" id="stat3wrap"><div class="stat-num" id="stat3">0</div><div class="stat-lbl" id="stat3lbl">Rel 1</div></div>
   <button class="btn btn-primary" id="addBtn" onclick="openAddModal()">+ Add</button>
   <button class="btn btn-ghost" onclick="exportData()">Export</button>
   <button class="btn btn-ghost" onclick="openImportModal()">Import</button>
@@ -516,7 +519,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-lbl">Company</label><input class="form-input" id="nCompany"></div>
-      <div class="form-group"><label class="form-lbl">Tier (1-4)</label><input class="form-input" id="nTier" type="number" min="1" max="4" value="2"></div>
+      <div class="form-group"><label class="form-lbl">Relationship (1-4)</label><input class="form-input" id="nTier" type="number" min="1" max="4" value="2"></div>
     </div>
     <div class="form-group"><label class="form-lbl">Position</label><input class="form-input" id="nPos"></div>
     <div class="form-group"><label class="form-lbl">LinkedIn URL</label><input class="form-input" id="nLI"></div>
@@ -565,7 +568,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 <!-- CONTACTS SIDEBAR -->
 <div class="sidebar" id="contactsSidebar">
   <div class="sidebar-section">
-    <div class="sidebar-lbl">Quality (Tier)</div>
+    <div class="sidebar-lbl">Relationship</div>
     <button class="tier-btn active" id="tier-all" onclick="setTier('all',this)">
       <span class="tier-dot" style="background:var(--muted)"></span> All
       <span class="tier-count" id="cnt-all">0</span>
@@ -588,6 +591,52 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     </button>
   </div>
   <div class="sidebar-section">
+    <div class="sidebar-lbl">Client Fit</div>
+    <button class="tier-btn active" id="cf-all" onclick="setFitFilter('client','all',this)">
+      <span class="tier-dot" style="background:var(--muted)"></span> All
+      <span class="tier-count" id="ccnt-all">0</span>
+    </button>
+    <button class="tier-btn" id="cf-1" onclick="setFitFilter('client',1,this)">
+      <span class="tier-dot" style="background:var(--t1)"></span> 1 — Strong
+      <span class="tier-count" id="ccnt-1">0</span>
+    </button>
+    <button class="tier-btn" id="cf-2" onclick="setFitFilter('client',2,this)">
+      <span class="tier-dot" style="background:var(--t2)"></span> 2 — Possible
+      <span class="tier-count" id="ccnt-2">0</span>
+    </button>
+    <button class="tier-btn" id="cf-3" onclick="setFitFilter('client',3,this)">
+      <span class="tier-dot" style="background:var(--t3)"></span> 3 — Weak
+      <span class="tier-count" id="ccnt-3">0</span>
+    </button>
+    <button class="tier-btn" id="cf-4" onclick="setFitFilter('client',4,this)">
+      <span class="tier-dot" style="background:var(--t4)"></span> 4 — No Fit
+      <span class="tier-count" id="ccnt-4">0</span>
+    </button>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-lbl">Connector Fit</div>
+    <button class="tier-btn active" id="xf-all" onclick="setFitFilter('connector','all',this)">
+      <span class="tier-dot" style="background:var(--muted)"></span> All
+      <span class="tier-count" id="xcnt-all">0</span>
+    </button>
+    <button class="tier-btn" id="xf-1" onclick="setFitFilter('connector',1,this)">
+      <span class="tier-dot" style="background:var(--t1)"></span> 1 — Strong
+      <span class="tier-count" id="xcnt-1">0</span>
+    </button>
+    <button class="tier-btn" id="xf-2" onclick="setFitFilter('connector',2,this)">
+      <span class="tier-dot" style="background:var(--t2)"></span> 2 — Possible
+      <span class="tier-count" id="xcnt-2">0</span>
+    </button>
+    <button class="tier-btn" id="xf-3" onclick="setFitFilter('connector',3,this)">
+      <span class="tier-dot" style="background:var(--t3)"></span> 3 — Weak
+      <span class="tier-count" id="xcnt-3">0</span>
+    </button>
+    <button class="tier-btn" id="xf-4" onclick="setFitFilter('connector',4,this)">
+      <span class="tier-dot" style="background:var(--t4)"></span> 4 — No Fit
+      <span class="tier-count" id="xcnt-4">0</span>
+    </button>
+  </div>
+  <div class="sidebar-section">
     <div class="sidebar-lbl">Status</div>
     <button class="flt-btn" id="sf-network_closely" onclick="toggleStatus('network_closely')">🟢 Network Closely</button>
     <button class="flt-btn" id="sf-network" onclick="toggleStatus('network')">🔵 Network Regularly</button>
@@ -606,9 +655,9 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     <button class="flt-btn" id="fv-knowsMe" onclick="toggleFlag('knowsMe')">⭐ Knows My Work</button>
   </div>
   <div class="sidebar-section">
-    <div class="sidebar-lbl">Quick Filters</div>
-    <button class="flt-btn" id="fv-recruiter" onclick="toggleFlag('recruiter')">🎯 Recruiters</button>
-    <button class="flt-btn" id="fv-hasNotes" onclick="toggleFlag('hasNotes')">📝 Has Notes</button>
+    <div class="sidebar-lbl">Exclusions</div>
+    <button class="flt-btn" id="fv-hideNotInterested" onclick="toggleFlag('hideNotInterested')">🚫 Hide Not Interested</button>
+    <button class="flt-btn" id="fv-notInterested" onclick="toggleFlag('notInterested')">Show Not Interested</button>
   </div>
 </div>
 
@@ -649,9 +698,10 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     <div class="list-header-cell" id="sh-name" onclick="sortBy('name')">Name ↕</div>
     <div class="list-header-cell" id="sh-company" onclick="sortBy('company')">Company ↕</div>
     <div class="list-header-cell" id="sh-position" onclick="sortBy('position')">Position ↕</div>
-    <div class="list-header-cell" id="sh-tier" onclick="sortBy('tier')">Tier ↕</div>
+    <div class="list-header-cell" id="sh-tier" onclick="sortBy('tier')">Rel ↕</div>
+    <div class="list-header-cell" id="sh-clientFitTier" onclick="sortBy('clientFitTier')">Client ↕</div>
+    <div class="list-header-cell" id="sh-connectorFitTier" onclick="sortBy('connectorFitTier')">Conn ↕</div>
     <div class="list-header-cell" id="sh-status" onclick="sortBy('status')">Status ↕</div>
-    <div class="list-header-cell">Value</div>
   </div>
   <div class="list-body" id="listBody"></div>
 </div>
@@ -726,9 +776,66 @@ TAILORED: I noticed [recent news/announcement] — how does that affect this rol
 // ─── CONTACTS DATA ────────────────────────────────────────────────
 const SEED = [{"id":0,"n":"Freek Tanis","t":1,"co":"IBM","pos":"Talent strategy and Design","li":"https://www.linkedin.com/in/freektanis/","nt":"Jan. 9: e-mailed to help with golden question Jun. 5: messaged Apr. 8 Suggested Marjolein van Eck at Uber- https://www.linkedin.com/in/marjoleinvaneck/ - and Stephen P. Buckley - https://www.linkedin.com/in/zzbuckley/","ff":1,"km":1,"st":"follow_up"},{"id":1,"n":"Arthur Eddy","t":1,"co":"IBM","pos":"Global Compensation Leader at IBM","li":"https://www.linkedin.com/in/arthurfeddy","nt":"Apr. 19: connected, asked for a connection to Mercedes Escala; Guardians, Ohio St., Browns","ff":1,"km":1,"st":"network_closely"},{"id":2,"n":"Lisa (Manning) Cassidy","t":1,"co":"IBM","pos":"Change and Digital Experience Consultant","li":"https://www.linkedin.com/in/lisamanningcassidy","nt":"Apr. 15: e-mailed and asked if she could introduce me to a few people","ff":1,"km":1,"st":"call_scheduled"},{"id":3,"n":"Dustin Schneider","t":2,"co":"Kyndryl","pos":"Director, Organizational Effectiveness and Culture","li":"https://www.linkedin.com/in/dustinschneider","nt":"Connected me to Charles D. Shaw and Melissa Strada","cf":1,"ff":1,"pf":1,"st":"network_closely"},{"id":4,"n":"Brorhie Muoboghare","t":1,"co":"IBM","pos":"Client HR Partner - IBM Research and Software","li":"https://www.linkedin.com/in/muoboghare/","nt":"Dec. 10: Talked Internal Mobility for DataDog. Lives in Albany","ff":1,"km":1,"st":"network_closely"},{"id":5,"n":"David Whirlow","t":1,"co":"IBM","pos":"Talent Leader","li":"https://www.linkedin.com/in/davidwhirlow","km":1,"st":"follow_up"},{"id":6,"n":"Victoria Castro","t":3,"co":"Accenture","pos":"Talent Brand and L&D Marketing + Communications Lead","li":"https://www.linkedin.com/in/victoria-castro-8930947/","st":"network_closely"},{"id":7,"n":"Hillary Klemmt Metcalf","t":2,"co":"Booz Allen Hamilton","pos":"Communications Specialist","li":"https://www.linkedin.com/in/hillary-klemmt-a81b0773/","nt":"May 1: She's referring me for Strategic Talent Integrator role at Booz.","ff":1,"st":"network_closely"},{"id":8,"n":"Danika Kazmer","t":3,"co":"Cargill","pos":"Organizational Change Management Expert","li":"https://www.linkedin.com/in/danikakazmer/","ff":1,"st":"network_closely"},{"id":9,"n":"Josh Berkowitz","t":2,"co":"Silver Point Capital","pos":"Total Rewards Professional","li":"https://www.linkedin.com/in/joshberkowitz/","nt":"May 3: Connecting me with Christie Raymond at PayPal","ff":1,"st":"network_closely"},{"id":10,"n":"Kendra Vierbickas","t":2,"co":"Tokio Marine America","pos":"Senior Manager, Human Resources","li":"https://www.linkedin.com/in/kendravier","ff":1,"km":1,"st":"network_closely"},{"id":11,"n":"Caroline Trudeau","t":2,"co":"pageightco.","pos":"Experience Strategist, Creative Director","li":"https://www.linkedin.com/in/caroline-trudeau","pf":1,"km":1,"st":"network"},{"id":12,"n":"Darcie Piechowski","t":1,"co":"IBM","pos":"Global Performance Leader, IBM","li":"https://www.linkedin.com/in/darciepiechowski","km":1,"st":"call_scheduled"},{"id":13,"n":"Hillary Kirtland","t":1,"co":"IBM","pos":"Global Career Strategy & Design","li":"https://www.linkedin.com/in/hillarykirtland","nt":"Helped me prep Snap and Datadog","ff":1,"km":1,"st":"network_closely"},{"id":14,"n":"Natalie Huddleston","t":2,"co":"Chicago Bulls","pos":"Vice President, Human Resources","li":"https://www.linkedin.com/in/natalie-huddleston-32853528","nt":"Referred me for NBA position","cf":1,"ff":1,"st":"network_closely"},{"id":15,"n":"Hope Turner","t":1,"co":"IBM","pos":"IBM Consulting, Senior Talent Solutions Partner","li":"https://www.linkedin.com/in/hope-turner-b36742119","em":"hopeturner100@gmail.com","ff":1,"km":1,"st":"follow_up"},{"id":16,"n":"Aparna Nair","t":1,"co":"IBM","pos":"Vice President HR, Business Transformation & Hybrid Cloud Services","li":"https://www.linkedin.com/in/nairap","km":1,"st":"network_closely"},{"id":17,"n":"Timothy Gentzlinger","t":3,"co":"Disney","pos":"Director, Executive Compensation","li":"https://www.linkedin.com/in/timothy-gentzlinger-66620461/","nt":"Said he would look for people in Talent for me to network with","cf":1,"ff":1,"pf":1,"st":"network_closely"},{"id":18,"n":"Meghan Mariner","t":2,"co":"BTS","pos":"Senior Vice President & Partner","li":"https://www.linkedin.com/in/megmariner","nt":"Will connect me with Salesforce and Datadog","cf":1,"pf":1,"km":1,"st":"follow_up"},{"id":19,"n":"BJ Siasoco","t":1,"pos":"Talent Leader, Employee Engagement & HR Analytics Manager","li":"https://www.linkedin.com/in/bj-r-siasoco/","ff":1,"st":"follow_up"},{"id":20,"n":"Scott Ryan","t":3,"co":"Uber","pos":"Senior HR Business Partner","li":"https://www.linkedin.com/in/scott-ryan-63699467/","st":"network"},{"id":21,"n":"Matt Coakley","t":2,"co":"Verizon","pos":"Vice President, Marketing Strategy","li":"https://www.linkedin.com/in/macoakley","nt":"Helped me prep for HRBP interview at Verizon","pf":1,"km":1,"st":"network"},{"id":22,"n":"Alex Bernstein","t":1,"co":"VIZIO Ads","pos":"Director, Ads Data and Measurement Product Strategy","li":"https://www.linkedin.com/in/bernsteinalex","nt":"Key reference at Snap","st":"came_through"},{"id":23,"n":"Matthew Guida","t":1,"co":"Morgan Stanley","pos":"Executive Director","li":"https://www.linkedin.com/in/matthew-guida-8273378","nt":"Helped me learn about Morgan Stanley"},{"id":24,"n":"Becky Karsh","t":4,"co":"Snap Inc.","pos":"People and Organizational Leader"},{"id":25,"n":"Jerry Wang","t":2,"co":"BCG","pos":"Career Coach & Senior Manager","li":"https://www.linkedin.com/in/jer-wang","nt":"Referred me to BCG","cf":1,"ff":1},{"id":26,"n":"Shahar Ziv","t":2,"co":"Garan","pos":"VP","nt":"Connected me to PayPal recruiter","km":1,"st":"came_through"},{"id":27,"n":"Sam Shabeer","t":2,"co":"Ralph Lauren","pos":"Director of Planning","nt":"Referred me to Ralph Lauren","km":1,"st":"came_through"},{"id":28,"n":"Andres Potes","t":1,"co":"Uber","pos":"General Manager","li":"https://www.linkedin.com/in/andres-potes-a425b69","nt":"Forwarded my resume to HR at Uber","cf":1,"st":"network"},{"id":29,"n":"Jackie Wilson","t":3,"co":"Kyndryl","pos":"Director Human Resources Business Partner","li":"https://www.linkedin.com/in/jackie-wilson-6700295","cf":1,"ff":1},{"id":30,"n":"Jody Ordioni","t":2,"co":"Brandemix","pos":"Chief Brand Officer and President","li":"https://www.linkedin.com/in/jodyordioni","nt":"Offered to be a connection, invited me to speak at AI in HR conference","ff":1,"pf":1,"st":"network"}];
 
+function rxAny(text, words) { return words.some(w => new RegExp(w, 'i').test(text)); }
+function fitTierFromScore(score) { return score >= 55 ? 1 : score >= 30 ? 2 : score >= 10 ? 3 : 4; }
+function normalizeFitTier(v) { const n = Number(v); return [1,2,3,4].includes(n) ? n : null; }
+function suggestFitTiers(c) {
+  const position = c.position || '';
+  const company = c.company || '';
+  const notes = c.notes || '';
+  const title = position.toLowerCase();
+  const companyText = company.toLowerCase();
+  const noteText = notes.replace(/<[^>]*>/g, ' ').toLowerCase();
+  const all = `${title} ${companyText} ${noteText}`;
+
+  let clientScore = 0;
+  if (rxAny(title, ['\\bowner\\b','\\bfounder\\b','\\bco-?founder\\b','\\bpresident\\b','\\bceo\\b','chief executive','\\bcoo\\b','chief operating','\\bcfo\\b','chief financial','general manager','managing partner'])) clientScore += 45;
+  if (rxAny(title, ['vp operations','vice president.*operations','director.*operations','head of operations','chief of staff','head of hr','head of people','chief people','vp sales','vp marketing','practice lead','functional leader'])) clientScore += 35;
+  if (rxAny(all, ['\\bsmb\\b','small business','mid-?sized','family[- ]owned','local business','regional business','manufactur','distribution','construction','trades','healthcare services','professional services','nonprofit','education'])) clientScore += 18;
+  if (rxAny(noteText, ['excel','spreadsheet','manual','handoff','follow-?up','reporting','process','systems? don.?t talk','visibility','automation','undocumented','knowledge lookup','training','guardrails','chatgpt','ai adoption','early with ai'])) clientScore += 24;
+  if (c.companyFlag) clientScore += 8;
+  if (c.functionFlag) clientScore += 6;
+  if (c.positionFlag) clientScore += 10;
+  if (c.recruiter || rxAny(title, ['recruiter','talent acquisition','sourcer'])) clientScore -= 25;
+  if (rxAny(title, ['student','intern','assistant professor','professor','software engineer','data scientist','retired'])) clientScore -= 12;
+  if (rxAny(companyText, ['google','microsoft','ibm','amazon','meta','salesforce','accenture','deloitte','bcg','mckinsey','bain'])) clientScore -= 10;
+
+  let connectorScore = 0;
+  if (rxAny(title, ['\\bcpa\\b','accountant','fractional cfo','attorney','lawyer','commercial banker','banker','insurance broker','wealth advisor','financial advisor','benefits broker','business coach','executive coach','eos','hr consultant','people consultant'])) connectorScore += 48;
+  if (rxAny(title, ['partner','managing partner','principal','founder','owner','agency owner','consultant','advisor'])) connectorScore += 30;
+  if (rxAny(title, ['private equity','search fund','family business','chamber','economic development','alumni','community leader','real estate developer'])) connectorScore += 35;
+  if (rxAny(all, ['managed service provider','\\bmsp\\b','it services','erp','salesforce consultant','microsoft consultant','web design','development agency','marketing agency'])) connectorScore += 30;
+  if (rxAny(companyText, ['advisors','advisory','consulting','partners','law','legal','accounting','cpa','bank','insurance','wealth','benefits','coaching','agency','capital','ventures','equity'])) connectorScore += 20;
+  if (rxAny(noteText, ['introduced me','connected me','referred me','warm intro','clients','business owners','portfolio compan','small business','local business','family business','trusted advisor','advisor to'])) connectorScore += 28;
+  if (c.positionFlag) connectorScore += 8;
+  if (c.recruiter || rxAny(title, ['recruiter','talent acquisition','sourcer'])) connectorScore -= 15;
+
+  return {
+    clientFitTier: fitTierFromScore(Math.max(0, clientScore)),
+    connectorFitTier: fitTierFromScore(Math.max(0, connectorScore))
+  };
+}
+
+function withFitDefaults(c) {
+  const fit = suggestFitTiers(c);
+  return {
+    ...c,
+    clientFitTier: normalizeFitTier(c.clientFitTier) || fit.clientFitTier,
+    connectorFitTier: normalizeFitTier(c.connectorFitTier) || fit.connectorFitTier,
+    notInterested: !!c.notInterested
+  };
+}
+
 function loadContacts() {
   const saved = localStorage.getItem('andre_crm_v2');
-  if (saved) { try { return JSON.parse(saved); } catch(e) {} }
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      const migrated = parsed.map(withFitDefaults);
+      if (JSON.stringify(parsed) !== JSON.stringify(migrated)) localStorage.setItem('andre_crm_v2', JSON.stringify(migrated));
+      return migrated;
+    } catch(e) {}
+  }
   const contacts = SEED.map((c,i) => ({
     id: c.id ?? i, name: c.n||'', firstName: (c.n||'').split(' ')[0],
     lastName: (c.n||'').split(' ').slice(1).join(' '),
@@ -738,7 +845,7 @@ function loadContacts() {
     knowsMe: !!c.km, status: c.st||null, recruiter: !!c.rec,
     followUp: c.st==='follow_up', lastContact: '',
     addedDate: new Date().toISOString().split('T')[0]
-  }));
+  })).map(withFitDefaults);
   saveContacts(contacts); return contacts;
 }
 function saveContacts(c) { localStorage.setItem('andre_crm_v2', JSON.stringify(c)); scheduleSync('Contact update'); }
@@ -794,8 +901,8 @@ function saveApps(apps) { localStorage.setItem('andre_apps_v1', JSON.stringify(a
 let contacts = loadContacts();
 let apps = loadApps();
 let currentView = 'contacts';
-let tierFilter = 'all', statusFilter = [];
-let flagFilters = { companyFlag:false, functionFlag:false, positionFlag:false, knowsMe:false, recruiter:false, hasNotes:false };
+let tierFilter = 'all', clientFitFilter = 'all', connectorFitFilter = 'all', statusFilter = [];
+let flagFilters = { companyFlag:false, functionFlag:false, positionFlag:false, knowsMe:false, notInterested:false, hideNotInterested:false };
 let pipelineFilter = 'all';
 let sortKey = null, sortDir = 1;
 let appSortKey = null, appSortDir = 1;
@@ -832,6 +939,13 @@ function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 function initials(n) { return (n||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
 function sdot(s) { return (SM[s]||{}).dot||'#888'; }
 function fmtDate(d) { if(!d) return '—'; try { return new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); } catch(e) { return d; } }
+function fitPill(tier) {
+  const t = normalizeFitTier(tier) || 4;
+  return `<div class="fit-pill" style="background:${TB[t]||TB[4]};color:${TC[t]||TC[4]}">${t}</div>`;
+}
+function fitSelector(contactId, field) {
+  return `<div class="tier-sel">${[1,2,3,4].map(t => `<div class="tier-opt ${normalizeFitTier(contacts.find(c=>c.id===contactId)?.[field])===t?'sel':''}" style="background:${TB[t]};color:${TC[t]}" onclick="updateFitTier(${contactId},'${field}',${t})">${t}</div>`).join('')}</div>`;
+}
 
 // ─── VIEW SWITCH ──────────────────────────────────────────────────
 function switchView(v) {
@@ -858,11 +972,13 @@ function getFiltered() {
   const q = document.getElementById('searchInput').value.toLowerCase().trim();
   return contacts.filter(c => {
     if (tierFilter !== 'all' && c.tier !== tierFilter) return false;
+    if (clientFitFilter !== 'all' && c.clientFitTier !== clientFitFilter) return false;
+    if (connectorFitFilter !== 'all' && c.connectorFitTier !== connectorFitFilter) return false;
     if (statusFilter.length && !statusFilter.includes(c.status)) return false;
     for (const [k,v] of Object.entries(flagFilters)) {
       if (!v) continue;
-      if (k === 'hasNotes' && !c.notes) return false;
-      else if (k !== 'hasNotes' && !c[k]) return false;
+      if (k === 'hideNotInterested' && c.notInterested) return false;
+      else if (k !== 'hideNotInterested' && !c[k]) return false;
     }
     if (!q) return true;
     return (c.name+c.company+c.position+c.notes).toLowerCase().includes(q);
@@ -878,7 +994,7 @@ function renderList() {
   filtered = getFiltered();
   if (sortKey) {
     filtered.sort((a,b) => {
-      const av=(a[sortKey]||'').toString().toLowerCase(), bv=(b[sortKey]||'').toString().toLowerCase();
+      const av=(a[sortKey]??'').toString().toLowerCase(), bv=(b[sortKey]??'').toString().toLowerCase();
       return av<bv?-sortDir:av>bv?sortDir:0;
     });
   } else {
@@ -908,8 +1024,9 @@ function renderList() {
       <div class="list-cell muted">${esc(c.company)}</div>
       <div class="list-cell muted">${esc(c.position).substring(0,45)}</div>
       <div class="list-cell"><div class="tier-pill" style="background:${TB[c.tier]||TB[4]};color:${TC[c.tier]||TC[4]};width:28px;height:28px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">${c.tier}</div></div>
+      <div class="list-cell">${fitPill(c.clientFitTier)}</div>
+      <div class="list-cell">${fitPill(c.connectorFitTier)}</div>
       <div class="list-cell">${statusCell}</div>
-      <div class="list-cell"><div class="vchips">${vchips||'<span style="color:var(--border);font-size:11px">—</span>'}</div></div>
       <button class="row-delete-btn" onclick="event.stopPropagation();deleteContact(${c.id})" title="Delete contact">🗑</button>
     </div>`;
   }).join('');
@@ -930,11 +1047,29 @@ function updateCounts() {
   document.getElementById('stat3').textContent = contacts.filter(c=>c.tier===1).length;
   document.getElementById('cnt-all').textContent = contacts.length;
   [1,2,3,4].forEach(t => { const el=document.getElementById('cnt-'+t); if(el) el.textContent=contacts.filter(c=>c.tier===t).length; });
+  document.getElementById('ccnt-all').textContent = contacts.length;
+  document.getElementById('xcnt-all').textContent = contacts.length;
+  [1,2,3,4].forEach(t => {
+    const cel=document.getElementById('ccnt-'+t); if(cel) cel.textContent=contacts.filter(c=>c.clientFitTier===t).length;
+    const xel=document.getElementById('xcnt-'+t); if(xel) xel.textContent=contacts.filter(c=>c.connectorFitTier===t).length;
+  });
 }
 
 function setTier(t,btn) {
   tierFilter=t;
-  document.querySelectorAll('.tier-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#contactsSidebar .sidebar-section:first-child .tier-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+function setFitFilter(kind,tier,btn) {
+  if (kind === 'client') {
+    clientFitFilter = tier;
+    document.querySelectorAll('#contactsSidebar .sidebar-section:nth-child(2) .tier-btn').forEach(b=>b.classList.remove('active'));
+  } else {
+    connectorFitFilter = tier;
+    document.querySelectorAll('#contactsSidebar .sidebar-section:nth-child(3) .tier-btn').forEach(b=>b.classList.remove('active'));
+  }
   btn.classList.add('active');
   renderList();
 }
@@ -1851,13 +1986,23 @@ function renderDetailContent(c) {
           ${c.linkedin ? `<a class="link-btn" href="${c.linkedin}" target="_blank">🔗 LinkedIn</a>` : ''}
           ${c.email ? `<a class="link-btn" href="mailto:${c.email}">✉️ Email</a>` : ''}
           <span class="tag ${c.recruiter?'tag-on':'tag-off'}" onclick="toggleField(${c.id},'recruiter')">🎯 Recruiter</span>
+          <span class="tag ${c.notInterested?'tag-alert':'tag-off'}" onclick="toggleField(${c.id},'notInterested')">🚫 Not Interested</span>
+          <button class="btn btn-ghost btn-sm" onclick="suggestMissingFit(${c.id})">Suggest Fit</button>
         </div>
       </div>
     </div>
     <div class="d-meta">
       <div class="meta-card">
-        <div class="meta-lbl">Quality (Tier)</div>
+        <div class="meta-lbl">Relationship</div>
         <div class="tier-sel">${[1,2,3,4].map(t => `<div class="tier-opt ${c.tier===t?'sel':''}" style="background:${TB[t]};color:${TC[t]}" onclick="updateTier(${c.id},${t})">${t}</div>`).join('')}</div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-lbl">Client Fit</div>
+        <div class="fit-controls">${fitSelector(c.id,'clientFitTier')}</div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-lbl">Connector Fit</div>
+        <div class="fit-controls">${fitSelector(c.id,'connectorFitTier')}</div>
       </div>
       <div class="meta-card">
         <div class="meta-lbl">Email</div>
@@ -1919,6 +2064,20 @@ function parseNotes(str) {
 
 function toggleField(id,field){const c=contacts.find(x=>x.id===id);if(!c)return;c[field]=!c[field];saveContacts(contacts);openDetail(id);}
 function updateField(id,field,val){const c=contacts.find(x=>x.id===id);if(!c)return;c[field]=val;saveContacts(contacts);renderList();}
+function updateFitTier(id,field,tier){
+  const c=contacts.find(x=>x.id===id);if(!c)return;
+  c[field]=tier;saveContacts(contacts);
+  openDetail(id);renderList();
+}
+function suggestMissingFit(id){
+  const c=contacts.find(x=>x.id===id);if(!c)return;
+  const fit=suggestFitTiers(c);
+  let changed=false;
+  if (!normalizeFitTier(c.clientFitTier)) { c.clientFitTier=fit.clientFitTier; changed=true; }
+  if (!normalizeFitTier(c.connectorFitTier)) { c.connectorFitTier=fit.connectorFitTier; changed=true; }
+  if (!changed) { toast('Fit tiers already set'); return; }
+  saveContacts(contacts); openDetail(id); renderList(); toast('Missing fit tiers suggested ✓');
+}
 function updateTier(id,tier){
   // Preserve any in-progress note draft before re-rendering
   const draftNote = document.getElementById('noteInput')?.innerHTML || '';
@@ -1958,8 +2117,8 @@ function deleteContact(id) {
 }
 
 function renderSortHeaders() {
-  const cols = ['name','company','position','tier','status'];
-  const labels = {name:'Name',company:'Company',position:'Position',tier:'Tier',status:'Status'};
+  const cols = ['name','company','position','tier','clientFitTier','connectorFitTier','status'];
+  const labels = {name:'Name',company:'Company',position:'Position',tier:'Rel',clientFitTier:'Client',connectorFitTier:'Conn',status:'Status'};
   cols.forEach(key => {
     const el = document.getElementById('sh-'+key);
     if (!el) return;
@@ -2006,7 +2165,7 @@ function saveNewContact() {
   const last = document.getElementById('nLast').value.trim();
   if (!first&&!last) { toast('Please enter a name'); return; }
   const maxId = contacts.reduce((m,c) => Math.max(m,c.id||0), 0);
-  const nc = { id: maxId+1, name:[first,last].filter(Boolean).join(' '), firstName:first, lastName:last,
+  const nc = withFitDefaults({ id: maxId+1, name:[first,last].filter(Boolean).join(' '), firstName:first, lastName:last,
     tier: parseInt(document.getElementById('nTier').value)||2,
     company: document.getElementById('nCompany').value.trim(),
     position: document.getElementById('nPos').value.trim(),
@@ -2014,7 +2173,7 @@ function saveNewContact() {
     email: document.getElementById('nEmail').value.trim(),
     notes: document.getElementById('nNotes').value.trim(),
     companyFlag:false, functionFlag:false, positionFlag:false, knowsMe:false, status:null, recruiter:false, followUp:false,
-    lastContact:'', addedDate: new Date().toISOString().split('T')[0] };
+    notInterested:false, lastContact:'', addedDate: new Date().toISOString().split('T')[0] });
   contacts.unshift(nc); saveContacts(contacts); closeAddModal(); renderList();
   ['nFirst','nLast','nCompany','nPos','nLI','nEmail','nNotes'].forEach(id => { document.getElementById(id).value = ''; });
   toast('Contact added ✓');
@@ -2117,7 +2276,7 @@ function confirmImport() {
       const liKey=normLI(row.linkedin); const nameKey=norm((row.firstName||'')+' '+(row.lastName||''));
       if((row.linkedin&&byLinkedin[liKey])||byName[nameKey]) return;
       maxId++;
-      contacts.unshift({id:maxId,name:row.name||((row.firstName||'')+' '+(row.lastName||'')).trim(),firstName:row.firstName||'',lastName:row.lastName||'',tier:row.tier||4,company:row.company||'',position:row.position||'',linkedin:row.linkedin||'',email:row.email||'',notes:row.notes||'',companyFlag:row.companyFlag||false,functionFlag:row.functionFlag||false,positionFlag:row.positionFlag||false,knowsMe:row.knowsMe||false,status:row.status||null,recruiter:row.recruiter||false,followUp:row.followUp||false,lastContact:row.lastContact||'',addedDate:row.addedDate||today});
+      contacts.unshift(withFitDefaults({id:maxId,name:row.name||((row.firstName||'')+' '+(row.lastName||'')).trim(),firstName:row.firstName||'',lastName:row.lastName||'',tier:row.tier||4,company:row.company||'',position:row.position||'',linkedin:row.linkedin||'',email:row.email||'',notes:row.notes||'',companyFlag:row.companyFlag||false,functionFlag:row.functionFlag||false,positionFlag:row.positionFlag||false,knowsMe:row.knowsMe||false,status:row.status||null,recruiter:row.recruiter||false,followUp:row.followUp||false,notInterested:row.notInterested||false,clientFitTier:row.clientFitTier,connectorFitTier:row.connectorFitTier,lastContact:row.lastContact||'',addedDate:row.addedDate||today}));
     });
     saveContacts(contacts);
   }
