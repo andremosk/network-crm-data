@@ -36055,9 +36055,10 @@
       "lastContact": "2026-04-22",
       "addedDate": "2026-04-20",
       "clientFitTier": 3,
-      "connectorFitTier": 2,
+      "connectorFitTier": 1,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "connectorFitManual": true
     },
     {
       "id": 578,
@@ -50554,7 +50555,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-02T15:49:02.096Z",
+    "lastSync": "2026-07-02T15:49:16.039Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 2
