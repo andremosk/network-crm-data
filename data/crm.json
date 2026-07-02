@@ -29023,10 +29023,11 @@
       "followUp": false,
       "lastContact": "",
       "addedDate": "2026-04-20",
-      "clientFitTier": 4,
+      "clientFitTier": 2,
       "connectorFitTier": 4,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "clientFitManual": true
     },
     {
       "id": 858,
@@ -50542,7 +50543,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-02T19:47:57.347Z",
+    "lastSync": "2026-07-02T19:48:12.241Z",
     "version": "v14",
     "contactCount": 2017,
     "appCount": 2
