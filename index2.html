@@ -779,6 +779,7 @@ const SEED = [{"id":0,"n":"Freek Tanis","t":1,"co":"IBM","pos":"Talent strategy 
 function rxAny(text, words) { return words.some(w => new RegExp(w, 'i').test(text)); }
 function fitTierFromScore(score) { return score >= 55 ? 1 : score >= 30 ? 2 : score >= 10 ? 3 : 4; }
 function normalizeFitTier(v) { const n = Number(v); return [1,2,3,4].includes(n) ? n : null; }
+const CLIENT_FIT_MODEL_VERSION = 4;
 function suggestFitTiers(c) {
   const position = c.position || '';
   const company = c.company || '';
@@ -832,9 +833,14 @@ function suggestFitTiers(c) {
 
 function withFitDefaults(c) {
   const fit = suggestFitTiers(c);
+  const hasCurrentClientModel = Number(c.clientFitModelVersion) === CLIENT_FIT_MODEL_VERSION;
+  const clientFitTier = c.clientFitManual || hasCurrentClientModel
+    ? (normalizeFitTier(c.clientFitTier) || fit.clientFitTier)
+    : fit.clientFitTier;
   return {
     ...c,
-    clientFitTier: normalizeFitTier(c.clientFitTier) || fit.clientFitTier,
+    clientFitTier,
+    clientFitModelVersion: CLIENT_FIT_MODEL_VERSION,
     connectorFitTier: normalizeFitTier(c.connectorFitTier) || fit.connectorFitTier,
     notInterested: !!c.notInterested
   };
@@ -2080,14 +2086,20 @@ function toggleField(id,field){const c=contacts.find(x=>x.id===id);if(!c)return;
 function updateField(id,field,val){const c=contacts.find(x=>x.id===id);if(!c)return;c[field]=val;saveContacts(contacts);renderList();}
 function updateFitTier(id,field,tier){
   const c=contacts.find(x=>x.id===id);if(!c)return;
-  c[field]=tier;saveContacts(contacts);
+  c[field]=tier;
+  if (field === 'clientFitTier') {
+    c.clientFitManual = true;
+    c.clientFitModelVersion = CLIENT_FIT_MODEL_VERSION;
+  }
+  if (field === 'connectorFitTier') c.connectorFitManual = true;
+  saveContacts(contacts);
   openDetail(id);renderList();
 }
 function suggestMissingFit(id){
   const c=contacts.find(x=>x.id===id);if(!c)return;
   const fit=suggestFitTiers(c);
   let changed=false;
-  if (!normalizeFitTier(c.clientFitTier)) { c.clientFitTier=fit.clientFitTier; changed=true; }
+  if (!normalizeFitTier(c.clientFitTier)) { c.clientFitTier=fit.clientFitTier; c.clientFitModelVersion=CLIENT_FIT_MODEL_VERSION; changed=true; }
   if (!normalizeFitTier(c.connectorFitTier)) { c.connectorFitTier=fit.connectorFitTier; changed=true; }
   if (!changed) { toast('Fit tiers already set'); return; }
   saveContacts(contacts); openDetail(id); renderList(); toast('Missing fit tiers suggested ✓');
