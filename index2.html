@@ -2489,27 +2489,48 @@ function copyThankYouModal() {
 function openThankYouInEmail() {
   const ta = document.getElementById('thankYouModalTA');
   if (!ta || !ta.value) { toast('Generate a note first'); return; }
-  const raw = ta.value;
-  const subjectMatch = raw.match(/^Subject:\s*(.+)/m);
-  const subject = subjectMatch ? subjectMatch[1].trim() : 'Following up';
-  const body = raw.replace(/^Subject:\s*.+\n?/m, '').trim();
+  const { subject, body } = parseEmailDraft(ta.value, 'Following up');
   const email = _tyState ? (contacts.find(x => x.id === _tyState.contactId)?.email || '') : '';
-  const url = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  window.open(url, '_blank');
+  openGmailComposeWithSignature(email, subject, body);
 }
 
 function openRoundThankYouInEmail(appId, roundId) {
   const ta = document.getElementById('thankYouOut_'+roundId);
   if (!ta || !ta.value) { toast('Generate a note first'); return; }
-  const raw = ta.value;
-  const subjectMatch = raw.match(/^Subject:\s*(.+)/m);
-  const subject = subjectMatch ? subjectMatch[1].trim() : 'Thank you';
-  const body = raw.replace(/^Subject:\s*.+\n?/m, '').trim();
+  const { subject, body } = parseEmailDraft(ta.value, 'Thank you');
   const a = apps.find(x => x.id === appId);
   const r = a?.rounds?.find(x => x.id === roundId);
   const email = r?.interviewerEmail || '';
-  const url = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  window.open(url, '_blank');
+  openGmailComposeWithSignature(email, subject, body);
+}
+
+function parseEmailDraft(raw, fallbackSubject) {
+  const subjectMatch = raw.match(/^Subject:\s*(.+)/m);
+  return {
+    subject: subjectMatch ? subjectMatch[1].trim() : fallbackSubject,
+    body: raw.replace(/^Subject:\s*.+\n?/m, '').trim()
+  };
+}
+
+async function openGmailComposeWithSignature(to, subject, body) {
+  if (body) {
+    try {
+      await navigator.clipboard.writeText(body);
+      toast('Draft copied. Paste it above your Gmail signature.');
+    } catch(e) {
+      const scratch = document.createElement('textarea');
+      scratch.value = body;
+      scratch.style.position = 'fixed';
+      scratch.style.opacity = '0';
+      document.body.appendChild(scratch);
+      scratch.select();
+      document.execCommand('copy');
+      scratch.remove();
+      toast('Draft copied. Paste it above your Gmail signature.');
+    }
+  }
+  const url = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(to||'')}&su=${encodeURIComponent(subject||'')}`;
+  window.open(url, '_blank', 'noopener');
 }
 
 function closeThankYouModal() { document.getElementById('thankYouModal').classList.remove('open'); _tyState = null; }
