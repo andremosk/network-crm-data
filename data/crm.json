@@ -32450,10 +32450,11 @@
       "followUp": false,
       "lastContact": "2026-06-15",
       "addedDate": "2026-04-20",
-      "clientFitTier": 3,
+      "clientFitTier": 1,
       "connectorFitTier": 4,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "clientFitManual": true
     },
     {
       "id": 722,
@@ -50552,7 +50553,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-02T15:48:04.530Z",
+    "lastSync": "2026-07-02T15:48:49.759Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 2
