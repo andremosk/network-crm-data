@@ -43115,10 +43115,12 @@
       "followUp": false,
       "lastContact": "",
       "addedDate": "2026-04-21",
-      "clientFitTier": 4,
+      "clientFitTier": 2,
       "connectorFitTier": 4,
       "notInterested": false,
-      "clientFitModelVersion": 4
+      "clientFitModelVersion": 4,
+      "connectorFitManual": true,
+      "clientFitManual": true
     },
     {
       "id": 296,
@@ -50558,7 +50560,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-02T15:50:31.292Z",
+    "lastSync": "2026-07-02T15:50:47.156Z",
     "version": "v14",
     "contactCount": 2018,
     "appCount": 2
