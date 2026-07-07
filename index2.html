@@ -2509,6 +2509,48 @@ function cleanRichNoteHtml(html) {
   return template.innerHTML;
 }
 
+function replaceElementTag(el, tagName) {
+  const replacement = document.createElement(tagName);
+  while (el.firstChild) replacement.appendChild(el.firstChild);
+  el.replaceWith(replacement);
+  return replacement;
+}
+
+function sanitizePastedRichHtml(html) {
+  const template = document.createElement('template');
+  template.innerHTML = html || '';
+  template.content.querySelectorAll('script,style,iframe,object,embed,meta,link').forEach(el => el.remove());
+  template.content.querySelectorAll('*').forEach(el => {
+    const style = el.getAttribute('style') || '';
+    if (/(^|;)\s*font-weight\s*:\s*(bold|[6-9]00)/i.test(style) && !['B','STRONG'].includes(el.tagName)) {
+      el = replaceElementTag(el, 'strong');
+    }
+    if (/(^|;)\s*font-style\s*:\s*italic/i.test(style) && !['I','EM'].includes(el.tagName)) {
+      el = replaceElementTag(el, 'em');
+    }
+    if (/(^|;)\s*text-decoration[^;]*underline/i.test(style) && el.tagName !== 'U') {
+      el = replaceElementTag(el, 'u');
+    }
+
+    const allowed = ['A','B','STRONG','I','EM','U','S','P','DIV','BR','UL','OL','LI','H1','H2','H3','H4','BLOCKQUOTE'];
+    if (!allowed.includes(el.tagName)) {
+      el.replaceWith(...el.childNodes);
+      return;
+    }
+
+    const href = el.getAttribute('href') || '';
+    [...el.attributes].forEach(attr => el.removeAttribute(attr.name));
+    if (el.tagName === 'A') {
+      if (/^https?:\/\//i.test(href) || /^mailto:/i.test(href)) {
+        el.setAttribute('href', href);
+        el.setAttribute('target','_blank');
+        el.setAttribute('rel','noopener noreferrer');
+      }
+    }
+  });
+  return template.innerHTML;
+}
+
 function renderNotes(notes, contactId) {
   if (!notes) return '<div style="color:var(--muted);font-size:13px;font-style:italic;margin-bottom:12px">No notes yet.</div>';
   const entries = parseNotes(notes);
@@ -2800,13 +2842,16 @@ function confirmSwitchDataset() {
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────
-// Strip pasted color/style baggage while keeping rich text fields readable.
+// Strip pasted color/style baggage while keeping useful rich text like Granola bold.
 document.addEventListener('paste', function(e) {
   const el = document.activeElement;
   if (el && el.contentEditable === 'true') {
     e.preventDefault();
-    const text = (e.clipboardData || window.clipboardData).getData('text/plain');
-    document.execCommand('insertHTML', false, text.replace(/\n/g, '<br>'));
+    const data = e.clipboardData || window.clipboardData;
+    const html = data.getData('text/html');
+    const text = data.getData('text/plain');
+    const insert = html ? sanitizePastedRichHtml(html) : esc(text).replace(/\n/g, '<br>');
+    document.execCommand('insertHTML', false, insert);
   }
 });
 renderList();
