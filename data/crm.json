@@ -39940,7 +39940,8 @@
       "clientFitTier": 4,
       "connectorFitTier": 4,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "followUpDate": "2026-09-07"
     },
     {
       "id": 422,
@@ -50540,7 +50541,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-07T16:24:11.610Z",
+    "lastSync": "2026-07-07T16:24:25.065Z",
     "version": "v14",
     "contactCount": 2016,
     "appCount": 2
