@@ -31434,10 +31434,11 @@
       "followUp": false,
       "lastContact": "",
       "addedDate": "2026-04-20",
-      "clientFitTier": 2,
+      "clientFitTier": 1,
       "connectorFitTier": 2,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "clientFitManual": true
     },
     {
       "id": 762,
@@ -50542,7 +50543,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-07T19:21:52.452Z",
+    "lastSync": "2026-07-07T20:37:49.006Z",
     "version": "v14",
     "contactCount": 2016,
     "appCount": 2
