@@ -47944,9 +47944,10 @@
       "lastContact": "",
       "addedDate": "2026-04-21",
       "clientFitTier": 4,
-      "connectorFitTier": 4,
+      "connectorFitTier": 1,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "connectorFitManual": true
     },
     {
       "id": 102,
@@ -50541,7 +50542,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-07T16:24:25.065Z",
+    "lastSync": "2026-07-07T17:00:25.995Z",
     "version": "v14",
     "contactCount": 2016,
     "appCount": 2
