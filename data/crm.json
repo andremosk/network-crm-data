@@ -39932,9 +39932,9 @@
       "functionFlag": true,
       "positionFlag": true,
       "knowsMe": true,
-      "status": null,
+      "status": "follow_up",
       "recruiter": false,
-      "followUp": false,
+      "followUp": true,
       "lastContact": "2026-07-07",
       "addedDate": "2026-04-21",
       "clientFitTier": 4,
@@ -50540,7 +50540,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-07T16:24:00.737Z",
+    "lastSync": "2026-07-07T16:24:11.610Z",
     "version": "v14",
     "contactCount": 2016,
     "appCount": 2
