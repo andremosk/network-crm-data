@@ -28650,7 +28650,7 @@
       "notes": "Jul 8, 2026: Friend from years back (in our 20s).\nJul 8, 2026: I reached out to Amy on LinkedIn.",
       "companyFlag": false,
       "functionFlag": false,
-      "positionFlag": false,
+      "positionFlag": true,
       "knowsMe": false,
       "status": "follow_up",
       "recruiter": false,
@@ -50486,7 +50486,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T18:14:24.585Z",
+    "lastSync": "2026-07-08T18:14:29.074Z",
     "version": "v14",
     "contactCount": 2013,
     "appCount": 2
