@@ -49569,31 +49569,6 @@
       "clientFitModelVersion": 7
     },
     {
-      "id": 36,
-      "name": "",
-      "firstName": "",
-      "lastName": "",
-      "tier": 4,
-      "company": "Glean",
-      "position": "",
-      "linkedin": "",
-      "email": "",
-      "notes": "About Glean:\n \nGlean is the Work AI platform that helps everyone work smarter with AI. What began as the industry’s most advanced enterprise search has evolved into a full-scale Work AI ecosystem, powering intelligent Search, an AI Assistant, and scalable AI agents on one secure, open platform. With over 100 enterprise SaaS connectors, flexible LLM choice, and robust APIs, Glean gives organizations the infrastructure to govern, scale, and customize AI across their entire business - without vendor lock-in or costly implementation cycles.\n \nAt its core, Glean is redefining how enterprises find, use, and act on knowledge. Its Enterprise Graph and Personal Knowledge Graph map the relationships between people, content, and activity, delivering deeply personalized, context-aware responses for every employee. This foundation powers Glean’s agentic capabilities - AI agents that automate real work across teams by accessing the industry’s broadest range of data: enterprise and world, structured and unstructured, historical and real-time. The result: measurable business impact through faster onboarding, hours of productivity gained each week, and smarter, safer decisions at every level.\n \nRecognized by Fast Company as one of the World’s Most Innovative Companies (Top 10, 2025), by CNBC’s Disruptor 50, Bloomberg’s AI Startups to Watch (2026), Forbes AI 50, and Gartner’s Tech Innovators in Agentic AI, Glean continues to accelerate its global impact. With customers across 50+ industries and 1,000+ employees in more than 25 countries, we’re helping the world’s largest organizations make every employee AI-fluent, and turning the superintelligent enterprise from concept into reality.\n \nIf you’re excited to shape how the world works, you’ll help build systems used daily across Microsoft Teams, Zoom, ServiceNow, Zendesk, GitHub, and many more - deeply embedded where people get things done. You’ll ship agentic capabilities on an open, extensible stack, with the craft and care required for enterprise trust, as we bring Work AI to every employee, in every company.\n \nAbout the Role:\n \nGlean is seeking a leader of our AIOM (AI Outcomes Manger) team. The AIOMs are responsible for ensuring that our customers’ end-users successfully adopt and derive meaningful, measurable value from Glean’s AI solutions. The AIOMs perform the following types of activities:  End-user training enablement (company and function sessions, search, chat and agent content), prompt and agent advisory/building and value realization. Ultimately, the AIOMs are responsible for breadth and depth of end-user engagement across our product suite.  \n \nYou will: \nManage the employee lifecycle for a team of AI Outcomes Managers to drive high-impact customer enablement, advisory/building on our platform and business value realization with Glean’s products.\nDevelop a set of Glean prescriptive adoption playbooks including codifying a set of standard process, templates and assets to drive delivery consistency with our customers\nEngage with executive sponsors and business stakeholders across priority accounts\nPartner cross-functionally with the other leaders of the customer organization including:  Solution Architects, Delivery Excellence Managers and Support to ensure Glean is providing a seamless customer journey to our customers\nSynthesize feedback and business insights from the field, influence Glean’s product roadmap, and collaborate with Product and R&D to shape new features and agent capabilities\nDesign, implement, and report on metrics for the AIOM team demonstrating ROI, adoption, and transformation progress for customers\nServe as a thought leader and subject matter expert on AI outcomes and user transformation; evangelize best practices internally and externally.\nAbout you: \n4+ years of experience in customer-facing, consultative roles (e.g., management consulting, customer success, business transformation, product management, solutions consulting) with an AI/data/enterprise SaaS company.\n2+ years of leadership experience and demonstrated ability to scale teams and drive business transformation through technology adoption.\nExcellent problem-solving skills and ability to communicate effectively with diverse audiences, from executives to end users.\nStrong data fluency; comfortable with adoption/ROI metrics and business KPIs.\nConsultative, creative, and motivated mindset—excited about helping organizations rethink business processes and work styles with AI.\nProven product sense and ability to maximize the impact of complex software platforms.\nExperience facilitating workshops and change management programs for business transformation.\nUnderstanding of modern AI capabilities (prompting, agent workflows, LLMs), with ability to coach others on best practices.\nLocation: \nThis role is hybrid (3-4 days a week in our NYC office)\nCompensation & Benefits:\n \nThe standard OTE range for this position is $270,000-$320,000 annually. Compensation offered will be determined by factors such as location, level, job-related knowledge, skills, and experience. Certain roles may be eligible for variable compensation, equity, and benefits.\n \nWe offer a comprehensive benefits package including competitive compensation, Medical, Vision, and Dental coverage, generous time-off policy, and the opportunity to contribute to your 401k plan to support your long-term goals. When you join, you'll receive a home office improvement stipend, as well as an annual education and wellness stipends to support your growth and wellbeing. We foster a vibrant company culture through regular events, and provide healthy lunches daily to keep you fueled and focused.\n \nWe are a diverse bunch of people and we want to continue to attract and retain a diverse range of people into our organization. We're committed to an inclusive and diverse company. We do not discriminate based on gender, ethnicity, sexual orientation, religion, civil or family status, age, disability, or race.\n \n#LI-HYBRID\nAI-First Mindset at Glean:\n\nAt Glean, AI fluency is core to how we work and we're committed to ensuring every new hire feels confident integrating AI into their everyday work. As part of the interview process, you'll complete a brief AI-focused exercise or discussion so we can understand how you think about, design, and use AI to drive impact in your role. Feel free to reference any tools, platforms, or workflows you use today — prior Glean experience isn't required.\n\n",
-      "companyFlag": false,
-      "functionFlag": false,
-      "positionFlag": false,
-      "knowsMe": false,
-      "status": "applied",
-      "recruiter": false,
-      "followUp": false,
-      "lastContact": "",
-      "addedDate": "2026-05-13",
-      "clientFitTier": 1,
-      "connectorFitTier": 2,
-      "notInterested": false,
-      "clientFitModelVersion": 7
-    },
-    {
       "id": 35,
       "name": "",
       "firstName": "",
@@ -50558,9 +50533,9 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T16:11:10.955Z",
+    "lastSync": "2026-07-08T16:36:12.362Z",
     "version": "v14",
-    "contactCount": 2016,
+    "contactCount": 2015,
     "appCount": 2
   }
 }
