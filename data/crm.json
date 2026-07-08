@@ -27255,10 +27255,11 @@
       "followUp": false,
       "lastContact": "",
       "addedDate": "2026-04-20",
-      "clientFitTier": 1,
+      "clientFitTier": 4,
       "connectorFitTier": 4,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "clientFitManual": true
     },
     {
       "id": 930,
@@ -50484,7 +50485,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T17:54:24.153Z",
+    "lastSync": "2026-07-08T17:55:51.650Z",
     "version": "v14",
     "contactCount": 2013,
     "appCount": 2
