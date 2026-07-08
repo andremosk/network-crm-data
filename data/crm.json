@@ -28652,9 +28652,9 @@
       "functionFlag": false,
       "positionFlag": false,
       "knowsMe": false,
-      "status": null,
+      "status": "follow_up",
       "recruiter": false,
-      "followUp": false,
+      "followUp": true,
       "lastContact": "2026-07-08",
       "addedDate": "2026-04-20",
       "clientFitTier": 1,
@@ -50485,7 +50485,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T18:14:15.511Z",
+    "lastSync": "2026-07-08T18:14:19.756Z",
     "version": "v14",
     "contactCount": 2013,
     "appCount": 2
