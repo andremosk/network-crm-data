@@ -26800,10 +26800,12 @@
       "followUp": false,
       "lastContact": "",
       "addedDate": "2026-04-20",
-      "clientFitTier": 1,
-      "connectorFitTier": 4,
+      "clientFitTier": 2,
+      "connectorFitTier": 3,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "clientFitManual": true,
+      "connectorFitManual": true
     },
     {
       "id": 948,
@@ -50556,7 +50558,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T16:07:56.997Z",
+    "lastSync": "2026-07-08T16:11:10.955Z",
     "version": "v14",
     "contactCount": 2016,
     "appCount": 2
