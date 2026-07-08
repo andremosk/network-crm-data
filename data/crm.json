@@ -28884,10 +28884,12 @@
       "followUp": false,
       "lastContact": "2026-07-08",
       "addedDate": "2026-04-20",
-      "clientFitTier": 1,
-      "connectorFitTier": 4,
+      "clientFitTier": 3,
+      "connectorFitTier": 3,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "clientFitManual": true,
+      "connectorFitManual": true
     },
     {
       "id": 865,
@@ -50486,7 +50488,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T18:39:10.633Z",
+    "lastSync": "2026-07-08T18:40:41.631Z",
     "version": "v14",
     "contactCount": 2013,
     "appCount": 2
