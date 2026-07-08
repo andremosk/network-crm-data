@@ -50369,10 +50369,12 @@
       "followUp": false,
       "lastContact": "",
       "addedDate": "2026-06-24",
-      "clientFitTier": 2,
-      "connectorFitTier": 4,
+      "clientFitTier": 4,
+      "connectorFitTier": 3,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "clientFitManual": true,
+      "connectorFitManual": true
     },
     {
       "id": 29,
@@ -50490,7 +50492,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T18:52:53.708Z",
+    "lastSync": "2026-07-08T18:53:05.025Z",
     "version": "v14",
     "contactCount": 2013,
     "appCount": 2
