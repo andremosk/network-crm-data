@@ -31438,9 +31438,9 @@
       "functionFlag": false,
       "positionFlag": false,
       "knowsMe": true,
-      "status": null,
+      "status": "follow_up",
       "recruiter": false,
-      "followUp": false,
+      "followUp": true,
       "lastContact": "2026-07-07",
       "addedDate": "2026-04-20",
       "clientFitTier": 1,
@@ -50488,7 +50488,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T18:40:41.631Z",
+    "lastSync": "2026-07-08T18:41:16.672Z",
     "version": "v14",
     "contactCount": 2013,
     "appCount": 2
