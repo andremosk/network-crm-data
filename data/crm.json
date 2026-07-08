@@ -49342,15 +49342,16 @@
       "functionFlag": true,
       "positionFlag": true,
       "knowsMe": false,
-      "status": "follow_up",
+      "status": null,
       "recruiter": false,
-      "followUp": true,
+      "followUp": false,
       "lastContact": "2026-05-15",
       "addedDate": "2026-04-28",
       "clientFitTier": 4,
       "connectorFitTier": 4,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "followUpDate": ""
     },
     {
       "id": 46,
@@ -50546,7 +50547,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T15:50:43.633Z",
+    "lastSync": "2026-07-08T16:00:09.181Z",
     "version": "v14",
     "contactCount": 2016,
     "appCount": 2
