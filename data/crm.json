@@ -46465,10 +46465,11 @@
       "followUp": false,
       "lastContact": "",
       "addedDate": "2026-04-21",
-      "clientFitTier": 2,
+      "clientFitTier": 3,
       "connectorFitTier": 4,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "clientFitManual": true
     },
     {
       "id": 162,
@@ -50495,7 +50496,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T18:56:16.506Z",
+    "lastSync": "2026-07-08T19:20:48.369Z",
     "version": "v14",
     "contactCount": 2013,
     "appCount": 2
