@@ -26795,9 +26795,9 @@
       "functionFlag": false,
       "positionFlag": true,
       "knowsMe": true,
-      "status": null,
+      "status": "follow_up",
       "recruiter": false,
-      "followUp": false,
+      "followUp": true,
       "lastContact": "2026-07-08",
       "addedDate": "2026-04-20",
       "clientFitTier": 2,
@@ -50483,7 +50483,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T16:49:01.164Z",
+    "lastSync": "2026-07-08T17:54:16.327Z",
     "version": "v14",
     "contactCount": 2013,
     "appCount": 2
