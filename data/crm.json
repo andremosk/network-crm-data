@@ -29267,10 +29267,11 @@
       "lastContact": "2026-05-07",
       "addedDate": "2026-04-20",
       "followUpDate": "",
-      "clientFitTier": 2,
+      "clientFitTier": 3,
       "connectorFitTier": 4,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "clientFitManual": true
     },
     {
       "id": 849,
@@ -50489,7 +50490,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T18:41:21.086Z",
+    "lastSync": "2026-07-08T18:52:33.910Z",
     "version": "v14",
     "contactCount": 2013,
     "appCount": 2
