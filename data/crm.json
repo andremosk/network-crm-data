@@ -26449,10 +26449,11 @@
       "lastContact": "2026-06-18",
       "addedDate": "2026-04-20",
       "followUpDate": "",
-      "clientFitTier": 1,
+      "clientFitTier": 2,
       "connectorFitTier": 2,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "clientFitManual": true
     },
     {
       "id": 962,
@@ -26950,10 +26951,11 @@
       "lastContact": "2026-06-18",
       "addedDate": "2026-04-20",
       "followUpDate": "",
-      "clientFitTier": 1,
+      "clientFitTier": 2,
       "connectorFitTier": 4,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "clientFitManual": true
     },
     {
       "id": 942,
@@ -50549,7 +50551,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T16:00:57.607Z",
+    "lastSync": "2026-07-08T16:01:34.608Z",
     "version": "v14",
     "contactCount": 2016,
     "appCount": 2
