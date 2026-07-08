@@ -49418,16 +49418,17 @@
       "functionFlag": false,
       "positionFlag": false,
       "knowsMe": false,
-      "status": "follow_up",
+      "status": null,
       "recruiter": false,
-      "followUp": true,
+      "followUp": false,
       "lastContact": "2026-07-08",
       "addedDate": "2026-05-01",
       "clientFitTier": 1,
       "connectorFitTier": 4,
       "notInterested": false,
       "clientFitModelVersion": 7,
-      "clientFitManual": true
+      "clientFitManual": true,
+      "followUpDate": ""
     },
     {
       "id": 43,
@@ -50544,7 +50545,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T15:33:25.937Z",
+    "lastSync": "2026-07-08T15:33:38.945Z",
     "version": "v14",
     "contactCount": 2016,
     "appCount": 2
