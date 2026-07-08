@@ -35202,10 +35202,11 @@
       "followUp": false,
       "lastContact": "",
       "addedDate": "2026-04-20",
-      "clientFitTier": 1,
+      "clientFitTier": 2,
       "connectorFitTier": 1,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "clientFitManual": true
     },
     {
       "id": 611,
@@ -50551,7 +50552,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T16:07:05.775Z",
+    "lastSync": "2026-07-08T16:07:17.749Z",
     "version": "v14",
     "contactCount": 2016,
     "appCount": 2
