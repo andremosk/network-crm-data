@@ -33527,10 +33527,11 @@
       "followUp": false,
       "lastContact": "2026-04-24",
       "addedDate": "2026-04-20",
-      "clientFitTier": 2,
+      "clientFitTier": 4,
       "connectorFitTier": 4,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "clientFitManual": true
     },
     {
       "id": 679,
@@ -50494,7 +50495,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T18:55:28.487Z",
+    "lastSync": "2026-07-08T18:56:16.506Z",
     "version": "v14",
     "contactCount": 2013,
     "appCount": 2
