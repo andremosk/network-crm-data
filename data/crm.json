@@ -41397,10 +41397,12 @@
       "followUp": false,
       "lastContact": "2026-05-05",
       "addedDate": "2026-04-21",
-      "clientFitTier": 1,
-      "connectorFitTier": 3,
+      "clientFitTier": 3,
+      "connectorFitTier": 2,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "clientFitManual": true,
+      "connectorFitManual": true
     },
     {
       "id": 364,
@@ -50553,7 +50555,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T16:07:25.709Z",
+    "lastSync": "2026-07-08T16:07:34.073Z",
     "version": "v14",
     "contactCount": 2016,
     "appCount": 2
