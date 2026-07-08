@@ -34246,7 +34246,7 @@
       "companyFlag": false,
       "functionFlag": false,
       "positionFlag": false,
-      "knowsMe": false,
+      "knowsMe": true,
       "status": null,
       "recruiter": false,
       "followUp": false,
@@ -50494,7 +50494,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T18:55:20.320Z",
+    "lastSync": "2026-07-08T18:55:28.487Z",
     "version": "v14",
     "contactCount": 2013,
     "appCount": 2
