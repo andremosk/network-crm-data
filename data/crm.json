@@ -32438,11 +32438,12 @@
       "followUp": false,
       "lastContact": "2026-06-15",
       "addedDate": "2026-04-20",
-      "clientFitTier": 1,
-      "connectorFitTier": 4,
+      "clientFitTier": 3,
+      "connectorFitTier": 2,
       "notInterested": false,
       "clientFitModelVersion": 7,
-      "clientFitManual": true
+      "clientFitManual": true,
+      "connectorFitManual": true
     },
     {
       "id": 722,
@@ -50547,7 +50548,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T16:00:09.181Z",
+    "lastSync": "2026-07-08T16:00:42.373Z",
     "version": "v14",
     "contactCount": 2016,
     "appCount": 2
