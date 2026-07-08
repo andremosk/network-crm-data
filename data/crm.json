@@ -49544,31 +49544,6 @@
       "clientFitModelVersion": 7
     },
     {
-      "id": 37,
-      "name": "",
-      "firstName": "",
-      "lastName": "",
-      "tier": 4,
-      "company": "BTS",
-      "position": "",
-      "linkedin": "",
-      "email": "",
-      "notes": "Strategy Execution Consultant - Director & Senior Director Levels\n\nWhat We’re Looking For\n\nWe want genuinely curious and humbly inclusive people who bring diverse experiences, backgrounds, skills, and capabilities to BTS.\n\n\nExperience and Background Requirements & Preferences:\n\nBachelor’s degree, or equivalent experience\nMinimum ten years' experience in consulting, or 15 years of work experience in a relevant industry\nProven experience in a revenue generating or account management consulting role as well as in project leadership\nDemonstrated ability to build, expand, and sustain senior client relationships\nEstablished network with decision-makers; ability to leverage existing relationships to open doors and create new opportunities\nEligibility to work in the US permanently without sponsorship is required\n\nRequired Skills and Capabilities:\n\nBusiness and Operational Acumen\n    Uses business and operating model knowledge to position all BTS client work\n    Translates client operating model insights to solutions and services\nProblem-framing and Developing Insights\n    Frames the essential client problems with the client\n    Catalyzes client and project related insights\n    Communicates insights related to the broader org outcome that goes beyond the scope of the current project\nClient-Ready Communication & Relationship Skills\n    Uses productive dialogue to challenge the client’s assumptions in a respectful way\n    Synthesizes complex client or team conversation progressing the topic\n    Delivers difficult messages to the client\n    Suggests ways the client can be more successful\nAccountability to Self, Team, and Clients\n    Claims accountability for delivering client outcomes, value, and quality\n    Innovates approaches that include the client and key stakeholders in meaningful ways\n    Scopes projects accurately and identifies the right project skills\n    Plans and executes complex projects\n    Identifies and takes smart risks in developing others\n   Teaches great project leadership values and behaviors and acts as a safety net for project leaders\n    Makes it safe for each person to ask for and give feedback\nFacilitation of Client Sessions\n    Leads engaging, impactful client workshops, working sessions, and offsites- bringing BTS’s designed experiences to life",
-      "companyFlag": false,
-      "functionFlag": false,
-      "positionFlag": false,
-      "knowsMe": false,
-      "status": "interviewing",
-      "recruiter": false,
-      "followUp": false,
-      "lastContact": "",
-      "addedDate": "2026-05-13",
-      "clientFitTier": 3,
-      "connectorFitTier": 3,
-      "notInterested": false,
-      "clientFitModelVersion": 7
-    },
-    {
       "id": 35,
       "name": "",
       "firstName": "",
@@ -50533,9 +50508,9 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T16:36:12.362Z",
+    "lastSync": "2026-07-08T16:36:25.779Z",
     "version": "v14",
-    "contactCount": 2015,
+    "contactCount": 2014,
     "appCount": 2
   }
 }
