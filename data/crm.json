@@ -28660,7 +28660,8 @@
       "clientFitTier": 1,
       "connectorFitTier": 4,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "followUpDate": "2026-07-20"
     },
     {
       "id": 874,
@@ -50485,7 +50486,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T18:14:19.756Z",
+    "lastSync": "2026-07-08T18:14:24.585Z",
     "version": "v14",
     "contactCount": 2013,
     "appCount": 2
