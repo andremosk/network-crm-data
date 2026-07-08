@@ -49374,7 +49374,8 @@
       "clientFitTier": 2,
       "connectorFitTier": 3,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "followUpDate": "2026-07-14"
     },
     {
       "id": 45,
@@ -50543,7 +50544,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T12:58:10.217Z",
+    "lastSync": "2026-07-08T15:29:40.779Z",
     "version": "v14",
     "contactCount": 2016,
     "appCount": 2
