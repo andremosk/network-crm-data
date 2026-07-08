@@ -31447,7 +31447,8 @@
       "connectorFitTier": 2,
       "notInterested": false,
       "clientFitModelVersion": 7,
-      "clientFitManual": true
+      "clientFitManual": true,
+      "followUpDate": "2026-07-10"
     },
     {
       "id": 762,
@@ -50488,7 +50489,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T18:41:16.672Z",
+    "lastSync": "2026-07-08T18:41:21.086Z",
     "version": "v14",
     "contactCount": 2013,
     "appCount": 2
