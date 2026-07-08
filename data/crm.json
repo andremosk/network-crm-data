@@ -37412,10 +37412,11 @@
       "followUp": false,
       "lastContact": "2026-05-15",
       "addedDate": "2026-04-21",
-      "clientFitTier": 1,
+      "clientFitTier": 3,
       "connectorFitTier": 2,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "clientFitManual": true
     },
     {
       "id": 523,
@@ -50548,7 +50549,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T16:00:42.373Z",
+    "lastSync": "2026-07-08T16:00:57.607Z",
     "version": "v14",
     "contactCount": 2016,
     "appCount": 2
