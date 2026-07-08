@@ -34252,11 +34252,12 @@
       "followUp": false,
       "lastContact": "",
       "addedDate": "2026-04-20",
-      "clientFitTier": 2,
+      "clientFitTier": 3,
       "connectorFitTier": 4,
       "notInterested": false,
       "clientFitModelVersion": 7,
-      "followUpDate": ""
+      "followUpDate": "",
+      "clientFitManual": true
     },
     {
       "id": 650,
@@ -50493,7 +50494,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T18:53:50.628Z",
+    "lastSync": "2026-07-08T18:55:20.320Z",
     "version": "v14",
     "contactCount": 2013,
     "appCount": 2
