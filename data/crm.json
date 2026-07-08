@@ -49519,31 +49519,6 @@
       "clientFitModelVersion": 7
     },
     {
-      "id": 39,
-      "name": "",
-      "firstName": "",
-      "lastName": "",
-      "tier": 4,
-      "company": "Experience Institute",
-      "position": "",
-      "linkedin": "",
-      "email": "",
-      "notes": "From Amelia: \"Experience Institute leads a whole bunch of workplace learning. One thing we've been doing lately is supporting companies with the people-side and behavior-change aspects of AI adoption. While we focus on the people part, it also helps to be a step ahead of our clients on the technical side.\n\nWe’ve been lucky enough to work with an AI whiz for the past 6 months, but they’ve moved on to another gig, so we’re keeping our eye out for someone who might be interested in lending us their technical expertise from time to time. They would join our “bench” of facilitators and help us both build and lead sessions.\n\nThe combo we’re looking for is: Someone who’s constantly learning new capabilities of AI + someone comfortable sharing some of that learning out loud (virtual workshop settings). There is no guarantee of a certain amount of work.\"",
-      "companyFlag": false,
-      "functionFlag": false,
-      "positionFlag": false,
-      "knowsMe": false,
-      "status": "screening",
-      "recruiter": false,
-      "followUp": false,
-      "lastContact": "",
-      "addedDate": "2026-05-13",
-      "clientFitTier": 3,
-      "connectorFitTier": 3,
-      "notInterested": false,
-      "clientFitModelVersion": 7
-    },
-    {
       "id": 35,
       "name": "",
       "firstName": "",
@@ -50508,9 +50483,9 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-08T16:36:25.779Z",
+    "lastSync": "2026-07-08T16:36:33.379Z",
     "version": "v14",
-    "contactCount": 2014,
+    "contactCount": 2013,
     "appCount": 2
   }
 }
