@@ -2235,14 +2235,124 @@ function addNote(id) {
   toast('Note saved ✓');
 }
 
+const BUSINESS_HQ_CONTEXT_FILES = [
+  'LLM Context Pack.md',
+  'Business Snapshot.md',
+  'Offer Map.md',
+  'AI Value Patterns.md',
+  'Candidate Market Fit Drafts.md',
+  'Warm Outreach Launch Checklist.md',
+  'Weekly Plan.md',
+  'Decision Log.md'
+];
+let _businessHqContextCache = null;
+
+async function getBusinessHqContext() {
+  if (_businessHqContextCache) return _businessHqContextCache;
+  const parts = await Promise.all(BUSINESS_HQ_CONTEXT_FILES.map(async file => {
+    try {
+      const res = await fetch(`context/business-hq/${encodeURIComponent(file)}`);
+      if (!res.ok) return '';
+      const text = await res.text();
+      return `# ${file}\n${text.trim()}`;
+    } catch(e) {
+      return '';
+    }
+  }));
+  _businessHqContextCache = parts.filter(Boolean).join('\n\n---\n\n').slice(0, 18000);
+  return _businessHqContextCache;
+}
+
+function fitLabel(v) {
+  const n = normalizeFitTier(v);
+  return n ? `${n} (${n===1?'strong':n===2?'good':n===3?'possible':'low'})` : 'Not set';
+}
+
+function buildConversationCoachPrompt(c, businessContext) {
+  const contactContext = [
+    `Name: ${c.name || 'Unknown'}`,
+    `Company: ${c.company || 'Unknown'}`,
+    `Position: ${c.position || 'Unknown'}`,
+    `Relationship: ${c.tier || 'Not set'} (1=very close, 4=weak tie)`,
+    `Client Fit: ${fitLabel(c.clientFitTier)}`,
+    `Connector Fit: ${fitLabel(c.connectorFitTier)}`,
+    `Not Interested: ${c.notInterested ? 'Yes' : 'No'}`,
+    `Knows Andre's work: ${c.knowsMe ? 'Yes' : 'No'}`,
+    `Status: ${c.status || 'none'}`,
+    `LinkedIn: ${c.linkedin || 'none'}`,
+    `Past notes: ${c.notes ? c.notes.substring(0, 1600) : 'None'}`
+  ].join('\n');
+
+  return `You are Andre Moskowitz's conversation coach inside Network.crm.
+
+Use the Business HQ Markdown context below as the current source of truth for Andre's business, Hudson Ray, offers, ideal clients, proof points, and outreach language. Do not default to older job-search positioning unless the contact context makes job-search framing specifically relevant.
+
+Business HQ context:
+${businessContext || '(Business HQ context unavailable. Use the contact context and current Hudson Ray positioning from CRM notes.)'}
+
+Contact context:
+${contactContext}
+
+Give Andre 3-4 specific, actionable suggestions for this conversation. Include:
+- the best angle for this person
+- what Andre should ask or listen for
+- how to describe Hudson Ray in language this person could repeat
+- any warm-intro or follow-up move if relevant
+
+Keep it concise, practical, and specific. Do not invent facts.`;
+}
+
+function buildContactThankYouPrompt(c, noteText, noteDate, businessContext) {
+  const formatInstructions = _tyFlavor === 'recap'
+    ? `WRITE:
+- Start with first name + comma on its own line
+- Keep it concise and email-ready: about 120-160 words
+- Open with one warm thank-you sentence
+- Include 2-4 short bullets recapping specific things discussed
+- End with one brief forward-looking line
+- Sign off: Andre
+- Tone: warm, useful, personal, and conversational
+- Do NOT add anything not in the notes`
+    : `WRITE:
+- Start with first name + comma on its own line
+- 2-3 SHORT paragraphs, under 100 words total
+- 1 specific callback to something from the note
+- 1 forward-looking line (genuine, not transactional)
+- Sign off: Andre
+- Tone: warm, casual, genuine — zero corporate speak
+- Do NOT add anything not in the notes`;
+
+  return `Write ${_tyFlavor === 'recap' ? 'a concise bullet-pointed meeting recap thank you note' : 'a brief, warm thank you note'} from Andre Moskowitz to a networking contact.
+
+Use the Business HQ Markdown context below as the current source of truth for Andre's business, Hudson Ray, offers, ideal clients, proof points, and outreach language. Do not default to older job-search positioning unless the conversation note makes job-search framing specifically relevant.
+
+Business HQ context:
+${businessContext || '(Business HQ context unavailable. Use the contact context and note only.)'}
+
+The contact:
+- Name: ${c.name || 'Unknown'}
+- Company: ${c.company || 'unknown'}
+- Position: ${c.position || 'unknown'}
+- Relationship: ${c.tier || 'Not set'}/4
+- Client Fit: ${fitLabel(c.clientFitTier)}
+- Connector Fit: ${fitLabel(c.connectorFitTier)}
+- Knows Andre's work: ${c.knowsMe ? 'Yes' : 'No'}
+
+Conversation note (${noteDate || 'recent'}):
+${noteText}
+
+${formatInstructions}`;
+}
+
 async function getAI(id) {
   const apiKey = 'server';
   if (!apiKey) { document.getElementById('aiOut').innerHTML = '<div style="color:#f5a623;font-size:13px">⚠️ Add ANTHROPIC_API_KEY in Vercel project settings.</div>'; return; }
   const c = contacts.find(x => x.id === id); if (!c) return;
   const el = document.getElementById('aiOut'); if (!el) return;
   el.innerHTML = '<div class="dot-pulse"><span></span><span></span><span></span></div>';
-  const prompt = `You are a career networking coach for Andre Moskowitz, recently laid off from Snap as Manager of Talent Programs. He has 12+ years at IBM (Watson/AI consulting, talent leadership) and Snap. He's seeking AI Enablement, AI Transformation, or Talent Management roles at mid-size tech companies.\n\nContact: ${c.name} | Company: ${c.company||'Unknown'} | Position: ${c.position||'Unknown'} | Tier: ${c.tier} (1=very close, 4=weak tie) | Knows Andre's work: ${c.knowsMe?'Yes':'No'} | Status: ${c.status||'none'}\nPast notes: ${c.notes?c.notes.substring(0,600):'None'}\n\nGive Andre 3-4 specific, actionable suggestions for this conversation. Concise and specific — no generic advice.`;
   try {
+    const businessContext = await getBusinessHqContext();
+    const prompt = buildConversationCoachPrompt(c, businessContext);
     const res = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] }) });
     const data = await res.json();
     if (data.error) { el.innerHTML = `<div style="color:#e05c5c;font-size:13px">API Error: ${esc(data.error.message||'Unknown error')}</div>`; return; }
@@ -2751,34 +2861,9 @@ async function _runThankYouGen(c, noteText, noteDate) {
   const errEl = document.getElementById('tyError');
   const apiKey = 'server';
   loading.style.display = 'block'; ta.value = ''; errEl.style.display = 'none';
-  const formatInstructions = _tyFlavor === 'recap'
-    ? `WRITE:
-- Start with first name + comma on its own line
-- Keep it concise and email-ready: about 120-160 words
-- Open with one warm thank-you sentence
-- Include 2-4 short bullets recapping specific things discussed
-- End with one brief forward-looking line
-- Sign off: Andre
-- Tone: warm, useful, personal, and conversational
-- Do NOT add anything not in the notes`
-    : `WRITE:
-- Start with first name + comma on its own line
-- 2-3 SHORT paragraphs, under 100 words total
-- 1 specific callback to something from the note
-- 1 forward-looking line (genuine, not transactional)
-- Sign off: Andre
-- Tone: warm, casual, genuine — zero corporate speak
-- Do NOT add anything not in the notes`;
-  const prompt = `Write ${_tyFlavor === 'recap' ? 'a concise bullet-pointed meeting recap thank you note' : 'a brief, warm thank you note'} from Andre Moskowitz to a networking contact.
-
-WHO ANDRE IS: Talent management and AI enablement leader, job searching. IBM (12 years: talent programs for 150K+ pros, Watson/AI consulting for Fortune 500), Snap (ran performance cycles, shipped AI HR tools for 1,000+ managers). MBA Notre Dame, BA Duke Psychology.
-
-THE CONTACT: ${c.name} at ${c.company||'unknown'}, ${c.position||'unknown'}. Knows Andre's work: ${c.knowsMe?'Yes':'No'}. Closeness tier: ${c.tier}/4.
-
-CONVERSATION NOTE (${noteDate||'recent'}): ${noteText}
-
-${formatInstructions}`;
   try {
+    const businessContext = await getBusinessHqContext();
+    const prompt = buildContactThankYouPrompt(c, noteText, noteDate, businessContext);
     const res = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: _tyFlavor === 'recap' ? 450 : 300, messages: [{ role: 'user', content: prompt }] }) });
     const data = await res.json();
     loading.style.display = 'none';
