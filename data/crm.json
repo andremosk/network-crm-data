@@ -1,6 +1,31 @@
 {
   "contacts": [
     {
+      "id": 2021,
+      "name": "Maggie Reichenbach",
+      "firstName": "Maggie",
+      "lastName": "Reichenbach",
+      "tier": 3,
+      "company": "Bird Bus Sales",
+      "position": "CX & Sales Advisor",
+      "linkedin": "https://www.linkedin.com/in/maggie-reichenbach/",
+      "email": "",
+      "notes": "",
+      "companyFlag": false,
+      "functionFlag": false,
+      "positionFlag": false,
+      "knowsMe": false,
+      "status": null,
+      "recruiter": false,
+      "followUp": false,
+      "notInterested": false,
+      "lastContact": "",
+      "addedDate": "2026-07-09",
+      "clientFitTier": 4,
+      "clientFitModelVersion": 7,
+      "connectorFitTier": 2
+    },
+    {
       "id": 2020,
       "name": "Casey Costello",
       "firstName": "Casey",
@@ -50497,9 +50522,9 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-09T13:31:08.027Z",
+    "lastSync": "2026-07-09T14:31:31.876Z",
     "version": "v14",
-    "contactCount": 2013,
+    "contactCount": 2014,
     "appCount": 2
   }
 }
