@@ -31142,9 +31142,9 @@
       "functionFlag": false,
       "positionFlag": false,
       "knowsMe": true,
-      "status": null,
+      "status": "follow_up",
       "recruiter": false,
-      "followUp": false,
+      "followUp": true,
       "lastContact": "2026-07-09",
       "addedDate": "2026-04-20",
       "clientFitTier": 4,
@@ -50525,7 +50525,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-09T18:32:29.391Z",
+    "lastSync": "2026-07-09T19:41:44.417Z",
     "version": "v14",
     "contactCount": 2014,
     "appCount": 2
