@@ -36198,9 +36198,9 @@
       "functionFlag": false,
       "positionFlag": false,
       "knowsMe": true,
-      "status": "network",
+      "status": "follow_up",
       "recruiter": false,
-      "followUp": false,
+      "followUp": true,
       "lastContact": "2026-07-10",
       "addedDate": "2026-04-20",
       "followUpDate": "",
@@ -50526,7 +50526,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-10T14:32:37.522Z",
+    "lastSync": "2026-07-10T14:32:41.885Z",
     "version": "v14",
     "contactCount": 2014,
     "appCount": 2
