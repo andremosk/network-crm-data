@@ -1066,10 +1066,28 @@ function sortBy(key) {
   renderList();
 }
 
+function compareContactStatus(a, b) {
+  const hasADate = a.status === 'follow_up' && !!a.followUpDate;
+  const hasBDate = b.status === 'follow_up' && !!b.followUpDate;
+  const aGroup = hasADate ? 0 : a.status && a.status !== 'follow_up' ? 1 : a.status === 'follow_up' ? 2 : 3;
+  const bGroup = hasBDate ? 0 : b.status && b.status !== 'follow_up' ? 1 : b.status === 'follow_up' ? 2 : 3;
+  if (aGroup !== bGroup) return aGroup - bGroup;
+  if (hasADate && hasBDate) {
+    const dateOrder = a.followUpDate.localeCompare(b.followUpDate) * sortDir;
+    if (dateOrder) return dateOrder;
+  } else if (aGroup === 1) {
+    const aLabel = (SM[a.status]?.label || a.status).toLowerCase();
+    const bLabel = (SM[b.status]?.label || b.status).toLowerCase();
+    const statusOrder = aLabel.localeCompare(bLabel) * sortDir;
+    if (statusOrder) return statusOrder;
+  }
+  return (a.name || '').localeCompare(b.name || '');
+}
+
 function renderList() {
   filtered = getFiltered();
   if (sortKey) {
-    filtered.sort((a,b) => {
+    filtered.sort(sortKey === 'status' ? compareContactStatus : (a,b) => {
       const av=(a[sortKey]??'').toString().toLowerCase(), bv=(b[sortKey]??'').toString().toLowerCase();
       return av<bv?-sortDir:av>bv?sortDir:0;
     });
