@@ -31151,7 +31151,8 @@
       "connectorFitTier": 1,
       "notInterested": false,
       "clientFitModelVersion": 7,
-      "connectorFitManual": true
+      "connectorFitManual": true,
+      "followUpDate": "2026-07-20"
     },
     {
       "id": 775,
@@ -43509,7 +43510,7 @@
       "position": "Principal",
       "linkedin": "https://www.linkedin.com/in/justinperzov",
       "email": "",
-      "notes": "Jul 8, 2026: has been going on his own for awhile now.\nJul 9, 2026: old steve &amp; barry's contact. Made a comment about how its REAL tough to go on your own. his about section:&nbsp;Analytical professional with significant experience in financial reporting, data reconciliation, and business process consulting making a deliberate, credentialed transition into accounting. Cornell University graduate actively completing accelerated post-baccalaureate upper-level accounting coursework. Career history includes direct collaboration with CPAs on trial balance reconciliations, COGS audits, variance analysis and building financial planning models across major corporate clients. Also brings firsthand experience operating an S-Corp — including payroll mechanics, corporate governance, and small business financial management — directly applicable to tax and accounting practice. Brings advanced Excel expertise, meticulous attention to detail, and the professional maturity of a seasoned veteran to contribute meaningfully from day one while building toward full CPA licensure. CPA exam eligibility expected by August 2026.",
+      "notes": "Jul 8, 2026: has been going on his own for awhile now.\nJul 9, 2026: old steve &amp; barry's contact. Made a comment about how its REAL tough to go on your own. his about section:&nbsp;Analytical professional with significant experience in financial reporting, data reconciliation, and business process consulting making a deliberate, credentialed transition into accounting. Cornell University graduate actively completing accelerated post-baccalaureate upper-level accounting coursework. Career history includes direct collaboration with CPAs on trial balance reconciliations, COGS audits, variance analysis and building financial planning models across major corporate clients. Also brings firsthand experience operating an S-Corp — including payroll mechanics, corporate governance, and small business financial management — directly applicable to tax and accounting practice. Brings advanced Excel expertise, meticulous attention to detail, and the professional maturity of a seasoned veteran to contribute meaningfully from day one while building toward full CPA licensure. CPA exam eligibility expected by August 2026.\nJul 10, 2026: <li><p><strong>Relationship / personal context:</strong> Old retail connection from Steve &amp; Barry’s / Ross orbit; easy rapport around Long Island roots and family. Lives in Collegeville, PA; wife is from Yardley. Has <strong>3 kids</strong> — Jackson (~6), Sawyer (3.5), and Hunter (~16 months). Memorable hooks: “<strong>we go white, we don’t go gray</strong>,” called one delivery a “<strong>slip and slide</strong>,” and joked he looks “<strong>homeless</strong>” if he doesn’t shave.</p>\n</li>\n<li>\n<p><strong>Professional context / what he’s working on:</strong> Independent consultant for ~11 years via his own S corp; works through <strong>Columbus Consulting International</strong> as a 1099 contractor, mainly on <strong>Excel automation, systems/process improvement, data flows, and Anaplan modeling</strong>. Built workforce planning models for <strong>Intuit</strong> and described big brands still running critical ops in spreadsheets.</p>\n</li>\n<li>\n<p><strong>How he thinks / memorable insights:</strong> Very pragmatic, anti-bureaucracy, and optimization-oriented. In a transition now: pursuing a <strong>CPA</strong> to get more stability and eventually build a <strong>strategic tax planning</strong> business. Strong POV on AI: said <strong>“ChatGPT is always wrong”</strong> for some current-year tax questions and is much more impressed by <strong>Claude</strong>; interested in AI workflows but thinks the real need is pairing automation with business utility.</p>\n</li>\n<li>\n<p><strong>Next steps:</strong> Andre to <strong>ask accountant about S corp election / Form 2553</strong> and Justin’s <strong>family partnership</strong> tax structure; schedule <strong>part 2</strong> around <strong>1pm next week</strong> to trade notes on AI / Excel automation; Andre to <strong>look up D&amp;I Integrators </strong>as a potential partner for me. Justin offered to <strong>connect Andre to his CPA</strong> if Andre’s accountant pushes back, and may also connect him to an <strong>AI/tech contact</strong> for potential project work.</p></li>",
       "companyFlag": false,
       "functionFlag": false,
       "positionFlag": false,
@@ -43517,7 +43518,7 @@
       "status": null,
       "recruiter": false,
       "followUp": false,
-      "lastContact": "2026-07-09",
+      "lastContact": "2026-07-10",
       "addedDate": "2026-04-21",
       "clientFitTier": 4,
       "connectorFitTier": 2,
@@ -50525,7 +50526,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-09T19:41:44.417Z",
+    "lastSync": "2026-07-10T13:48:18.700Z",
     "version": "v14",
     "contactCount": 2014,
     "appCount": 2
