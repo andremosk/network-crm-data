@@ -48027,7 +48027,8 @@
       "connectorFitTier": 1,
       "notInterested": false,
       "clientFitModelVersion": 7,
-      "connectorFitManual": true
+      "connectorFitManual": true,
+      "followUpDate": "2026-07-17"
     },
     {
       "id": 102,
@@ -50552,7 +50553,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-10T20:34:40.940Z",
+    "lastSync": "2026-07-10T20:34:57.191Z",
     "version": "v14",
     "contactCount": 2015,
     "appCount": 2
