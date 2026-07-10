@@ -36203,7 +36203,7 @@
       "followUp": true,
       "lastContact": "2026-07-10",
       "addedDate": "2026-04-20",
-      "followUpDate": "",
+      "followUpDate": "2026-07-17",
       "clientFitTier": 4,
       "connectorFitTier": 4,
       "notInterested": false,
@@ -50526,7 +50526,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-10T14:32:41.885Z",
+    "lastSync": "2026-07-10T14:32:49.829Z",
     "version": "v14",
     "contactCount": 2014,
     "appCount": 2
