@@ -2019,7 +2019,13 @@ function renderDetailContent(c) {
             <option value="">— No Status —</option>
             ${Object.entries(SM).map(([k,v]) => `<option value="${k}" ${c.status===k?'selected':''}>${STATUS_EMOJIS[k]||''} ${v.label}</option>`).join('')}
           </select>
-          ${c.status==='follow_up' ? `<input type="date" class="followup-date-input" value="${c.followUpDate||''}" onchange="updateFollowUpDate(${c.id},this.value)" title="Follow up by">` : ``}
+          ${c.status==='follow_up' ? `<select class="status-select" aria-label="Set follow-up timing" onchange="setFollowUpTiming(${c.id},this.value)">
+            <option value="">When?</option>
+            <option value="week">In a week</option>
+            <option value="month">In a month</option>
+            <option value="three_months">In 3 months</option>
+            <option value="custom">Custom date</option>
+          </select><input id="followUpDate_${c.id}" type="date" class="followup-date-input" value="${c.followUpDate||''}" onchange="updateFollowUpDate(${c.id},this.value)" title="Follow up by">` : ``}
           ${chips}
         </div>
         <div class="d-actions" style="margin-top:8px">
@@ -2143,6 +2149,24 @@ function setStatus(id, val) {
   saveContacts(contacts);
   renderList();
   openDetail(id);
+}
+
+function setFollowUpTiming(id, timing) {
+  if (!timing) return;
+  const dateInput = document.getElementById(`followUpDate_${id}`);
+  if (timing === 'custom') {
+    if (dateInput?.showPicker) dateInput.showPicker();
+    else dateInput?.focus();
+    return;
+  }
+  const date = new Date();
+  if (timing === 'week') date.setDate(date.getDate() + 7);
+  if (timing === 'month') date.setMonth(date.getMonth() + 1);
+  if (timing === 'three_months') date.setMonth(date.getMonth() + 3);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  updateFollowUpDate(id, `${year}-${month}-${day}`);
 }
 
 function updateFollowUpDate(id, val) {
