@@ -48013,15 +48013,15 @@
       "position": "Marketing Thought Leadership - Lead",
       "linkedin": "https://www.linkedin.com/in/rachaelrisinger",
       "email": "",
-      "notes": "Jul 8, 2026: LI app? chamber of commerce?",
+      "notes": "Jul 8, 2026: LI app? chamber of commerce?\nJul 10, 2026: sent her an email - outreach to a connector)",
       "companyFlag": false,
       "functionFlag": false,
       "positionFlag": false,
       "knowsMe": false,
-      "status": null,
+      "status": "follow_up",
       "recruiter": false,
-      "followUp": false,
-      "lastContact": "2026-07-09",
+      "followUp": true,
+      "lastContact": "2026-07-10",
       "addedDate": "2026-04-21",
       "clientFitTier": 4,
       "connectorFitTier": 1,
@@ -50552,7 +50552,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-10T19:53:46.879Z",
+    "lastSync": "2026-07-10T20:34:40.940Z",
     "version": "v14",
     "contactCount": 2015,
     "appCount": 2
