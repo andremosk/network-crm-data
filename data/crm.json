@@ -48017,7 +48017,7 @@
       "notes": "Jul 8, 2026: LI app? chamber of commerce?\nJul 10, 2026: sent her an email - outreach to a connector)\nJul 13, 2026: she's going to introduce me to Bryan Kelly - head of oldfield flooring and very active in the community. And will share my stampfinder app around. So helpful!",
       "companyFlag": false,
       "functionFlag": false,
-      "positionFlag": false,
+      "positionFlag": true,
       "knowsMe": false,
       "status": "follow_up",
       "recruiter": false,
@@ -50554,7 +50554,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-13T16:08:01.966Z",
+    "lastSync": "2026-07-13T16:08:12.238Z",
     "version": "v14",
     "contactCount": 2015,
     "appCount": 2
