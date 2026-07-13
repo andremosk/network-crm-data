@@ -48029,7 +48029,7 @@
       "notInterested": false,
       "clientFitModelVersion": 7,
       "connectorFitManual": true,
-      "followUpDate": "2026-07-17"
+      "followUpDate": "2026-07-20"
     },
     {
       "id": 102,
@@ -50554,7 +50554,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-13T16:07:54.595Z",
+    "lastSync": "2026-07-13T16:08:01.966Z",
     "version": "v14",
     "contactCount": 2015,
     "appCount": 2
