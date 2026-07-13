@@ -26940,12 +26940,12 @@
       "name": "Paul Muller",
       "firstName": "Paul",
       "lastName": "Muller",
-      "tier": 2,
+      "tier": 1,
       "company": "Kallyope",
       "position": "Senior Scientist",
       "linkedin": "https://www.linkedin.com/in/paul-muller-3234337",
       "email": "",
-      "notes": "",
+      "notes": "Jul 13, 2026: texted him to see if we get together on a call, then a live event.",
       "companyFlag": false,
       "functionFlag": false,
       "positionFlag": false,
@@ -26953,7 +26953,7 @@
       "status": null,
       "recruiter": false,
       "followUp": false,
-      "lastContact": "",
+      "lastContact": "2026-07-13",
       "addedDate": "2026-04-20",
       "clientFitTier": 4,
       "connectorFitTier": 4,
@@ -50553,7 +50553,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-10T20:34:57.191Z",
+    "lastSync": "2026-07-13T13:52:49.407Z",
     "version": "v14",
     "contactCount": 2015,
     "appCount": 2
