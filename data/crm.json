@@ -21018,7 +21018,7 @@
       "functionFlag": false,
       "positionFlag": false,
       "knowsMe": false,
-      "status": null,
+      "status": "network",
       "recruiter": false,
       "followUp": false,
       "lastContact": "2026-07-13",
@@ -21026,7 +21026,8 @@
       "clientFitTier": 4,
       "connectorFitTier": 2,
       "notInterested": false,
-      "clientFitModelVersion": 7
+      "clientFitModelVersion": 7,
+      "followUpDate": ""
     },
     {
       "id": 1181,
@@ -50553,7 +50554,7 @@
     }
   ],
   "meta": {
-    "lastSync": "2026-07-13T15:27:14.232Z",
+    "lastSync": "2026-07-13T15:29:37.028Z",
     "version": "v14",
     "contactCount": 2015,
     "appCount": 2
