@@ -1008,7 +1008,11 @@ function loadContacts() {
   })).map(withFitDefaults);
   saveContacts(contacts); return contacts;
 }
-function saveContacts(c) { localStorage.setItem('andre_crm_v2', JSON.stringify(c)); scheduleSync('Contact update'); }
+function saveContacts(c) {
+  localStorage.setItem('andre_crm_v2', JSON.stringify(c));
+  localStorage.setItem('andre_crm_local_dirty', '1');
+  scheduleSync('Contact update');
+}
 
 // ─── APPLICATIONS DATA ────────────────────────────────────────────
 const APP_SEED = [
@@ -1055,7 +1059,11 @@ function loadApps() {
   }
   saveApps(APP_SEED); return APP_SEED.map(a => ({statusLog:[],...a}));
 }
-function saveApps(apps) { localStorage.setItem('andre_apps_v1', JSON.stringify(apps)); scheduleSync('Application update'); }
+function saveApps(apps) {
+  localStorage.setItem('andre_apps_v1', JSON.stringify(apps));
+  localStorage.setItem('andre_crm_local_dirty', '1');
+  scheduleSync('Application update');
+}
 
 // ─── STATE ────────────────────────────────────────────────────────
 let contacts = loadContacts();
@@ -1069,6 +1077,33 @@ let appSortKey = null, appSortDir = 1;
 let selectedId = null, selectedAppId = null, selectedRoundId = null;
 let filtered = [], filteredApps = [];
 let activeAppSection = 'overview';
+
+function isSampleContactDataset(list) {
+  if (!Array.isArray(list) || list.length !== SEED.length) return false;
+  return SEED.every(seed => list.some(contact => contact.id === seed.id && contact.name === seed.n));
+}
+
+async function loadBundledCrmDataset() {
+  const isSample = isSampleContactDataset(contacts);
+  const hasUnsyncedLocalChanges = localStorage.getItem('andre_crm_local_dirty') === '1';
+  if (!isSample && hasUnsyncedLocalChanges) return;
+  try {
+    const response = await fetch('/data/crm.json', { cache: 'no-store' });
+    if (!response.ok) return;
+    const data = await response.json();
+    if (!Array.isArray(data.contacts) || data.contacts.length <= contacts.length) return;
+    contacts = data.contacts.map(withFitDefaults);
+    if (Array.isArray(data.apps)) apps = data.apps.map(app => ({ statusLog: [], ...app }));
+    localStorage.setItem('andre_crm_v2', JSON.stringify(contacts));
+    localStorage.setItem('andre_apps_v1', JSON.stringify(apps));
+    localStorage.removeItem('andre_crm_local_dirty');
+    localStorage.setItem('andre_crm_source_sync', data.meta?.lastSync || new Date().toISOString());
+    if (currentView === 'contacts') renderList(); else renderApps();
+    updateSyncBar('synced', `${contacts.length} contacts`);
+  } catch (error) {
+    console.warn('Could not load bundled CRM data:', error);
+  }
+}
 
 // ─── META ─────────────────────────────────────────────────────────
 const SM = {
@@ -2761,6 +2796,7 @@ async function syncToGitHub(commitMessage) {
     if (putRes.ok) {
       const pd = await putRes.json();
       if (pd.content?.sha) _ghSyncSHA = pd.content.sha;
+      localStorage.removeItem('andre_crm_local_dirty');
       updateSyncBar('synced');
     } else {
       const err = await putRes.json().catch(() => ({}));
@@ -3342,6 +3378,7 @@ document.addEventListener('paste', function(e) {
 renderList();
 renderSortHeaders();
 updateSyncBar('idle');
+loadBundledCrmDataset();
 </script>
 </body>
 </html>
