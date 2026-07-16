@@ -1,7 +1,5 @@
-const fs = require("fs");
-const path = require("path");
+const { getSql } = require("../../lib/crm-db");
 
-const CRM_PATH = path.join(process.cwd(), "data", "crm.json");
 const MAX_LIMIT = 200;
 const DEFAULT_LIMIT = 50;
 const MONTHS = {
@@ -192,6 +190,16 @@ function matchesSearch(record, terms) {
   return terms.some((term) => haystack.includes(term));
 }
 
+async function loadContacts() {
+  const sql = getSql();
+  const rows = await sql`
+    SELECT payload FROM crm_records
+    WHERE record_type = 'contact'
+    ORDER BY updated_at DESC
+  `;
+  return rows.map((row) => row.payload);
+}
+
 module.exports = async function handler(request, response) {
   if (request.method !== "GET") {
     response.setHeader("Allow", "GET");
@@ -220,14 +228,19 @@ module.exports = async function handler(request, response) {
     .map((term) => term.trim().toLowerCase())
     .filter(Boolean);
 
-  const data = JSON.parse(fs.readFileSync(CRM_PATH, "utf8"));
-  const notes = (data.contacts || [])
-    .filter((contact) => !contact.deleted && !contact.archived)
-    .flatMap((contact) => splitNoteEntries(contact).map((entry) => noteRecord(contact, entry)))
-    .filter((record) => new Date(record.updated_at).getTime() >= since.getTime())
-    .filter((record) => matchesSearch(record, terms))
-    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-    .slice(0, limit);
+  try {
+    const contacts = await loadContacts();
+    const notes = contacts
+      .filter((contact) => !contact.deleted && !contact.archived)
+      .flatMap((contact) => splitNoteEntries(contact).map((entry) => noteRecord(contact, entry)))
+      .filter((record) => new Date(record.updated_at).getTime() >= since.getTime())
+      .filter((record) => matchesSearch(record, terms))
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+      .slice(0, limit);
 
-  return response.status(200).json({ notes });
+    return response.status(200).json({ notes });
+  } catch (error) {
+    console.error("Recent notes Neon query failed:", error);
+    return response.status(500).json({ error: { message: "Could not load CRM notes." } });
+  }
 };

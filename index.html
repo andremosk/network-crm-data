@@ -343,6 +343,11 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .status-log-input:focus { border-color: var(--accent); }
 
 .mobile-filters-btn, .mobile-drawer-close { display: none; }
+.cloud-login-overlay { position: fixed; inset: 0; z-index: 300; display: none; align-items: center; justify-content: center; padding: 18px; background: rgba(23,32,28,0.5); backdrop-filter: blur(8px); }
+.cloud-login-card { width: min(420px,100%); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 24px; }
+.cloud-login-card h2 { font-family: 'DM Serif Display',serif; font-size: 23px; margin-bottom: 7px; }
+.cloud-login-card p { color: var(--muted); font-size: 13px; line-height: 1.55; margin-bottom: 16px; }
+.cloud-login-error { min-height: 18px; color: #b91c1c; font-size: 12px; margin-top: 7px; }
 
 @media (max-width: 760px) {
   body { min-height: 100dvh; height: 100dvh; }
@@ -356,6 +361,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   #addBtn { grid-column: 3; grid-row: 3; padding-inline: 12px; justify-self: end; }
   .topbar-stat, .topbar > .btn-switch, .topbar > .gh-sync-bar,
   .topbar > .btn-ghost:not(.mobile-filters-btn) { display: none !important; }
+  .topbar > .gh-sync-bar.cloud-active { display: flex !important; grid-column: 2; grid-row: 3; min-width: 0; padding: 5px 8px; }
 
   .body-wrap { position: relative; }
   .sidebar { position: fixed; z-index: 45; top: 0; bottom: 0; left: 0; width: min(86vw, 340px); box-shadow: var(--shadow); transform: translateX(-105%); transition: transform 0.2s ease; }
@@ -450,6 +456,16 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     <span id="ghSyncLabel">No GitHub</span>
   </div>
   <button class="settings-btn" onclick="openSettingsModal()" title="Settings">⚙️</button>
+</div>
+
+<div class="cloud-login-overlay" id="cloudLoginOverlay">
+  <div class="cloud-login-card">
+    <h2>Open Network.crm</h2>
+    <p>Enter your private CRM access key once on this device. Your session will stay signed in for 30 days.</p>
+    <input class="form-input" id="cloudLoginToken" type="password" autocomplete="current-password" placeholder="CRM access key" onkeydown="if(event.key==='Enter')signInToCloud()">
+    <div class="cloud-login-error" id="cloudLoginError"></div>
+    <button class="btn btn-primary" id="cloudLoginBtn" style="width:100%;margin-top:8px" onclick="signInToCloud()">Continue</button>
+  </div>
 </div>
 
 <!-- SWITCH DATASET MODAL -->
@@ -1011,7 +1027,7 @@ function loadContacts() {
 function saveContacts(c) {
   localStorage.setItem('andre_crm_v2', JSON.stringify(c));
   localStorage.setItem('andre_crm_local_dirty', '1');
-  scheduleSync('Contact update');
+  if (cloudSyncReady) queueCloudSync(); else scheduleSync('Contact update');
 }
 
 // ─── APPLICATIONS DATA ────────────────────────────────────────────
@@ -1062,7 +1078,7 @@ function loadApps() {
 function saveApps(apps) {
   localStorage.setItem('andre_apps_v1', JSON.stringify(apps));
   localStorage.setItem('andre_crm_local_dirty', '1');
-  scheduleSync('Application update');
+  if (cloudSyncReady) queueCloudSync(); else scheduleSync('Application update');
 }
 
 // ─── STATE ────────────────────────────────────────────────────────
@@ -1077,33 +1093,13 @@ let appSortKey = null, appSortDir = 1;
 let selectedId = null, selectedAppId = null, selectedRoundId = null;
 let filtered = [], filteredApps = [];
 let activeAppSection = 'overview';
-
-function isSampleContactDataset(list) {
-  if (!Array.isArray(list) || list.length !== SEED.length) return false;
-  return SEED.every(seed => list.some(contact => contact.id === seed.id && contact.name === seed.n));
-}
-
-async function loadBundledCrmDataset() {
-  const isSample = isSampleContactDataset(contacts);
-  const hasUnsyncedLocalChanges = localStorage.getItem('andre_crm_local_dirty') === '1';
-  if (!isSample && hasUnsyncedLocalChanges) return;
-  try {
-    const response = await fetch('/data/crm.json', { cache: 'no-store' });
-    if (!response.ok) return;
-    const data = await response.json();
-    if (!Array.isArray(data.contacts) || data.contacts.length <= contacts.length) return;
-    contacts = data.contacts.map(withFitDefaults);
-    if (Array.isArray(data.apps)) apps = data.apps.map(app => ({ statusLog: [], ...app }));
-    localStorage.setItem('andre_crm_v2', JSON.stringify(contacts));
-    localStorage.setItem('andre_apps_v1', JSON.stringify(apps));
-    localStorage.removeItem('andre_crm_local_dirty');
-    localStorage.setItem('andre_crm_source_sync', data.meta?.lastSync || new Date().toISOString());
-    if (currentView === 'contacts') renderList(); else renderApps();
-    updateSyncBar('synced', `${contacts.length} contacts`);
-  } catch (error) {
-    console.warn('Could not load bundled CRM data:', error);
-  }
-}
+var cloudSyncReady = false;
+var cloudSyncTimer = null;
+var cloudPollTimer = null;
+var cloudContactVersions = new Map();
+var cloudContactFingerprints = new Map();
+var cloudAppVersions = new Map();
+var cloudAppFingerprints = new Map();
 
 // ─── META ─────────────────────────────────────────────────────────
 const SM = {
@@ -3378,7 +3374,7 @@ document.addEventListener('paste', function(e) {
 renderList();
 renderSortHeaders();
 updateSyncBar('idle');
-loadBundledCrmDataset();
 </script>
+<script src="/cloud-sync.js"></script>
 </body>
 </html>

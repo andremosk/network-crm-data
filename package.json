@@ -1,0 +1,11 @@
+{
+  "name": "network-crm-data",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "1.0.2"
+  }
+}
