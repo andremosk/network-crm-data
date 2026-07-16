@@ -1,5 +1,5 @@
 const { ensureSchema, getSql } = require("../../lib/crm-db");
-const { tokenIsValid } = require("../../lib/crm-auth");
+const { messagesTokenIsValid } = require("../../lib/crm-auth");
 const {
   cleanTranscript,
   getBearerToken,
@@ -30,7 +30,7 @@ async function contactDirectory(sql) {
 }
 
 module.exports = async function handler(request, response) {
-  if (!tokenIsValid(getBearerToken(request))) {
+  if (!messagesTokenIsValid(getBearerToken(request))) {
     return response.status(401).json({ error: { message: "Unauthorized" } });
   }
   if (!['GET', 'POST'].includes(request.method)) {

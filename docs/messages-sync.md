@@ -18,7 +18,7 @@ The helper uses the pinned `imessage-exporter` 4.2.0 release because it handles 
 
 1. Make sure Messages on the Mac shows the same conversations as the iPhone.
 2. From this repository, run `zsh scripts/setup_messages_sync.sh`.
-3. Paste the same Network.crm access key used to sign into the web app.
+3. Paste the dedicated Messages sync key. The main Network.crm key remains supported as a fallback.
 4. Open **System Settings > Privacy & Security > Full Disk Access**.
 5. Add and enable `~/Library/Application Support/Network CRM/bin/imessage-exporter`.
 6. Run `/usr/bin/python3 scripts/messages_sync.py --dry-run` from the repository.

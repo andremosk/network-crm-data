@@ -10,6 +10,13 @@ test("accepts only the configured access token", () => {
   assert.equal(auth.tokenIsValid(""), false);
 });
 
+test("accepts a separate Messages-only token without changing the main token", () => {
+  process.env.NETWORK_CRM_MESSAGES_TOKEN = "test-messages-token";
+  assert.equal(auth.messagesTokenIsValid("test-messages-token"), true);
+  assert.equal(auth.messagesTokenIsValid("test-private-token"), true);
+  assert.equal(auth.messagesTokenIsValid("wrong-token"), false);
+});
+
 test("creates and validates an HTTP-only session cookie", () => {
   const cookie = auth.createSessionCookie();
   assert.match(cookie, /HttpOnly/);
