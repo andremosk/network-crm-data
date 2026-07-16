@@ -14,3 +14,7 @@ for (const file of ["index.html", "index2.html"]) {
 test("cloud sync client parses", () => {
   new Function(fs.readFileSync("cloud-sync.js", "utf8"));
 });
+
+test("text summary review client parses", () => {
+  new Function(fs.readFileSync("text-summary-review.js", "utf8"));
+});

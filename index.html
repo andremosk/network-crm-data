@@ -343,6 +343,15 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .status-log-input:focus { border-color: var(--accent); }
 
 .mobile-filters-btn, .mobile-drawer-close { display: none; }
+.text-summary-review { margin: 0 0 22px; padding: 14px 0 4px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.text-summary-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.text-summary-subtitle { margin-top: 2px; color: var(--muted); font-size: 11px; }
+.text-summary-count { min-width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 7px; background: var(--accent); color: white; font-size: 12px; font-weight: 700; }
+.text-summary-draft { padding: 12px 0; border-top: 1px solid var(--border); }
+.text-summary-meta { margin-bottom: 7px; color: var(--muted); font-size: 11px; }
+.text-summary-editor { width: 100%; min-height: 74px; resize: vertical; padding: 10px 12px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface2); color: var(--text); font: 13px/1.55 'DM Sans', sans-serif; outline: none; }
+.text-summary-editor:focus { border-color: var(--accent); }
+.text-summary-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 8px; }
 .cloud-login-overlay { position: fixed; inset: 0; z-index: 300; display: none; align-items: center; justify-content: center; padding: 18px; background: rgba(23,32,28,0.5); backdrop-filter: blur(8px); }
 .cloud-login-card { width: min(420px,100%); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 24px; }
 .cloud-login-card h2 { font-family: 'DM Serif Display',serif; font-size: 23px; margin-bottom: 7px; }
@@ -621,7 +630,10 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     </div>
     <div class="form-group"><label class="form-lbl">Position</label><input class="form-input" id="nPos"></div>
     <div class="form-group"><label class="form-lbl">LinkedIn URL</label><input class="form-input" id="nLI"></div>
-    <div class="form-group"><label class="form-lbl">Email</label><input class="form-input" id="nEmail"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-lbl">Email</label><input class="form-input" id="nEmail"></div>
+      <div class="form-group"><label class="form-lbl">Mobile Phone</label><input class="form-input" id="nPhone" type="tel" placeholder="(555) 555-5555"></div>
+    </div>
     <div class="form-group"><label class="form-lbl">Initial Notes</label><textarea class="form-input" id="nNotes" rows="3"></textarea></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
@@ -2245,6 +2257,10 @@ function renderDetailContent(c) {
         <input class="inline-edit" value="${esc(c.email||'')}" placeholder="email@example.com" onblur="updateField(${c.id},'email',this.value)" style="font-size:13px;font-weight:500;width:100%">
       </div>
       <div class="meta-card">
+        <div class="meta-lbl">Mobile Phone</div>
+        <input class="inline-edit" type="tel" value="${esc(c.phone||'')}" placeholder="(555) 555-5555" onblur="updateField(${c.id},'phone',this.value)" style="font-size:13px;font-weight:500;width:100%">
+      </div>
+      <div class="meta-card">
         <div class="meta-lbl">Last Contact</div>
         <input type="date" style="background:transparent;border:none;color:var(--text);font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;outline:none" value="${c.lastContact||''}" onchange="updateField(${c.id},'lastContact',this.value)">
       </div>
@@ -2253,6 +2269,7 @@ function renderDetailContent(c) {
         <div class="meta-val">${fmtDate(c.addedDate)}</div>
       </div>
     </div>
+    ${window.renderTextSummarySection ? window.renderTextSummarySection(c.id) : ''}
     <div class="sec-title">Notes</div>
     <div class="add-note-wrap" style="margin-bottom:16px">
       <div class="rt-wrap" style="flex:1">
@@ -2541,11 +2558,12 @@ function saveNewContact() {
     position: document.getElementById('nPos').value.trim(),
     linkedin: document.getElementById('nLI').value.trim(),
     email: document.getElementById('nEmail').value.trim(),
+    phone: document.getElementById('nPhone').value.trim(),
     notes: document.getElementById('nNotes').value.trim(),
     companyFlag:false, functionFlag:false, positionFlag:false, knowsMe:false, status:null, recruiter:false, followUp:false,
     notInterested:false, lastContact:'', addedDate: new Date().toISOString().split('T')[0] });
   contacts.unshift(nc); saveContacts(contacts); closeAddModal(); renderList();
-  ['nFirst','nLast','nCompany','nPos','nLI','nEmail','nNotes'].forEach(id => { document.getElementById(id).value = ''; });
+  ['nFirst','nLast','nCompany','nPos','nLI','nEmail','nPhone','nNotes'].forEach(id => { document.getElementById(id).value = ''; });
   toast('Contact added ✓');
   openDetail(nc.id);
 }
@@ -2608,6 +2626,7 @@ function previewImport(incoming) {
       const upd={};
       if(row.company&&norm(match.company)!==norm(row.company)) upd.company=row.company;
       if(row.position&&norm(match.position)!==norm(row.position)) upd.position=row.position;
+      if(row.phone&&norm(match.phone)!==norm(row.phone)) upd.phone=row.phone;
       const hasNoteUpdate=row.notes&&row.notes.trim()&&!(match.notes||'').includes(row.notes.trim().substring(0,40));
       if(Object.keys(upd).length||hasNoteUpdate) { cUpdate++; changes.push({match,upd,notes:hasNoteUpdate?row.notes:''}); }
     } else cAdd++;
@@ -2645,7 +2664,7 @@ function confirmImport() {
       const liKey=normLI(row.linkedin); const nameKey=norm((row.firstName||'')+' '+(row.lastName||''));
       if((row.linkedin&&byLinkedin[liKey])||byName[nameKey]) return;
       maxId++;
-      contacts.unshift(withFitDefaults({id:maxId,name:row.name||((row.firstName||'')+' '+(row.lastName||'')).trim(),firstName:row.firstName||'',lastName:row.lastName||'',tier:row.tier||4,company:row.company||'',position:row.position||'',linkedin:row.linkedin||'',email:row.email||'',notes:row.notes||'',companyFlag:row.companyFlag||false,functionFlag:row.functionFlag||false,positionFlag:row.positionFlag||false,knowsMe:row.knowsMe||false,status:row.status||null,recruiter:row.recruiter||false,followUp:row.followUp||false,notInterested:row.notInterested||false,clientFitTier:row.clientFitTier,connectorFitTier:row.connectorFitTier,lastContact:row.lastContact||'',addedDate:row.addedDate||today}));
+      contacts.unshift(withFitDefaults({id:maxId,name:row.name||((row.firstName||'')+' '+(row.lastName||'')).trim(),firstName:row.firstName||'',lastName:row.lastName||'',tier:row.tier||4,company:row.company||'',position:row.position||'',linkedin:row.linkedin||'',email:row.email||'',phone:row.phone||'',notes:row.notes||'',companyFlag:row.companyFlag||false,functionFlag:row.functionFlag||false,positionFlag:row.positionFlag||false,knowsMe:row.knowsMe||false,status:row.status||null,recruiter:row.recruiter||false,followUp:row.followUp||false,notInterested:row.notInterested||false,clientFitTier:row.clientFitTier,connectorFitTier:row.connectorFitTier,lastContact:row.lastContact||'',addedDate:row.addedDate||today}));
     });
     saveContacts(contacts);
   }
@@ -3375,6 +3394,7 @@ renderList();
 renderSortHeaders();
 updateSyncBar('idle');
 </script>
+<script src="/text-summary-review.js"></script>
 <script src="/cloud-sync.js"></script>
 </body>
 </html>

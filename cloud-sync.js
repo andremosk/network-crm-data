@@ -98,7 +98,12 @@
         }
       }, 30000);
     }
+    if (typeof window.loadTextSummaries === 'function') await window.loadTextSummaries();
   }
+
+  window.refreshCloudState = function refreshCloudState() {
+    return pullState(false);
+  };
 
   function changedRecords(records, versions, fingerprints) {
     return records
