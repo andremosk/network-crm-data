@@ -2563,6 +2563,7 @@ function saveNewContact() {
     companyFlag:false, functionFlag:false, positionFlag:false, knowsMe:false, status:null, recruiter:false, followUp:false,
     notInterested:false, lastContact:'', addedDate: new Date().toISOString().split('T')[0] });
   contacts.unshift(nc); saveContacts(contacts); closeAddModal(); renderList();
+  if (typeof window.completeTextContactCreation === 'function') window.completeTextContactCreation(nc.id);
   ['nFirst','nLast','nCompany','nPos','nLI','nEmail','nPhone','nNotes'].forEach(id => { document.getElementById(id).value = ''; });
   toast('Contact added ✓');
   openDetail(nc.id);

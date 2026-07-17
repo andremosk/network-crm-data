@@ -29,6 +29,50 @@ async function contactDirectory(sql) {
   }));
 }
 
+async function conversationDecisions(sql) {
+  const rows = await sql`
+    SELECT conversation_key, status, contact_id, reviewed_message_at
+    FROM crm_text_conversations
+    WHERE status IN ('matched', 'dismissed', 'ignored')
+  `;
+  return rows.map((row) => ({
+    key: row.conversation_key,
+    status: row.status,
+    contactId: row.contact_id || undefined,
+    reviewedMessageAt: row.reviewed_message_at || undefined
+  }));
+}
+
+async function recordUnmatchedConversations(sql, body) {
+  const conversations = Array.isArray(body.conversations) ? body.conversations.slice(0, 100) : [];
+  let accepted = 0;
+  for (const item of conversations) {
+    const key = String(item?.key || "").toLowerCase();
+    const label = String(item?.label || "").trim().slice(0, 200);
+    const latestMessageAt = validDate(item?.latestMessageAt);
+    if (!/^[a-f0-9]{64}$/.test(key) || !label || !latestMessageAt) continue;
+    await sql`
+      INSERT INTO crm_text_conversations (
+        conversation_key, participant_label, latest_message_at
+      ) VALUES (
+        ${key}, ${label}, ${latestMessageAt.toISOString()}
+      )
+      ON CONFLICT (conversation_key) DO UPDATE
+      SET participant_label = EXCLUDED.participant_label,
+          latest_message_at = GREATEST(crm_text_conversations.latest_message_at, EXCLUDED.latest_message_at),
+          status = CASE
+            WHEN crm_text_conversations.status = 'dismissed'
+              AND EXCLUDED.latest_message_at > COALESCE(crm_text_conversations.reviewed_message_at, '-infinity'::timestamptz)
+            THEN 'pending'
+            ELSE crm_text_conversations.status
+          END,
+          updated_at = NOW()
+    `;
+    accepted += 1;
+  }
+  return accepted;
+}
+
 module.exports = async function handler(request, response) {
   if (!messagesTokenIsValid(getBearerToken(request))) {
     return response.status(401).json({ error: { message: "Unauthorized" } });
@@ -42,11 +86,19 @@ module.exports = async function handler(request, response) {
     const sql = getSql();
     await ensureSchema(sql);
     if (request.method === 'GET') {
-      return response.status(200).json({ contacts: await contactDirectory(sql) });
+      const [contacts, decisions] = await Promise.all([
+        contactDirectory(sql),
+        conversationDecisions(sql)
+      ]);
+      return response.status(200).json({ contacts, conversationDecisions: decisions });
     }
 
     const body = parseBody(request);
     if (!body) return response.status(400).json({ error: { message: "Invalid JSON" } });
+    if (body.type === 'unmatched') {
+      const accepted = await recordUnmatchedConversations(sql, body);
+      return response.status(200).json({ status: "recorded", accepted });
+    }
     const transcript = cleanTranscript(body.transcript);
     const startedAt = validDate(body.startedAt);
     const endedAt = validDate(body.endedAt);

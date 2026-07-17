@@ -17,6 +17,7 @@ import urllib.request
 APP_DIR = Path.home() / "Library" / "Application Support" / "Network CRM"
 DEFAULT_CONFIG = APP_DIR / "messages-sync.json"
 DEFAULT_STATE = APP_DIR / "messages-sync-state.json"
+DEFAULT_UNMATCHED = APP_DIR / "messages-sync-unmatched.json"
 DEFAULT_EXPORTER = APP_DIR / "bin" / "imessage-exporter"
 SELF_NAME = "Andre"
 TIMESTAMP = re.compile(
@@ -160,10 +161,15 @@ def isoformat(value):
     return value.astimezone(dt.timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def conversation_key(value):
+    return hashlib.sha256(str(value or "").encode("utf-8")).hexdigest()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Create Network.crm text-summary drafts.")
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--state", type=Path, default=DEFAULT_STATE)
+    parser.add_argument("--unmatched-report", type=Path, default=DEFAULT_UNMATCHED)
     parser.add_argument("--lookback-hours", type=int, default=12)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -188,8 +194,14 @@ def main():
         since = now - dt.timedelta(hours=max(1, args.lookback_hours))
 
     directory = api_request(base_url, token, "/api/automation/text-summaries")
-    indexes = build_indexes(directory.get("contacts", []))
-    stats = {"files": 0, "matched": 0, "unmatched": 0, "group": 0, "submitted": 0, "skipped": 0}
+    contacts = directory.get("contacts", [])
+    indexes = build_indexes(contacts)
+    contacts_by_id = {str(contact["id"]): contact for contact in contacts}
+    decisions = {item.get("key"): item for item in directory.get("conversationDecisions", []) if item.get("key")}
+    existing_unmatched = read_json(args.unmatched_report, {}).get("unmatched", [])
+    stats = {"files": 0, "matched": 0, "unmatched": 0, "ignored": 0, "group": 0, "submitted": 0, "skipped": 0}
+    unmatched = []
+    unmatched_observations = []
 
     with tempfile.TemporaryDirectory(prefix="network-crm-messages-") as folder:
         command = [
@@ -208,13 +220,35 @@ def main():
                 continue
             other_senders = sorted({item["sender"] for item in messages if normalize_name(item["sender"]) != normalize_name(SELF_NAME)})
             stem = re.sub(r" - \d+$", "", path.stem)
+            key = conversation_key(stem)
             labels = other_senders or [stem]
             if is_likely_group(stem, other_senders, indexes):
                 stats["group"] += 1
                 continue
-            contact = match_contact(labels + [stem], indexes)
+            decision = decisions.get(key, {})
+            if decision.get("status") == "ignored":
+                stats["ignored"] += 1
+                continue
+            observation = {
+                "key": key,
+                "label": labels[0] if labels else stem,
+                "latestMessageAt": isoformat(messages[-1]["at"]),
+            }
+            if decision.get("status") == "dismissed":
+                unmatched_observations.append(observation)
+                continue
+            contact = contacts_by_id.get(str(decision.get("contactId"))) if decision.get("status") == "matched" else None
+            if contact is None:
+                contact = match_contact(labels + [stem], indexes)
             if not contact:
                 stats["unmatched"] += 1
+                unmatched_observations.append(observation)
+                unmatched.append({
+                    "key": key,
+                    "participant": labels[0] if labels else stem,
+                    "conversation": stem,
+                    "latestMessageAt": isoformat(messages[-1]["at"]),
+                })
                 continue
             stats["matched"] += 1
             transcript = "\n\n".join(
@@ -237,9 +271,38 @@ def main():
             else:
                 stats["skipped"] += 1
 
+    if unmatched_observations and not args.dry_run:
+        api_request(base_url, token, "/api/automation/text-summaries", "POST", {
+            "type": "unmatched",
+            "conversations": unmatched_observations,
+        })
+
+    unmatched_by_conversation = {
+        item.get("conversation") or item.get("participant"): item
+        for item in existing_unmatched
+        if item.get("participant") and not match_contact(
+            [item.get("participant", ""), item.get("conversation", "")], indexes
+        )
+    }
+    unmatched_by_conversation.update({
+        item.get("conversation") or item.get("participant"): item for item in unmatched
+    })
+    cutoff = now.astimezone(dt.timezone.utc) - dt.timedelta(days=30)
+    retained_unmatched = []
+    for item in unmatched_by_conversation.values():
+        try:
+            latest = dt.datetime.fromisoformat(item["latestMessageAt"].replace("Z", "+00:00"))
+        except (KeyError, TypeError, ValueError):
+            continue
+        if latest >= cutoff:
+            retained_unmatched.append(item)
+    write_private_json(args.unmatched_report, {
+        "generatedAt": isoformat(now),
+        "unmatched": sorted(retained_unmatched, key=lambda item: item["latestMessageAt"], reverse=True),
+    })
     if not args.dry_run:
         write_private_json(args.state, {"lastCompletedAt": isoformat(now)})
-    print("Messages sync: {matched} matched, {submitted} awaiting review, {skipped} skipped, {unmatched} unmatched, {group} group threads ignored.".format(**stats))
+    print("Messages sync: {matched} matched, {submitted} awaiting review, {skipped} skipped, {unmatched} unmatched, {ignored} ignored, {group} group threads excluded.".format(**stats))
 
 
 if __name__ == "__main__":

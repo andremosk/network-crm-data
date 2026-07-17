@@ -2,6 +2,7 @@ import datetime as dt
 import importlib.util
 from pathlib import Path
 import unittest
+import tempfile
 
 
 SPEC = importlib.util.spec_from_file_location(
@@ -42,6 +43,17 @@ class MessagesSyncTests(unittest.TestCase):
         indexes = MODULE.build_indexes(contacts)
         self.assertEqual(MODULE.match_contact(["Mary Claire Sullivan"], indexes)["id"], "1")
         self.assertTrue(MODULE.is_likely_group("Mary Claire Sullivan, Jennifer Greene", ["Mary Claire Sullivan"], indexes))
+
+    def test_writes_private_json(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "unmatched.json"
+            MODULE.write_private_json(path, {"unmatched": [{"participant": "Example"}]})
+            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+
+    def test_conversation_keys_are_stable_and_private(self):
+        self.assertEqual(MODULE.conversation_key("Karen"), MODULE.conversation_key("Karen"))
+        self.assertNotEqual(MODULE.conversation_key("Karen"), MODULE.conversation_key("Dad"))
+        self.assertNotIn("Karen", MODULE.conversation_key("Karen"))
 
 
 if __name__ == "__main__":

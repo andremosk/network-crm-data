@@ -33,7 +33,7 @@ module.exports = async function handler(request, response) {
     const sql = getSql();
     await ensureSchema(sql);
     if (request.method === 'GET') {
-      const rows = await sql`
+      const summaries = await sql`
         SELECT id, contact_id, summary, conversation_started_at,
                conversation_ended_at, message_count, created_at
         FROM crm_text_summaries
@@ -41,10 +41,45 @@ module.exports = async function handler(request, response) {
         ORDER BY conversation_ended_at DESC
         LIMIT 250
       `;
-      return response.status(200).json({ summaries: rows });
+      const conversations = await sql`
+        SELECT conversation_key, participant_label, latest_message_at, created_at
+        FROM crm_text_conversations
+        WHERE status = 'pending'
+        ORDER BY latest_message_at DESC
+        LIMIT 250
+      `;
+      return response.status(200).json({ summaries, conversations });
     }
 
     const body = parseBody(request);
+    if (body?.resource === 'conversation') {
+      const key = String(body.key || "").toLowerCase();
+      if (!/^[a-f0-9]{64}$/.test(key) || !['match', 'dismiss', 'ignore'].includes(body.action)) {
+        return response.status(400).json({ error: { message: "Invalid conversation review action." } });
+      }
+      let contactId = null;
+      if (body.action === 'match') {
+        contactId = String(body.contactId || "");
+        const contacts = await sql`
+          SELECT record_id FROM crm_records
+          WHERE record_type = 'contact' AND record_id = ${contactId}
+        `;
+        if (!contacts.length) return response.status(404).json({ error: { message: "Contact not found." } });
+      }
+      const status = body.action === 'match' ? 'matched' : body.action === 'ignore' ? 'ignored' : 'dismissed';
+      const rows = await sql`
+        UPDATE crm_text_conversations
+        SET status = ${status},
+            contact_id = ${contactId},
+            reviewed_message_at = latest_message_at,
+            updated_at = NOW()
+        WHERE conversation_key = ${key} AND status = 'pending'
+        RETURNING conversation_key, status, contact_id
+      `;
+      return response.status(rows.length ? 200 : 404).json(rows.length
+        ? { status: rows[0].status, key: rows[0].conversation_key, contactId: rows[0].contact_id }
+        : { error: { message: "Pending conversation not found." } });
+    }
     const id = Number(body?.id);
     if (!id || !['approve', 'dismiss'].includes(body?.action)) {
       return response.status(400).json({ error: { message: "Invalid review action." } });

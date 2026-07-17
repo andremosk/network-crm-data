@@ -4,6 +4,7 @@ set -euo pipefail
 APP_DIR="$HOME/Library/Application Support/Network CRM"
 BIN_DIR="$APP_DIR/bin"
 CONFIG="$APP_DIR/messages-sync.json"
+INSTALLED_SCRIPT="$APP_DIR/messages_sync.py"
 PLIST="$HOME/Library/LaunchAgents/com.networkcrm.messages-sync.plist"
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 VERSION="4.2.0"
@@ -28,6 +29,7 @@ if [[ "$ACTUAL_SHA" != "$EXPECTED_SHA" ]]; then
   exit 1
 fi
 chmod 700 "$EXPORTER"
+install -m 700 "$REPO_DIR/scripts/messages_sync.py" "$INSTALLED_SCRIPT"
 
 echo "Paste your Network.crm access key, then press Return:"
 read -rs TOKEN
@@ -59,7 +61,7 @@ cat > "$PLIST" <<PLIST
   <key>ProgramArguments</key>
   <array>
     <string>/usr/bin/python3</string>
-    <string>$REPO_DIR/scripts/messages_sync.py</string>
+    <string>$INSTALLED_SCRIPT</string>
   </array>
   <key>StartCalendarInterval</key>
   <array>
@@ -82,4 +84,4 @@ echo "Next: give this file Full Disk Access in System Settings:"
 echo "$EXPORTER"
 echo
 echo "Then test with:"
-echo "/usr/bin/python3 '$REPO_DIR/scripts/messages_sync.py' --dry-run"
+echo "/usr/bin/python3 '$INSTALLED_SCRIPT' --dry-run"

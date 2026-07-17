@@ -21,8 +21,8 @@ The helper uses the pinned `imessage-exporter` 4.2.0 release because it handles 
 3. Paste the dedicated Messages sync key. The main Network.crm key remains supported as a fallback.
 4. Open **System Settings > Privacy & Security > Full Disk Access**.
 5. Add and enable `~/Library/Application Support/Network CRM/bin/imessage-exporter`.
-6. Run `/usr/bin/python3 scripts/messages_sync.py --dry-run` from the repository.
-7. Run `/usr/bin/python3 scripts/messages_sync.py` to create the first review drafts.
+6. Run `/usr/bin/python3 ~/Library/Application\ Support/Network\ CRM/messages_sync.py --dry-run`.
+7. Run `/usr/bin/python3 ~/Library/Application\ Support/Network\ CRM/messages_sync.py` to create the first review drafts.
 
 The first run considers the previous 12 hours. Later runs continue from the last successful checkpoint. The installed schedule runs at noon and 6 PM local time.
 
@@ -35,3 +35,5 @@ Open a matched contact in Network.crm. Pending summaries appear above Notes. Edi
 The parser asks the local macOS Contacts database to resolve phone numbers and email addresses to names. The helper then requires one unambiguous match against Network.crm name, email, or mobile phone. Add a mobile number to a CRM profile when a conversation remains unmatched.
 
 The sync log reports only counts and errors; it never prints message contents. Logs and the private checkpoint live in `~/Library/Application Support/Network CRM/`.
+
+Unmatched one-to-one conversations are listed in `messages-sync-unmatched.json` in that same private folder. The report contains only the participant label and latest message date, never message content. Entries remain until they match a CRM contact or are more than 30 days old.
