@@ -3098,24 +3098,8 @@ function parseEmailDraft(raw, fallbackSubject) {
   };
 }
 
-async function openGmailComposeWithSignature(to, subject, body) {
-  if (body) {
-    try {
-      await navigator.clipboard.writeText(body);
-      toast('Draft copied. Paste it above your Gmail signature.');
-    } catch(e) {
-      const scratch = document.createElement('textarea');
-      scratch.value = body;
-      scratch.style.position = 'fixed';
-      scratch.style.opacity = '0';
-      document.body.appendChild(scratch);
-      scratch.select();
-      document.execCommand('copy');
-      scratch.remove();
-      toast('Draft copied. Paste it above your Gmail signature.');
-    }
-  }
-  const url = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(to||'')}&su=${encodeURIComponent(subject||'')}`;
+function openGmailComposeWithSignature(to, subject, body) {
+  const url = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(to||'')}&su=${encodeURIComponent(subject||'')}&body=${encodeURIComponent(body||'')}`;
   window.open(url, '_blank', 'noopener');
 }
 
