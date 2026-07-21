@@ -573,7 +573,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 <div class="modal-overlay" id="thankYouModal" onclick="if(event.target===this)closeThankYouModal()">
   <div class="modal" style="width:560px;max-height:90vh">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-      <h2 style="margin:0">✉️ Thank You Note</h2>
+      <h2 id="tyModalTitle" style="margin:0">✉️ Thank You Note</h2>
       <div style="display:flex;gap:8px;align-items:center">
         <button class="btn btn-ghost btn-sm" id="tyRegenBtn" onclick="regenThankYou()">↺ Regenerate</button>
         <button class="btn btn-ghost btn-sm" onclick="openThankYouInEmail()">📧 Draft Email</button>
@@ -582,7 +582,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
       </div>
     </div>
     <div id="tyContactLabel" style="font-size:12px;color:var(--muted);margin-bottom:14px"></div>
-    <div style="display:flex;gap:8px;margin-bottom:12px">
+    <div id="tyFlavorControls" style="display:flex;gap:8px;margin-bottom:12px">
       <button class="btn btn-ghost btn-sm active" id="tyFlavorQuick" onclick="setThankYouFlavor('quick')">Quick Thank You</button>
       <button class="btn btn-ghost btn-sm" id="tyFlavorRecap" onclick="setThankYouFlavor('recap')">Meeting Recap</button>
     </div>
@@ -2233,6 +2233,7 @@ function renderDetailContent(c) {
         <div class="d-actions" style="margin-top:8px">
           ${c.linkedin ? `<a class="link-btn" href="${c.linkedin}" target="_blank">🔗 LinkedIn</a>` : ''}
           ${c.email ? `<a class="link-btn" href="mailto:${c.email}">✉️ Email</a>` : ''}
+          <button class="btn btn-ghost btn-sm" onclick="genReconnectEmail(${c.id})">Reconnect</button>
           <span class="tag ${c.recruiter?'tag-on':'tag-off'}" onclick="toggleField(${c.id},'recruiter')">🎯 Recruiter</span>
           <span class="tag ${c.notInterested?'tag-alert':'tag-off'}" onclick="toggleField(${c.id},'notInterested')">🚫 Not Interested</span>
           <button class="btn btn-ghost btn-sm" onclick="suggestMissingFit(${c.id})">Suggest Fit</button>
@@ -2254,7 +2255,10 @@ function renderDetailContent(c) {
       </div>
       <div class="meta-card">
         <div class="meta-lbl">Email</div>
-        <input class="inline-edit" value="${esc(c.email||'')}" placeholder="email@example.com" onblur="updateField(${c.id},'email',this.value)" style="font-size:13px;font-weight:500;width:100%">
+        <div style="display:flex;gap:6px;align-items:center">
+          <input id="contactEmail_${c.id}" class="inline-edit" type="email" value="${esc(c.email||'')}" placeholder="email@example.com" onkeydown="if(event.key==='Enter'){event.preventDefault();saveContactEmail(${c.id})}" style="font-size:13px;font-weight:500;width:100%;min-width:0">
+          <button class="btn btn-primary btn-sm" onclick="saveContactEmail(${c.id})">Save</button>
+        </div>
       </div>
       <div class="meta-card">
         <div class="meta-lbl">Mobile Phone</div>
@@ -2317,6 +2321,12 @@ function parseNotes(str) {
 
 function toggleField(id,field){const c=contacts.find(x=>x.id===id);if(!c)return;c[field]=!c[field];saveContacts(contacts);openDetail(id);}
 function updateField(id,field,val){const c=contacts.find(x=>x.id===id);if(!c)return;c[field]=val;saveContacts(contacts);renderList();}
+function saveContactEmail(id){
+  const c=contacts.find(x=>x.id===id);const input=document.getElementById('contactEmail_'+id);if(!c||!input)return;
+  const email=input.value.trim();
+  if(email&&!input.checkValidity()){toast('Enter a valid email address');input.focus();return;}
+  c.email=email;saveContacts(contacts);renderDetailContent(c);renderList();toast(email?'Email saved':'Email removed');
+}
 function updateFitTier(id,field,tier){
   const c=contacts.find(x=>x.id===id);if(!c)return;
   c[field]=tier;
@@ -2526,6 +2536,44 @@ Conversation note (${noteDate || 'recent'}):
 ${noteText}
 
 ${formatInstructions}`;
+}
+
+function buildReconnectPrompt(c, businessContext) {
+  return `Write a warm reconnection email from Andre Moskowitz to this contact.
+
+Use this approved structure and language as the foundation:
+Subject: Checking in
+
+Hey [First name],
+
+I've been meaning to reach out and see how you're doing. I saw that you're at [Company] now, and I'd love to hear how things are going and what you've been working on.
+
+On my side, I've started helping organizations figure out where AI can make work easier in practical, useful ways. There's a quick overview at https://andremosk.com. I'd also be curious to hear how AI is showing up in your world, if at all.
+
+Open to catching up sometime in the next few weeks? Feel free to find a slot in my Calendly below.
+
+Best Regards,
+Andre
+Website: https://andremosk.com
+Calendly: https://calendly.com/andre-moskowitz/30min
+
+Contact:
+- Name: ${c.name || 'Unknown'}
+- Company: ${c.company || 'unknown'}
+- Position: ${c.position || 'unknown'}
+- Relationship: ${c.tier || 'Not set'}/4 (1 is closest)
+- Past notes: ${c.notes ? c.notes.substring(0, 1800) : 'None'}
+
+Current business context:
+${businessContext || '(Unavailable; use only the approved language above.)'}
+
+REQUIREMENTS:
+- Keep the subject exactly "Checking in"
+- Keep the overall length and casual warmth close to the approved draft
+- Personalize the company, role, and one genuine detail from the notes only when supported
+- Do not invent facts or imply that Andre recently saw something he could not know
+- Keep both full links exactly as written
+- Return only the email, beginning with "Subject: Checking in"`;
 }
 
 async function getAI(id) {
@@ -3011,8 +3059,10 @@ async function genContactThankYou(contactId, noteIdx) {
   const c = contacts.find(x => x.id === contactId); if (!c) return;
   const entries = parseNotes(c.notes);
   const entry = entries[noteIdx]; if (!entry) return;
-  _tyState = { contactId, noteIdx };
+  _tyState = { contactId, noteIdx, mode: 'thank-you' };
   document.getElementById('thankYouModal').classList.add('open');
+  document.getElementById('tyModalTitle').textContent = '✉️ Thank You Note';
+  document.getElementById('tyFlavorControls').style.display = 'flex';
   document.getElementById('tyContactLabel').textContent = `For: ${c.name}${c.company?' · '+c.company:''}${c.position?' · '+c.position:''}`;
   document.getElementById('thankYouModalTA').value = '';
   document.getElementById('tyError').style.display = 'none';
@@ -3037,10 +3087,41 @@ function updateThankYouFlavorUI() {
 async function regenThankYou() {
   if (!_tyState) return;
   const c = contacts.find(x => x.id === _tyState.contactId); if (!c) return;
+  if (_tyState.mode === 'reconnect') { await _runReconnectGen(c); return; }
   const entries = parseNotes(c.notes);
   const entry = entries[_tyState.noteIdx]; if (!entry) return;
   const apiKey = 'server'; if (!apiKey) return;
   await _runThankYouGen(c, entry.text, entry.date);
+}
+
+async function genReconnectEmail(contactId) {
+  const c = contacts.find(x => x.id === contactId); if (!c) return;
+  _tyState = { contactId, mode: 'reconnect' };
+  document.getElementById('thankYouModal').classList.add('open');
+  document.getElementById('tyModalTitle').textContent = 'Would love to reconnect!';
+  document.getElementById('tyFlavorControls').style.display = 'none';
+  document.getElementById('tyContactLabel').textContent = `To: ${c.email || 'Email not saved'} · ${c.name}${c.company ? ' · '+c.company : ''}`;
+  document.getElementById('thankYouModalTA').value = '';
+  document.getElementById('tyError').style.display = 'none';
+  await _runReconnectGen(c);
+}
+
+async function _runReconnectGen(c) {
+  const loading = document.getElementById('tyLoading');
+  const ta = document.getElementById('thankYouModalTA');
+  const errEl = document.getElementById('tyError');
+  loading.style.display = 'block'; ta.value = ''; errEl.style.display = 'none';
+  try {
+    const businessContext = await getBusinessHqContext();
+    const res = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': 'server', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 450, messages: [{ role: 'user', content: buildReconnectPrompt(c, businessContext) }] }) });
+    const data = await res.json();
+    loading.style.display = 'none';
+    if (data.error) { errEl.textContent = 'API Error: '+(data.error.message||'Unknown error'); errEl.style.display = 'block'; return; }
+    ta.value = data.content?.[0]?.text || 'Unable to generate.';
+    toast('Reconnection email ready');
+  } catch(e) {
+    loading.style.display = 'none'; errEl.textContent = 'Error connecting to AI. Check ANTHROPIC_API_KEY in Vercel.'; errEl.style.display = 'block';
+  }
 }
 
 async function _runThankYouGen(c, noteText, noteDate) {
