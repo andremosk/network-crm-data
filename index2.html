@@ -582,13 +582,6 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
       </div>
     </div>
     <div id="tyContactLabel" style="font-size:12px;color:var(--muted);margin-bottom:14px"></div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-      <label class="form-lbl" for="tyFromAddress" style="margin:0">From</label>
-      <select class="status-select" id="tyFromAddress" onchange="localStorage.setItem('network_crm_email_from',this.value)">
-        <option value="andre.moskowitz@gmail.com">andre.moskowitz@gmail.com</option>
-        <option value="andre@andremosk.com">andre@andremosk.com</option>
-      </select>
-    </div>
     <div id="tyFlavorControls" style="display:flex;gap:8px;margin-bottom:12px">
       <button class="btn btn-ghost btn-sm active" id="tyFlavorQuick" onclick="setThankYouFlavor('quick')">Quick Thank You</button>
       <button class="btn btn-ghost btn-sm" id="tyFlavorRecap" onclick="setThankYouFlavor('recap')">Meeting Recap</button>
@@ -2986,7 +2979,6 @@ async function genContactThankYou(contactId, noteIdx) {
   document.getElementById('thankYouModal').classList.add('open');
   document.getElementById('tyModalTitle').textContent = '✉️ Thank You Note';
   document.getElementById('tyFlavorControls').style.display = 'flex';
-  setDraftFromPreference();
   document.getElementById('tyContactLabel').textContent = `For: ${c.name}${c.company?' · '+c.company:''}${c.position?' · '+c.position:''}`;
   document.getElementById('thankYouModalTA').value = '';
   document.getElementById('tyError').style.display = 'none';
@@ -3024,7 +3016,6 @@ async function genReconnectEmail(contactId) {
   document.getElementById('thankYouModal').classList.add('open');
   document.getElementById('tyModalTitle').textContent = 'Would love to reconnect!';
   document.getElementById('tyFlavorControls').style.display = 'none';
-  setDraftFromPreference();
   document.getElementById('tyContactLabel').textContent = `To: ${c.email || 'Email not saved'} · ${c.name}${c.company ? ' · '+c.company : ''}`;
   document.getElementById('thankYouModalTA').value = '';
   document.getElementById('tyError').style.display = 'none';
@@ -3104,22 +3095,10 @@ function parseEmailDraft(raw, fallbackSubject) {
   };
 }
 
-function setDraftFromPreference() {
-  const select = document.getElementById('tyFromAddress'); if (!select) return;
-  const saved = localStorage.getItem('network_crm_email_from');
-  if (saved && [...select.options].some(option => option.value === saved)) select.value = saved;
-}
-
-async function openGmailComposeWithSignature(to, subject, body) {
+function openGmailComposeWithSignature(to, subject, body) {
   if (!to) { toast('Save an email address for this contact first'); return; }
-  const from = document.getElementById('tyFromAddress')?.value || 'andre.moskowitz@gmail.com';
-  toast('Creating Gmail draft...');
-  try {
-    const res = await fetch('/api/gmail/drafts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ from, to, subject, body }) });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error?.message || 'Could not create Gmail draft');
-    window.location.assign(data.url);
-  } catch(e) { toast(e.message || 'Could not create Gmail draft'); }
+  const url = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subject||'')}&body=${encodeURIComponent(body||'')}`;
+  window.location.assign(url);
 }
 
 function closeThankYouModal() { document.getElementById('thankYouModal').classList.remove('open'); _tyState = null; }
