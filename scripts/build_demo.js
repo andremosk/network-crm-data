@@ -61,7 +61,18 @@ html = replaceBetween(
 html = html
   .replace("<title>Network CRM</title>", "<title>Network.crm Interactive Demo</title>")
   .replace("<body>", `<body>\n<div class="demo-mode-banner"><strong>Interactive demo</strong> · All people, companies, and notes are fictional. Changes reset on refresh.</div>`)
-  .replace("</head>", `<style>\n.demo-mode-banner{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9999;background:#173e38;color:#fff;border:1px solid rgba(255,255,255,.2);box-shadow:0 8px 30px rgba(0,0,0,.18);border-radius:7px;padding:8px 13px;font:12px 'DM Sans',sans-serif;white-space:nowrap}.demo-mode-banner strong{color:#9ed9ce}@media(max-width:700px){.demo-mode-banner{max-width:calc(100vw - 20px);white-space:normal;text-align:center}}\n</style>\n</head>`)
+  .replace("</head>", `<style>
+.topbar>button[onclick="exportData()"],
+.topbar>button[onclick="openImportModal()"],
+.topbar>button[onclick="openSwitchModal()"],
+.topbar>#ghSyncBar,
+.topbar>button[onclick="openSettingsModal()"]{display:none!important}
+.topbar{gap:12px;padding-left:18px;padding-right:18px}
+.search-wrap{min-width:150px}
+.list-body,.detail-content,.sidebar{padding-bottom:64px}
+.demo-mode-banner{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;background:#173e38;color:#fff;border:1px solid rgba(255,255,255,.2);box-shadow:0 8px 30px rgba(0,0,0,.18);border-radius:7px;padding:8px 13px;font:12px 'DM Sans',sans-serif;white-space:nowrap}.demo-mode-banner strong{color:#9ed9ce}
+@media(max-width:700px){.demo-mode-banner{bottom:max(12px,env(safe-area-inset-bottom));max-width:calc(100vw - 20px);white-space:normal;text-align:center}.list-body,.detail-content,.sidebar{padding-bottom:88px}}
+</style>\n</head>`)
   .replace('<script src="/text-summary-review.js"></script>', "")
   .replace('<script src="/cloud-sync.js"></script>', '<script src="./demo-overrides.js"></script>');
 
