@@ -3095,10 +3095,15 @@ function parseEmailDraft(raw, fallbackSubject) {
   };
 }
 
-function openGmailComposeWithSignature(to, subject, body) {
+async function openGmailComposeWithSignature(to, subject, body) {
   if (!to) { toast('Save an email address for this contact first'); return; }
-  const url = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subject||'')}&body=${encodeURIComponent(body||'')}`;
-  window.location.assign(url);
+  toast('Saving draft to Gmail...');
+  try {
+    const res = await fetch('/api/gmail/drafts', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({to,subject,body}) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'Could not save Gmail draft');
+    toast('Draft saved to Gmail');
+  } catch(e) { toast(e.message || 'Could not save Gmail draft'); }
 }
 
 function closeThankYouModal() { document.getElementById('thankYouModal').classList.remove('open'); _tyState = null; }

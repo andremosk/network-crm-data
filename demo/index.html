@@ -1,22 +1,110 @@
-N
-Network
-Demo CRM
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Network.crm Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <button class="mobile-filter" id="mobileFilter" aria-label="Open filters"><i data-lucide="panel-left"></i></button>
+    <a class="brand" href="./" aria-label="Network CRM demo home">Network<span>.crm</span></a>
+    <nav class="modules" aria-label="Modules">
+      <button class="module active"><i data-lucide="users"></i> Contacts</button>
+      <button class="module" data-demo-toast="Applications are included in the full CRM demo roadmap."><i data-lucide="briefcase-business"></i> Applications</button>
+    </nav>
+    <label class="global-search">
+      <i data-lucide="search"></i>
+      <input id="searchInput" type="search" placeholder="Search contacts..." autocomplete="off">
+    </label>
+    <div class="top-stats">
+      <span><strong id="showingCount">0</strong><small>Showing</small></span>
+      <span><strong id="totalCount">0</strong><small>Total</small></span>
+      <span><strong id="relationshipOneCount">0</strong><small>Rel 1</small></span>
+    </div>
+    <button class="icon-button review-button" id="reviewButton" title="Text Review" aria-label="Open text review">
+      <i data-lucide="messages-square"></i><span class="badge">2</span>
+    </button>
+    <button class="primary-button" id="addContact"><i data-lucide="plus"></i><span>Add</span></button>
+    <button class="secondary-button" id="resetDemo"><i data-lucide="rotate-ccw"></i><span>Reset</span></button>
+  </header>
 
-Contacts Applications
-Tier
-All 0 T1 Close 0 T2 Good 0 T3 Emerging 0
-Status
-Network Closely Follow Up Came Through Recruiter
-Pipeline
-All Interviewing Researching Applied
-Demo mode Changes reset on refresh. No visitor data is saved.
-⌕ 
-Search demo data
-0Showing
-0Total
-Reset Demo
-Name Company Position Tier Status
-Company Role Stage Priority
-Select a row
-Try filters, open a contact, edit notes, or generate an outreach angle. Everything resets for the next visitor.
+  <div class="demo-banner">
+    <i data-lucide="sparkles"></i>
+    <span><strong>Interactive demo</strong> · All people and notes are fictional. Changes reset when you refresh.</span>
+  </div>
 
+  <main class="workspace">
+    <aside class="filters" id="filters">
+      <div class="filter-mobile-head"><strong>Filters</strong><button class="icon-button" id="closeFilters" aria-label="Close filters"><i data-lucide="x"></i></button></div>
+      <section class="filter-section">
+        <h2>Relationship</h2>
+        <div id="relationshipFilters"></div>
+      </section>
+      <section class="filter-section">
+        <h2>Client Fit</h2>
+        <div id="clientFilters"></div>
+      </section>
+      <section class="filter-section">
+        <h2>Connector Fit</h2>
+        <div id="connectorFilters"></div>
+      </section>
+      <section class="filter-section">
+        <h2>Status</h2>
+        <div id="statusFilters"></div>
+      </section>
+    </aside>
+
+    <section class="contact-list" aria-label="Contacts">
+      <div class="list-toolbar">
+        <div class="result-copy"><span id="resultLabel">All contacts</span><small id="activeFilterLabel"></small></div>
+        <label class="sort-control">Sort
+          <select id="sortSelect">
+            <option value="followup">Follow-up date</option>
+            <option value="name">Name</option>
+            <option value="relationship">Relationship</option>
+            <option value="client">Client fit</option>
+            <option value="connector">Connector fit</option>
+          </select>
+        </label>
+      </div>
+      <div class="table-head">
+        <span>Name</span><span>Company</span><span>Position</span><span>Rel</span><span>Client</span><span>Conn</span><span>Status</span>
+      </div>
+      <div id="contactRows" class="contact-rows"></div>
+      <div class="empty-state" id="emptyState" hidden>
+        <i data-lucide="search-x"></i>
+        <strong>No contacts match</strong>
+        <span>Try clearing a filter or changing your search.</span>
+      </div>
+    </section>
+  </main>
+
+  <aside class="detail-panel" id="detailPanel" aria-label="Contact profile" aria-hidden="true">
+    <div class="detail-top">
+      <button class="icon-button" id="closeDetail" aria-label="Close profile"><i data-lucide="x"></i></button>
+      <span id="detailBreadcrumb">Contact</span>
+      <span class="spacer"></span>
+      <button class="icon-button" id="prevContact" title="Previous contact"><i data-lucide="chevron-up"></i></button>
+      <button class="icon-button" id="nextContact" title="Next contact"><i data-lucide="chevron-down"></i></button>
+    </div>
+    <div id="detailContent" class="detail-content"></div>
+  </aside>
+
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <section class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <header><h2 id="modalTitle">Modal</h2><button class="icon-button" id="closeModal" aria-label="Close"><i data-lucide="x"></i></button></header>
+      <div id="modalContent"></div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
