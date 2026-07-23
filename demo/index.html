@@ -2484,16 +2484,16 @@ ${formatInstructions}`;
 function buildReconnectPrompt(c, businessContext) {
   return `Write a warm reconnection email from Andre Moskowitz to this contact.
 
-Use this approved structure and language as the foundation:
+Use this email as a VOICE reference, not as a factual template:
 Subject: Checking in
 
-Hey [First name],
+Hey Steve!
 
-I've been meaning to reach out and see how you're doing. I saw that you're at [Company] now, and I'd love to hear how things are going and what you've been working on.
+How are you man! I'm reaching out to old colleagues and giving them an update on what I'm doing. After 15 years in the corporate world (IBM, Snap), I've ditched the shackles, gone out on my own, and started helping small and mid-sized organizations figure out where AI can make work easier in practical, useful ways. There's a quick overview at https://andremosk.com.
 
-On my side, I've started helping organizations figure out where AI can make work easier in practical, useful ways. There's a quick overview at https://andremosk.com. I'd also be curious to hear how AI is showing up in your world, if at all.
+I'd also be curious to catch up on your career and life trajectory (wow, how long have you been in Cali for). And I saw that you're at DIFF Eyewear now - what a great brand. If I wasn't such a klutz and always losing sunglasses, I'd go for a pair. I stick to budget knockarounds for now because of the, uh, aforementioned penchant for losing them all the time.
 
-Open to catching up sometime in the next few weeks? Feel free to find a slot in my Calendly below.
+Open to catching up sometime in the next few weeks? Feel free to find a slot in my Calendly below. Would love to reminisce on S&B softball, and commiserate on - who else, the Mets.
 
 Best Regards,
 Andre
@@ -2512,8 +2512,15 @@ ${businessContext || '(Unavailable; use only the approved language above.)'}
 
 REQUIREMENTS:
 - Keep the subject exactly "Checking in"
-- Keep the overall length and casual warmth close to the approved draft
-- Personalize the company, role, and one genuine detail from the notes only when supported
+- Adapt the greeting and entire opening to the actual relationship. Do not automatically use "How are you man" or "old colleagues"
+- Explain Andre's update naturally: after 15 years across IBM and Snap, he left the corporate world and now helps small and mid-sized organizations make AI practical and useful
+- Vary the wording of that update so it sounds written for this person; "ditched the shackles" is optional, not required
+- Use 1-3 genuine details from the notes when available: shared history, family or life context, location, interests, company, role, or an old memory
+- Let Andre be playful, specific, lightly self-deprecating, and comfortable using a brief parenthetical aside when the context supports it
+- Make the catch-up invitation personal too; reference shared history or interests when supported
+- If the notes are sparse, write a simpler email rather than manufacturing familiarity
+- Aim for roughly 170-250 words, but favor naturalness over hitting a word count
+- Avoid generic networking language, corporate polish, flattery, and sales pressure
 - Do not invent facts or imply that Andre recently saw something he could not know
 - Keep both full links exactly as written
 - Return only the email, beginning with "Subject: Checking in"`;
@@ -3056,7 +3063,7 @@ async function _runReconnectGen(c) {
   loading.style.display = 'block'; ta.value = ''; errEl.style.display = 'none';
   try {
     const businessContext = await getBusinessHqContext();
-    const res = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': 'server', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 450, messages: [{ role: 'user', content: buildReconnectPrompt(c, businessContext) }] }) });
+    const res = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': 'server', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 650, messages: [{ role: 'user', content: buildReconnectPrompt(c, businessContext) }] }) });
     const data = await res.json();
     loading.style.display = 'none';
     if (data.error) { errEl.textContent = 'API Error: '+(data.error.message||'Unknown error'); errEl.style.display = 'block'; return; }

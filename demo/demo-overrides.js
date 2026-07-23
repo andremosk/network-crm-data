@@ -32,9 +32,9 @@
 
 Hey ${c.firstName},
 
-I’ve been meaning to reach out and see how you’re doing. I’d love to hear how things are going at ${c.company} and what you’ve been working on.
+How are you! I’m reaching out to people I’ve enjoyed getting to know and giving them an update on what I’m doing. After 15 years in the corporate world across IBM and Snap, I’ve gone out on my own and started helping small and mid-sized organizations figure out where AI can make work easier in practical, useful ways. There’s a quick overview at https://andremosk.com.
 
-On my side, I’ve started helping organizations figure out where AI can make work easier in practical, useful ways. There’s a quick overview at https://andremosk.com. I’d also be curious to hear how AI is showing up in your world, if at all.
+I’d also love to catch up on how things are going at ${c.company} and what you’ve been working on. I’m curious how AI is showing up in your world, if at all.
 
 Open to catching up sometime in the next few weeks? Feel free to find a slot in my Calendly below.
 
