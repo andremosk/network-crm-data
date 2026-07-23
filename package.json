@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
+    "build:demo": "node scripts/build_demo.js",
     "test": "node --test test/*.test.js"
   },
   "dependencies": {
