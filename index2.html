@@ -471,7 +471,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   <div class="cloud-login-card">
     <h2>Open Network.crm</h2>
     <p>Enter your private CRM access key once on this device. Your session will stay signed in for 30 days.</p>
-    <input class="form-input" id="cloudLoginToken" type="password" autocomplete="current-password" placeholder="CRM access key" onkeydown="if(event.key==='Enter')signInToCloud()">
+    <input class="form-input" id="cloudLoginToken" type="password" autocomplete="one-time-code" placeholder="CRM access key" onkeydown="if(event.key==='Enter')signInToCloud()">
     <div class="cloud-login-error" id="cloudLoginError"></div>
     <button class="btn btn-primary" id="cloudLoginBtn" style="width:100%;margin-top:8px" onclick="signInToCloud()">Continue</button>
   </div>
