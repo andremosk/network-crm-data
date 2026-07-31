@@ -65,8 +65,9 @@ cat > "$PLIST" <<PLIST
   </array>
   <key>StartCalendarInterval</key>
   <array>
-    <dict><key>Hour</key><integer>12</integer><key>Minute</key><integer>0</integer></dict>
-    <dict><key>Hour</key><integer>18</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>11</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>15</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>21</integer><key>Minute</key><integer>15</integer></dict>
   </array>
   <key>StandardOutPath</key><string>$APP_DIR/messages-sync.log</string>
   <key>StandardErrorPath</key><string>$APP_DIR/messages-sync-error.log</string>
@@ -79,7 +80,7 @@ launchctl bootout "gui/$(id -u)/com.networkcrm.messages-sync" 2>/dev/null || tru
 launchctl bootstrap "gui/$(id -u)" "$PLIST"
 
 echo
-echo "Setup installed the twice-daily schedule."
+echo "Setup installed the three-times-daily schedule."
 echo "Next: give this file Full Disk Access in System Settings:"
 echo "$EXPORTER"
 echo

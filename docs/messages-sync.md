@@ -24,7 +24,7 @@ The helper uses the pinned `imessage-exporter` 4.2.0 release because it handles 
 6. Run `/usr/bin/python3 ~/Library/Application\ Support/Network\ CRM/messages_sync.py --dry-run`.
 7. Run `/usr/bin/python3 ~/Library/Application\ Support/Network\ CRM/messages_sync.py` to create the first review drafts.
 
-The first run considers the previous 12 hours. Later runs continue from the last successful checkpoint. The installed schedule runs at noon and 6 PM local time.
+The first run considers the previous 12 hours. Later runs continue from the last successful checkpoint. The installed schedule runs at 11 AM, 3 PM, and 9:15 PM local time.
 
 ## Review flow
 

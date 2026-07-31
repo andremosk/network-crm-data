@@ -450,7 +450,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   </div>
   <div class="search-wrap">
     <span class="search-icon">🔍</span>
-    <input type="text" id="searchInput" placeholder="Search..." oninput="onSearch()">
+    <input type="text" id="searchInput" placeholder="Search..." oninput="onSearch()" onkeydown="onSearchKey(event)" autocomplete="off">
   </div>
   <button class="btn btn-ghost mobile-filters-btn" id="mobileFiltersBtn" onclick="toggleMobileFilters()">Filters</button>
   <div class="topbar-stat"><div class="stat-num" id="statShowing">0</div><div class="stat-lbl">Showing</div></div>
@@ -1167,7 +1167,22 @@ function switchView(v) {
   if(v==='contacts') renderList(); else renderApps();
 }
 
-function onSearch() { if(currentView==='contacts') renderList(); else renderApps(); }
+function onSearch() {
+  if (currentView === 'contacts' && document.getElementById('detailPanel').classList.contains('open')) return;
+  if(currentView==='contacts') renderList(); else renderApps();
+}
+function onSearchKey(e) {
+  if (e.key !== 'Enter' || currentView !== 'contacts' || !document.getElementById('detailPanel').classList.contains('open')) return;
+  const input = document.getElementById('searchInput');
+  const q = input.value.toLowerCase().trim();
+  if (!q) return;
+  const match = contacts.find(c => String(c.name||'').toLowerCase().startsWith(q))
+    || contacts.find(c => `${c.name||''} ${c.company||''} ${c.position||''}`.toLowerCase().includes(q));
+  if (!match) { toast('No matching contact found'); return; }
+  input.value = '';
+  renderList();
+  openDetail(match.id);
+}
 function openAddModal() { if(currentView==='contacts') openAddContactModal(); else openAddAppModal(); }
 
 function toggleMobileFilters(forceClose = false) {
@@ -2185,6 +2200,7 @@ function openDetail(id) {
   selectedId = id;
   const c = contacts.find(x => x.id === id); if (!c) return;
   document.getElementById('detailPanel').classList.add('open');
+  document.getElementById('searchInput').placeholder = 'Jump to another contact...';
   document.getElementById('detailBreadcrumb').textContent = c.name;
   renderDetailContent(c);
   document.querySelectorAll('.list-row').forEach(r => r.classList.remove('selected'));
@@ -2193,6 +2209,8 @@ function openDetail(id) {
 
 function closeDetail() {
   document.getElementById('detailPanel').classList.remove('open');
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchInput').placeholder = 'Search name, company, notes...';
   renderList();
 }
 
