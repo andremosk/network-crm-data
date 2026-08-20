@@ -10,6 +10,14 @@ test("accepts only the configured access token", () => {
   assert.equal(auth.tokenIsValid(""), false);
 });
 
+test("accepts the staged next token without disabling the current token", () => {
+  process.env.NETWORK_CRM_AUTOMATION_TOKEN_NEXT = "test-next-token";
+  assert.equal(auth.tokenIsValid("test-private-token"), true);
+  assert.equal(auth.tokenIsValid("test-next-token"), true);
+  assert.equal(auth.tokenIsValid("wrong-token"), false);
+  delete process.env.NETWORK_CRM_AUTOMATION_TOKEN_NEXT;
+});
+
 test("accepts a separate Messages-only token without changing the main token", () => {
   process.env.NETWORK_CRM_MESSAGES_TOKEN = "test-messages-token";
   assert.equal(auth.messagesTokenIsValid("test-messages-token"), true);

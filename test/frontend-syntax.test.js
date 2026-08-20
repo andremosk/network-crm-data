@@ -15,6 +15,11 @@ test("cloud sync client parses", () => {
   new Function(fs.readFileSync("cloud-sync.js", "utf8"));
 });
 
+test("engagement client parses", () => {
+  new Function(fs.readFileSync("engagement-core.js", "utf8"));
+  new Function(fs.readFileSync("engagements.js", "utf8"));
+});
+
 test("text summary review client parses", () => {
   new Function(fs.readFileSync("text-summary-review.js", "utf8"));
 });

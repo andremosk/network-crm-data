@@ -447,6 +447,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   <div class="view-tabs">
     <button class="view-tab active" id="tab-contacts" onclick="switchView('contacts')">👥 Contacts</button>
     <button class="view-tab" id="tab-apps" onclick="switchView('apps')">📋 Applications</button>
+    <button class="view-tab" id="tab-engagements" onclick="switchView('engagements')">Engagements</button>
   </div>
   <div class="search-wrap">
     <span class="search-icon">🔍</span>
@@ -495,7 +496,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
       </div>
       <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px">
         <span style="background:rgba(110,198,202,0.15);color:#6ec6ca;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px">2</span>
-        <span style="color:var(--text);line-height:1.5">Everything clears — contacts and applications</span>
+        <span style="color:var(--text);line-height:1.5">Everything clears — contacts, applications, and engagements</span>
       </div>
       <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px">
         <span style="background:rgba(110,198,202,0.15);color:#6ec6ca;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px">3</span>
@@ -851,6 +852,8 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   </div>
 </div>
 
+<div class="sidebar" id="engagementsSidebar" style="display:none"></div>
+
 <!-- MAIN: CONTACTS VIEW -->
 <div class="main-panel" id="contactsView">
   <div class="list-header">
@@ -876,6 +879,8 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   </div>
   <div class="list-body" id="appsListBody"></div>
 </div>
+
+<div class="main-panel" id="engagementsView" style="display:none"></div>
 
 <!-- CONTACT DETAIL PANEL -->
 <div class="detail-panel" id="detailPanel">
@@ -914,8 +919,15 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   <div class="detail-content" id="appDetailContent"></div>
 </div>
 
+<div class="detail-panel" id="engagementDetailPanel"></div>
+
+<div class="modal-overlay" id="addEngagementModal" onclick="if(event.target===this)closeAddEngagementModal()">
+  <div class="modal" style="width:680px" id="addEngagementContent"></div>
+</div>
+
 </div><!-- body-wrap -->
 
+<script src="/engagement-core.js"></script>
 <script>
 // ─── HOISTED STATE (declared here to avoid temporal dead zone) ────
 let pendingImportData = null;
@@ -1093,9 +1105,21 @@ function saveApps(apps) {
   if (cloudSyncReady) queueCloudSync(); else scheduleSync('Application update');
 }
 
+function loadEngagements() {
+  const saved = localStorage.getItem('andre_engagements_v1');
+  if (!saved) return [];
+  try { return JSON.parse(saved).map(window.EngagementCore.withDefaults); } catch(e) { return []; }
+}
+function saveEngagements(items) {
+  localStorage.setItem('andre_engagements_v1', JSON.stringify(items));
+  localStorage.setItem('andre_crm_local_dirty', '1');
+  if (cloudSyncReady) queueCloudSync();
+}
+
 // ─── STATE ────────────────────────────────────────────────────────
 let contacts = loadContacts();
 let apps = loadApps();
+let engagements = loadEngagements();
 let currentView = 'contacts';
 let tierFilter = 'all', clientFitFilter = 'all', connectorFitFilter = 'all', statusFilter = [];
 let flagFilters = { companyFlag:false, functionFlag:false, positionFlag:false, knowsMe:false, notInterested:false, hideNotInterested:false };
@@ -1103,15 +1127,21 @@ let pipelineFilter = 'all';
 let sortKey = null, sortDir = 1;
 let appSortKey = null, appSortDir = 1;
 let selectedId = null, selectedAppId = null, selectedRoundId = null;
+let selectedEngagementId = null;
 let filtered = [], filteredApps = [];
 let activeAppSection = 'overview';
 var cloudSyncReady = false;
 var cloudSyncTimer = null;
 var cloudPollTimer = null;
+var cloudPullInFlight = false;
+var cloudSaveInFlight = false;
+var cloudLocalRevision = 0;
 var cloudContactVersions = new Map();
 var cloudContactFingerprints = new Map();
 var cloudAppVersions = new Map();
 var cloudAppFingerprints = new Map();
+var cloudEngagementVersions = new Map();
+var cloudEngagementFingerprints = new Map();
 
 // ─── META ─────────────────────────────────────────────────────────
 const SM = {
@@ -1155,21 +1185,25 @@ function switchView(v) {
   currentView = v;
   document.getElementById('tab-contacts').classList.toggle('active', v==='contacts');
   document.getElementById('tab-apps').classList.toggle('active', v==='apps');
+  document.getElementById('tab-engagements').classList.toggle('active', v==='engagements');
   document.getElementById('contactsSidebar').style.display = v==='contacts' ? '' : 'none';
   document.getElementById('appsSidebar').style.display = v==='apps' ? '' : 'none';
+  document.getElementById('engagementsSidebar').style.display = v==='engagements' ? '' : 'none';
   document.getElementById('contactsView').style.display = v==='contacts' ? '' : 'none';
   document.getElementById('appsView').style.display = v==='apps' ? '' : 'none';
+  document.getElementById('engagementsView').style.display = v==='engagements' ? '' : 'none';
   document.getElementById('detailPanel').classList.remove('open');
   document.getElementById('appDetailPanel').classList.remove('open');
-  document.getElementById('addBtn').textContent = v==='contacts' ? '+ Add' : '+ Add Application';
-  document.getElementById('searchInput').placeholder = v==='contacts' ? 'Search name, company, notes...' : 'Search applications...';
+  document.getElementById('engagementDetailPanel').classList.remove('open');
+  document.getElementById('addBtn').textContent = v==='contacts' ? '+ Add' : v==='apps' ? '+ Add Application' : '+ Add Engagement';
+  document.getElementById('searchInput').placeholder = v==='contacts' ? 'Search name, company, notes...' : v==='apps' ? 'Search applications...' : 'Search engagements...';
   document.getElementById('stat3wrap').style.display = v==='contacts' ? '' : 'none';
-  if(v==='contacts') renderList(); else renderApps();
+  if(v==='contacts') renderList(); else if(v==='apps') renderApps(); else renderEngagements();
 }
 
 function onSearch() {
   if (currentView === 'contacts' && document.getElementById('detailPanel').classList.contains('open')) return;
-  if(currentView==='contacts') renderList(); else renderApps();
+  if(currentView==='contacts') renderList(); else if(currentView==='apps') renderApps(); else renderEngagements();
 }
 function onSearchKey(e) {
   if (e.key !== 'Enter' || currentView !== 'contacts' || !document.getElementById('detailPanel').classList.contains('open')) return;
@@ -1183,10 +1217,10 @@ function onSearchKey(e) {
   renderList();
   openDetail(match.id);
 }
-function openAddModal() { if(currentView==='contacts') openAddContactModal(); else openAddAppModal(); }
+function openAddModal() { if(currentView==='contacts') openAddContactModal(); else if(currentView==='apps') openAddAppModal(); else openAddEngagementModal(); }
 
 function toggleMobileFilters(forceClose = false) {
-  const sidebar = document.getElementById(currentView === 'contacts' ? 'contactsSidebar' : 'appsSidebar');
+  const sidebar = document.getElementById(currentView === 'contacts' ? 'contactsSidebar' : currentView === 'apps' ? 'appsSidebar' : 'engagementsSidebar');
   if (!sidebar) return;
   document.querySelectorAll('.sidebar').forEach(el => { if (el !== sidebar) el.classList.remove('mobile-open'); });
   if (forceClose) sidebar.classList.remove('mobile-open');
@@ -2624,8 +2658,11 @@ function saveNewContact() {
   const first = document.getElementById('nFirst').value.trim();
   const last = document.getElementById('nLast').value.trim();
   if (!first&&!last) { toast('Please enter a name'); return; }
-  const maxId = contacts.reduce((m,c) => Math.max(m,c.id||0), 0);
-  const nc = withFitDefaults({ id: maxId+1, name:[first,last].filter(Boolean).join(' '), firstName:first, lastName:last,
+  const maxId = contacts.reduce((m,c) => Math.max(m,Number(c.id)||0), 0);
+  const id = cloudSyncReady && window.CloudSyncCore
+    ? window.CloudSyncCore.createTemporaryId(contacts)
+    : maxId + 1;
+  const nc = withFitDefaults({ id, _syncPendingCreate: cloudSyncReady, name:[first,last].filter(Boolean).join(' '), firstName:first, lastName:last,
     tier: parseInt(document.getElementById('nTier').value)||2,
     company: document.getElementById('nCompany').value.trim(),
     position: document.getElementById('nPos').value.trim(),
@@ -2644,11 +2681,11 @@ function saveNewContact() {
 
 // ─── EXPORT / IMPORT ──────────────────────────────────────────────
 function exportData() {
-  const data = { contacts, apps };
+  const data = { contacts, apps, engagements };
   const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = `andre_network_${new Date().toISOString().split('T')[0]}.json`;
-  a.click(); toast('Exported contacts + applications ✓');
+  a.click(); toast('Exported contacts, applications, and engagements ✓');
 }
 
 function openImportModal() {
@@ -2657,7 +2694,7 @@ function openImportModal() {
   document.getElementById('importConfirmBtn').style.display='none';
   document.getElementById('importFileInput').value='';
   document.getElementById('importModalTitle').textContent='Import';
-  document.getElementById('importModalDesc').textContent='Drop a JSON file exported from this app. Contacts and applications will both be restored.';
+  document.getElementById('importModalDesc').textContent='Drop a JSON file exported from this app. Contacts, applications, and engagements will be restored.';
   document.getElementById('importModal').classList.add('open');
 }
 function closeImportModal() { document.getElementById('importModal').classList.remove('open'); pendingImportData=null; }
@@ -2670,8 +2707,8 @@ function readImportFile(file) {
     try {
       const parsed = JSON.parse(e.target.result);
       // Combined format: { contacts: [...], apps: [...] }
-      if (parsed && !Array.isArray(parsed) && (parsed.contacts || parsed.apps)) {
-        previewImport({ contacts: parsed.contacts || [], apps: parsed.apps || [] });
+      if (parsed && !Array.isArray(parsed) && (parsed.contacts || parsed.apps || parsed.engagements)) {
+        previewImport({ contacts: parsed.contacts || [], apps: parsed.apps || [], engagements: parsed.engagements || [] });
       }
       // Legacy: array of contacts (no 'company' field shaped like apps) or apps
       else if (Array.isArray(parsed)) {
@@ -2686,6 +2723,7 @@ function readImportFile(file) {
 function previewImport(incoming) {
   const inContacts = incoming.contacts || [];
   const inApps = incoming.apps || [];
+  const inEngagements = incoming.engagements || [];
 
   // Count contact changes
   const norm = s => (s||'').toLowerCase().trim().replace(/\s+/,' ');
@@ -2711,19 +2749,20 @@ function previewImport(incoming) {
   const aAdd = inApps.filter(a=>!existingAppIds.has(a.id)).length;
   const aUpdate = inApps.filter(a=>existingAppIds.has(a.id)).length;
 
-  pendingImportData = {inContacts, inApps, changes, cAdd, cUpdate};
+  pendingImportData = {inContacts, inApps, inEngagements, changes, cAdd, cUpdate};
   const preview = document.getElementById('importPreview');
   preview.style.display = 'block';
   const parts = [];
   if(inContacts.length) parts.push(`<span>👥 <strong>${cAdd}</strong> new / <strong>${cUpdate}</strong> updated contacts</span>`);
   if(inApps.length) parts.push(`<span>📋 <strong>${aAdd}</strong> new / <strong>${aUpdate}</strong> updated applications</span>`);
+  if(inEngagements.length) parts.push(`<span><strong>${inEngagements.length}</strong> engagements</span>`);
   if(!parts.length) parts.push('<span>Nothing to import</span>');
   preview.innerHTML = `<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:4px">${parts.join('')}</div>`;
   document.getElementById('importConfirmBtn').style.display = 'inline-flex';
 }
 function confirmImport() {
   if (!pendingImportData) return;
-  const {inContacts, inApps, changes, cAdd, cUpdate} = pendingImportData;
+  const {inContacts, inApps, inEngagements, changes, cAdd, cUpdate} = pendingImportData;
   const norm = s => (s||'').toLowerCase().trim().replace(/\s+/,' ');
   const normLI = u => (u||'').toLowerCase().trim().replace(/\/$/,'').replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//,'');
 
@@ -2759,11 +2798,22 @@ function confirmImport() {
     saveApps(apps);
   }
 
+  if (inEngagements.length) {
+    const byId = new Map(engagements.map(item => [String(item.id), item]));
+    inEngagements.forEach(item => {
+      const normalized = window.EngagementCore.withDefaults(item);
+      byId.set(String(normalized.id), normalized);
+    });
+    engagements = [...byId.values()];
+    saveEngagements(engagements);
+  }
+
   closeImportModal();
-  if(currentView==='contacts') renderList(); else renderApps();
+  if(currentView==='contacts') renderList(); else if(currentView==='apps') renderApps(); else renderEngagements();
   const msgs = [];
   if(inContacts.length) msgs.push(`${cAdd} contacts added, ${cUpdate} updated`);
   if(inApps.length) msgs.push(`${inApps.length} applications imported`);
+  if(inEngagements.length) msgs.push(`${inEngagements.length} engagements imported`);
   toast('✓ ' + (msgs.join(' · ') || 'Nothing imported'));
 }
 
@@ -3426,7 +3476,7 @@ function toast(msg) { const t=document.createElement('div'); t.className='toast'
 
 // ─── KEYBOARD ─────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
-  if (e.key==='Escape') { closeDetail(); closeAppDetail(); }
+  if (e.key==='Escape') { closeDetail(); closeAppDetail(); if(typeof closeEngagementDetail==='function') closeEngagementDetail(); }
   const tag = document.activeElement ? document.activeElement.tagName : '';
   const isTyping = tag==='INPUT' || tag==='TEXTAREA' || document.activeElement.isContentEditable;
   if (isTyping) return;
@@ -3438,8 +3488,9 @@ document.addEventListener('keydown', e => {
 function openSwitchModal() {
   const cCount = contacts.length;
   const aCount = apps.length;
+  const eCount = engagements.length;
   document.getElementById('switchModalCounts').innerHTML =
-    `<span style="color:var(--accent)">${cCount}</span> contact${cCount!==1?'s':''} &nbsp;·&nbsp; <span style="color:var(--accent)">${aCount}</span> application${aCount!==1?'s':''}`;
+    `<span style="color:var(--accent)">${cCount}</span> contact${cCount!==1?'s':''} &nbsp;·&nbsp; <span style="color:var(--accent)">${aCount}</span> application${aCount!==1?'s':''} &nbsp;·&nbsp; <span style="color:var(--accent)">${eCount}</span> engagement${eCount!==1?'s':''}`;
   document.getElementById('switchModal').classList.add('open');
 }
 
@@ -3449,7 +3500,7 @@ function closeSwitchModal() {
 
 function confirmSwitchDataset() {
   // Step 1: Auto-export current data
-  const data = { contacts, apps };
+  const data = { contacts, apps, engagements };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -3459,8 +3510,10 @@ function confirmSwitchDataset() {
   // Step 2: Clear to empty arrays (not seed) and save
   contacts = [];
   apps = [];
+  engagements = [];
   saveContacts(contacts);
   saveApps(apps);
+  saveEngagements(engagements);
 
   // Step 3: Reset UI state
   selectedId = null;
@@ -3468,9 +3521,10 @@ function confirmSwitchDataset() {
   selectedRoundId = null;
   document.getElementById('detailPanel').classList.remove('open');
   document.getElementById('appDetailPanel').classList.remove('open');
+  document.getElementById('engagementDetailPanel').classList.remove('open');
   closeSwitchModal();
 
-  if (currentView === 'contacts') renderList(); else renderApps();
+  if (currentView === 'contacts') renderList(); else if(currentView === 'apps') renderApps(); else renderEngagements();
   toast('✓ Backup downloaded · Ready for demo data — use Import to load it');
 }
 
@@ -3491,7 +3545,9 @@ renderList();
 renderSortHeaders();
 updateSyncBar('idle');
 </script>
+<script src="/engagements.js"></script>
 <script src="/text-summary-review.js"></script>
+<script src="/cloud-sync-core.js"></script>
 <script src="/cloud-sync.js"></script>
 </body>
 </html>

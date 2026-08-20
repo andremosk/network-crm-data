@@ -1,6 +1,7 @@
 (function () {
   let pendingSummaries = [];
   let pendingConversations = [];
+  let pendingProposals = [];
   let pendingCreateKey = null;
   let contactChoices = new Map();
 
@@ -58,10 +59,20 @@
         .text-review-contact { color:var(--muted); font-size:12px; }
         .text-review-summary { width:100%; min-height:74px; margin-top:9px; resize:vertical; padding:10px 12px; border:1px solid var(--border); border-radius:7px; background:var(--surface2); color:var(--text); font:13px/1.55 'DM Sans',sans-serif; outline:none; }
         .text-review-summary:focus { border-color:var(--accent); }
+        .communication-review-labels { display:flex; flex-wrap:wrap; gap:6px; margin-top:5px; }
+        .communication-review-label { padding:2px 7px; border:1px solid var(--border); border-radius:4px; color:var(--muted); font-size:10px; font-weight:700; text-transform:uppercase; }
+        .communication-review-evidence { margin-top:10px; color:var(--text); font-size:13px; line-height:1.55; }
+        .communication-review-fields { margin-top:10px; padding:12px; border:1px solid var(--border); border-radius:7px; background:var(--surface2); }
+        .communication-review-fields summary { cursor:pointer; color:var(--muted); font-size:11px; font-weight:700; }
+        .communication-review-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+        .communication-review-grid .wide { grid-column:1 / -1; }
+        .communication-review-field label { display:block; margin-bottom:4px; color:var(--muted); font-size:10px; font-weight:700; text-transform:uppercase; }
         @media (max-width:700px) {
           .text-review-trigger { grid-column:auto; grid-row:auto; }
           .text-review-controls { grid-template-columns:1fr; }
           .text-review-actions { justify-content:flex-start; }
+          .communication-review-grid { grid-template-columns:1fr; }
+          .communication-review-grid .wide { grid-column:auto; }
         }
       `;
       document.head.appendChild(style);
@@ -71,8 +82,8 @@
       const button = document.createElement("button");
       button.id = "textReviewBtn";
       button.className = "btn btn-ghost text-review-trigger";
-      button.title = "Text Review";
-      button.setAttribute("aria-label", "Open Text Review");
+      button.title = "Communication Review";
+      button.setAttribute("aria-label", "Open Communication Review");
       button.innerHTML = `<span aria-hidden="true">💬</span><span class="text-review-badge" id="textReviewBadge"></span>`;
       button.onclick = window.openTextReview;
       const anchor = document.getElementById("ghSyncBar");
@@ -91,14 +102,14 @@
 
   function updateBadge() {
     ensureTextReviewUi();
-    const count = pendingSummaries.length + pendingConversations.length;
+    const count = pendingSummaries.length + pendingConversations.length + pendingProposals.length;
     const badge = document.getElementById("textReviewBadge");
     if (badge) {
       badge.textContent = String(count);
       badge.classList.toggle("visible", count > 0);
     }
     const button = document.getElementById("textReviewBtn");
-    if (button) button.title = count ? `Text Review · ${count} pending` : "Text Review";
+    if (button) button.title = count ? `Communication Review · ${count} pending` : "Communication Review";
   }
 
   function buildContactChoices() {
@@ -120,6 +131,7 @@
         <div>
           <div class="text-review-name">${escapeHtml(item.participant_label)}</div>
           <div class="text-review-meta">Latest text ${escapeHtml(formatDate(item.latest_message_at))}</div>
+          <div class="communication-review-labels"><span class="communication-review-label">SMS</span><span class="communication-review-label">Create contact</span></div>
         </div>
       </div>
       <div class="text-review-controls">
@@ -141,6 +153,7 @@
         <div>
           <div class="text-review-name">${escapeHtml(contact?.name || "CRM contact")}</div>
           <div class="text-review-meta">${escapeHtml(formatDate(item.conversation_ended_at))} · ${Number(item.message_count) || 0} messages</div>
+          <div class="communication-review-labels"><span class="communication-review-label">SMS</span><span class="communication-review-label">Update contact</span></div>
         </div>
         <div class="text-review-contact">Ready for Notes</div>
       </div>
@@ -152,20 +165,58 @@
     </div>`;
   }
 
+  function proposalTypeLabel(type) {
+    return type === "create_contact" ? "Create contact" : type === "update_contact" ? "Update contact" : "No CRM action";
+  }
+
+  function renderProposal(item) {
+    const proposed = item.proposed || {};
+    const create = item.proposal_type === "create_contact";
+    const displayName = create ? proposed.name : (item.matched_contact_name || "CRM contact");
+    const field = (id, label, value, extra = "") => `<div class="communication-review-field ${extra}"><label for="comm_${id}_${item.id}">${label}</label><input class="form-input" id="comm_${id}_${item.id}" value="${escapeHtml(value)}"></div>`;
+    return `<div class="text-review-row" id="communicationProposal_${item.id}">
+      <div class="text-review-row-head">
+        <div>
+          <div class="text-review-name">${escapeHtml(displayName)}</div>
+          <div class="text-review-meta">${escapeHtml(formatDate(item.occurred_at))}${item.recipient_email ? ` · ${escapeHtml(item.recipient_email)}` : ""}</div>
+          <div class="communication-review-labels"><span class="communication-review-label">Email</span><span class="communication-review-label">${proposalTypeLabel(item.proposal_type)}</span></div>
+        </div>
+        <div class="text-review-contact">Awaiting approval</div>
+      </div>
+      <div class="communication-review-evidence">${escapeHtml(item.evidence)}</div>
+      <details class="communication-review-fields" open>
+        <summary>Proposed CRM fields</summary>
+        <div class="communication-review-grid">
+          ${create ? `${field("name", "Name", proposed.name)}${field("email", "Email", proposed.email)}${field("company", "Company", proposed.company)}${field("position", "Position", proposed.position)}
+          <div class="communication-review-field"><label for="comm_tier_${item.id}">Relationship</label><select class="form-input" id="comm_tier_${item.id}">${[1,2,3,4].map((tier) => `<option value="${tier}" ${Number(proposed.tier) === tier ? "selected" : ""}>T${tier}</option>`).join("")}</select></div>` : ""}
+          <div class="communication-review-field"><label for="comm_status_${item.id}">Status</label><select class="form-input" id="comm_status_${item.id}"><option value="">No change</option><option value="follow_up" ${proposed.status === "follow_up" ? "selected" : ""}>Follow Up</option></select></div>
+          <div class="communication-review-field"><label for="comm_followUpDate_${item.id}">Follow-up date</label><input class="form-input" type="date" id="comm_followUpDate_${item.id}" value="${escapeHtml(proposed.followUpDate)}"></div>
+          <div class="communication-review-field wide"><label for="comm_note_${item.id}">Initial note</label><textarea class="text-review-summary" id="comm_note_${item.id}">${escapeHtml(proposed.notes || proposed.note)}</textarea></div>
+        </div>
+      </details>
+      <div class="text-review-actions">
+        <button class="btn btn-ghost btn-sm" onclick="ignoreCommunicationProposal(${item.id})">Ignore</button>
+        <button class="btn btn-ghost btn-sm" onclick="editCommunicationProposal(${item.id})">Save Edit</button>
+        ${item.proposal_type !== "no_action" ? `<button class="btn btn-primary btn-sm" onclick="applyCommunicationProposal(${item.id})">${create ? "Create" : "Apply"}</button>` : ""}
+      </div>
+    </div>`;
+  }
+
   function renderTextReviewModal() {
     ensureTextReviewUi();
     const content = document.getElementById("textReviewContent");
     if (!content) return;
-    const total = pendingSummaries.length + pendingConversations.length;
+    const total = pendingSummaries.length + pendingConversations.length + pendingProposals.length;
     content.innerHTML = `<div class="text-review-header">
-      <div><h2 style="margin:0">Text Review</h2><div class="text-summary-subtitle">Match conversations and approve durable CRM updates</div></div>
+      <div><h2 style="margin:0">Communication Review</h2><div class="text-summary-subtitle">Review SMS and email proposals before changing the CRM</div></div>
       <button class="btn btn-ghost btn-sm" onclick="closeTextReview()" aria-label="Close">×</button>
     </div>
     ${total ? `
       ${pendingConversations.length ? `<section class="text-review-section"><div class="text-review-section-title"><span>Needs matching</span><span>${pendingConversations.length}</span></div><div class="text-review-list">${pendingConversations.map(renderConversation).join("")}</div></section>` : ""}
       ${pendingSummaries.length ? `<section class="text-review-section"><div class="text-review-section-title"><span>Summary review</span><span>${pendingSummaries.length}</span></div><div class="text-review-list">${pendingSummaries.map(renderSummary).join("")}</div></section>` : ""}
+      ${pendingProposals.length ? `<section class="text-review-section"><div class="text-review-section-title"><span>Email proposals</span><span>${pendingProposals.length}</span></div><div class="text-review-list">${pendingProposals.map(renderProposal).join("")}</div></section>` : ""}
       <datalist id="textReviewContacts">${buildContactChoices()}</datalist>
-    ` : `<div class="text-review-empty">No text conversations need attention.</div>`}`;
+    ` : `<div class="text-review-empty">No communications need attention.</div>`}`;
   }
 
   window.renderTextSummarySection = function renderTextSummarySection(contactId) {
@@ -179,12 +230,19 @@
 
   window.loadTextSummaries = async function loadTextSummaries() {
     try {
-      const response = await fetch("/api/crm/text-summaries", { cache: "no-store" });
-      if (response.status === 401) return;
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error?.message || "Could not load Text Review.");
+      const [textResponse, proposalResponse] = await Promise.all([
+        fetch("/api/crm/text-summaries", { cache: "no-store" }),
+        fetch("/api/crm/communication-proposals", { cache: "no-store" })
+      ]);
+      if (textResponse.status === 401 || proposalResponse.status === 401) return;
+      const [data, proposalData] = await Promise.all([
+        textResponse.json().catch(() => ({})), proposalResponse.json().catch(() => ({}))
+      ]);
+      if (!textResponse.ok) throw new Error(data.error?.message || "Could not load Communication Review.");
+      if (!proposalResponse.ok) throw new Error(proposalData.error?.message || "Could not load email proposals.");
       pendingSummaries = Array.isArray(data.summaries) ? data.summaries : [];
       pendingConversations = Array.isArray(data.conversations) ? data.conversations : [];
+      pendingProposals = Array.isArray(proposalData.proposals) ? proposalData.proposals : [];
       updateBadge();
       if (document.getElementById("textReviewModal")?.classList.contains("open")) renderTextReviewModal();
       const signature = pendingConversations.map((item) => item.conversation_key).sort().join(",");
@@ -193,7 +251,7 @@
         if (typeof window.toast === "function") window.toast(`${pendingConversations.length} text conversation${pendingConversations.length === 1 ? "" : "s"} need review`);
       }
     } catch (error) {
-      console.warn("Text Review unavailable:", error);
+      console.warn("Communication Review unavailable:", error);
     }
   };
 
@@ -215,9 +273,63 @@
       body: JSON.stringify(body)
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error?.message || "Could not update Text Review.");
+    if (!response.ok) throw new Error(data.error?.message || "Could not update Communication Review.");
     return data;
   }
+
+  async function patchCommunicationReview(body) {
+    const response = await fetch("/api/crm/communication-proposals", {
+      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error?.message || "Could not update Communication Review.");
+    return data;
+  }
+
+  function proposalFromEditor(id) {
+    const item = pendingProposals.find((candidate) => Number(candidate.id) === Number(id));
+    if (!item) return null;
+    const value = (name) => document.getElementById(`comm_${name}_${id}`)?.value.trim() || "";
+    const common = { note: value("note"), notes: value("note"), status: value("status"), followUpDate: value("followUpDate"), lastContact: item.proposed?.lastContact || "" };
+    return item.proposal_type === "create_contact" ? {
+      ...common, name: value("name"), email: value("email"), company: value("company"), position: value("position"), tier: Number(value("tier")) || 3
+    } : common;
+  }
+
+  async function completeCommunicationProposal(id, action) {
+    const proposed = proposalFromEditor(id);
+    const data = await patchCommunicationReview({ id, action, proposed });
+    if (action !== "edit") pendingProposals = pendingProposals.filter((item) => Number(item.id) !== Number(id));
+    else {
+      const item = pendingProposals.find((candidate) => Number(candidate.id) === Number(id));
+      if (item) item.proposed = data.proposal || proposed;
+    }
+    updateBadge();
+    renderTextReviewModal();
+    return data;
+  }
+
+  window.editCommunicationProposal = async function editCommunicationProposal(id) {
+    try {
+      await completeCommunicationProposal(id, "edit");
+      if (typeof window.toast === "function") window.toast("Proposal edits saved");
+    } catch (error) { if (typeof window.toast === "function") window.toast(error.message); }
+  };
+
+  window.ignoreCommunicationProposal = async function ignoreCommunicationProposal(id) {
+    try {
+      await completeCommunicationProposal(id, "ignore");
+      if (typeof window.toast === "function") window.toast("Communication ignored");
+    } catch (error) { if (typeof window.toast === "function") window.toast(error.message); }
+  };
+
+  window.applyCommunicationProposal = async function applyCommunicationProposal(id) {
+    try {
+      const data = await completeCommunicationProposal(id, "apply");
+      if (typeof window.refreshCloudState === "function") await window.refreshCloudState();
+      if (typeof window.toast === "function") window.toast(data.status === "applied" ? "CRM proposal applied" : "Proposal updated");
+    } catch (error) { if (typeof window.toast === "function") window.toast(error.message); }
+  };
 
   window.reviewTextConversation = async function reviewTextConversation(key, action, contactId) {
     try {
