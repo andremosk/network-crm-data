@@ -1,4 +1,5 @@
 const { hasValidSession } = require("../../lib/crm-auth");
+const { getGmailAccessToken } = require("../../lib/gmail-review-sync");
 
 function escapeHtml(value) {
   return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -27,21 +28,6 @@ function rawMessage(to, subject, html) {
   return Buffer.from(mime, "utf8").toString("base64url");
 }
 
-async function getAccessToken() {
-  const clientId = process.env.GOOGLE_GMAIL_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_GMAIL_CLIENT_SECRET;
-  const refreshToken = process.env.GOOGLE_GMAIL_REFRESH_TOKEN;
-  if (!clientId || !clientSecret || !refreshToken) return null;
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret, refresh_token: refreshToken, grant_type: "refresh_token" })
-  });
-  const data = await response.json();
-  if (!response.ok || !data.access_token) throw new Error(data.error_description || "Could not connect to Gmail");
-  return data.access_token;
-}
-
 module.exports = async function handler(request, response) {
   if (!hasValidSession(request)) return response.status(401).json({ error: { message: "Unauthorized" } });
   if (request.method !== "POST") {
@@ -56,7 +42,7 @@ module.exports = async function handler(request, response) {
     if (!/^\S+@\S+\.\S+$/.test(to) || !subject || !message) {
       return response.status(400).json({ error: { message: "Recipient, subject, and message are required." } });
     }
-    const token = await getAccessToken();
+    const token = await getGmailAccessToken();
     if (!token) return response.status(503).json({ error: { message: "Gmail connection is not configured yet." } });
     const gmailResponse = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/drafts", {
       method: "POST",

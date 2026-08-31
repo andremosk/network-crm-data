@@ -96,7 +96,7 @@ async function applyCreate(sql, draft, proposed) {
 
 async function applyUpdate(sql, draft, proposed) {
   const clean = sanitizeProposal("update_contact", proposed);
-  const note = clean.note ? `${noteDate(draft.occurred_at)}: <strong>Sent email</strong> — ${escapeHtml(clean.note)}` : "";
+  const note = clean.note ? `${noteDate(draft.occurred_at)}: <strong>Email</strong> — ${escapeHtml(clean.note)}` : "";
   const rows = await sql`
     WITH target AS MATERIALIZED (
       SELECT id, matched_contact_id
@@ -115,6 +115,9 @@ async function applyUpdate(sql, draft, proposed) {
           ) || jsonb_strip_nulls(jsonb_build_object(
             'lastContact', CASE
               WHEN ${clean.lastContact} <> '' AND ${clean.lastContact} > COALESCE(r.payload->>'lastContact', '') THEN ${clean.lastContact}
+              ELSE NULL END,
+            'email', CASE
+              WHEN ${clean.email} <> '' AND COALESCE(r.payload->>'email', '') = '' THEN ${clean.email}
               ELSE NULL END,
             'status', CASE WHEN ${clean.status || ""} = 'follow_up' THEN 'follow_up' ELSE NULL END,
             'followUp', CASE WHEN ${clean.status || ""} = 'follow_up' THEN true ELSE NULL END,

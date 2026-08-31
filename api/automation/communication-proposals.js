@@ -66,7 +66,13 @@ function createHandler(dependencies = {}) {
       const sql = sqlFactory();
       await schema(sql);
       const matchedContact = await findContact(sql, preliminary.recipientEmail);
-      const proposal = analyzeOutboundEmail(body, matchedContact);
+      const proposal = analyzeOutboundEmail(
+        body.direction === "inbound" || body.inbound === true
+          ? { ...body, requireKnownContact: true }
+          : body,
+        matchedContact
+      );
+      if (proposal.status === "excluded") return response.status(200).json({ status: "skipped", reason: proposal.reason });
       const result = await saveProposal(sql, proposal);
       return response.status(200).json(result);
     } catch (error) {

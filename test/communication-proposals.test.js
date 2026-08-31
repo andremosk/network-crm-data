@@ -18,6 +18,19 @@ function outbound(overrides = {}) {
   };
 }
 
+function inbound(overrides = {}) {
+  return {
+    direction: "inbound",
+    sourceMessageId: "gmail-inbound-1",
+    receivedAt: "2026-08-24T13:42:00Z",
+    sender: { name: "Lisa Cassidy", email: "lisa@cassidylab.com" },
+    recipients: [{ email: "andre@example.com" }],
+    subject: "Complimentary Gartner webinars",
+    bodyText: "Hi Andre & Lea, I hope you are both navigating the back to school with your kids okay. Portland is back next week so still in Mom Camp mode here. You both came to mind when I saw these AI webinars. Gartner research consistently impresses me and thought you might be interested too. Talk again soon, Lisa. ---------- Forwarded message ---------- Gartner webinar details.",
+    ...overrides
+  };
+}
+
 function responseRecorder() {
   return {
     statusCode: null, body: null, headers: {},
@@ -63,6 +76,32 @@ test("excludes group mail, transactional mail, and low-signal logistics", () => 
   assert.equal(analyzeOutboundEmail(outbound({ subject: "Calendar", bodyText: "Tuesday at 3 works for me. See you then." })).status, "excluded");
 });
 
+test("creates a note-only proposal for personal inbound mail from a known contact", () => {
+  const result = analyzeOutboundEmail(inbound(), { id: "55", name: "Lisa Cassidy", email: "lisa@cassidylab.com" });
+  assert.equal(result.status, "pending");
+  assert.equal(result.proposalType, "update_contact");
+  assert.equal(result.matchedContactId, "55");
+  assert.equal(result.proposed.status, null);
+  assert.equal(result.proposed.followUpDate, "");
+  assert.equal(result.proposed.lastContact, "2026-08-24");
+  assert.match(result.proposed.note, /Received email from Lisa Cassidy/);
+  assert.match(result.proposed.note, /back to school/i);
+  assert.doesNotMatch(result.proposed.note, /Forwarded message/i);
+});
+
+test("excludes inbound messages without a known CRM contact after lookup", () => {
+  const candidate = analyzeOutboundEmail(inbound());
+  assert.equal(candidate.status, "pending");
+  const unmatched = analyzeOutboundEmail(inbound({ requireKnownContact: true }));
+  assert.equal(unmatched.status, "excluded");
+  assert.match(unmatched.reason, /existing contact/i);
+});
+
+test("keeps the group-mail guard for incoming email", () => {
+  const result = analyzeOutboundEmail(inbound({ recipients: [{ email: "andre@example.com" }, { email: "other@example.com" }] }), { id: "55", name: "Lisa Cassidy" });
+  assert.equal(result.status, "excluded");
+});
+
 test("automation ingestion is idempotent and matches by normalized recipient email", async () => {
   const { createHandler } = require("../api/automation/communication-proposals");
   const stored = new Map();
@@ -86,6 +125,22 @@ test("automation ingestion is idempotent and matches by normalized recipient ema
   assert.equal(first.body.proposalType, "update_contact");
   assert.equal(second.body.status, "duplicate");
   assert.equal(stored.size, 1);
+});
+
+test("automation skips inbound personal mail when the sender is not already a CRM contact", async () => {
+  const { createHandler } = require("../api/automation/communication-proposals");
+  const handler = createHandler({
+    auth: () => true,
+    getSql: () => ({}),
+    ensureSchema: async () => {},
+    findContactByEmail: async () => null,
+    insertProposal: async () => { throw new Error("should not save an unmatched inbound message"); }
+  });
+  const response = responseRecorder();
+  await handler({ method: "POST", headers: { authorization: "Bearer test" }, body: inbound() }, response);
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.status, "skipped");
+  assert.match(response.body.reason, /existing contact/i);
 });
 
 test("automation ingestion rejects unauthenticated requests before database access", async () => {
@@ -119,6 +174,13 @@ test("applying an update preserves an existing later follow-up date", () => {
   assert.equal(updated.followUpDate, "2026-09-10");
   assert.match(updated.notes, /Sent a reconnection email/);
   assert.equal(updated.lastContact, "2026-08-12");
+});
+
+test("an approved email suggestion fills only a blank email field", () => {
+  const blank = applyUpdatePayload({ id: 42, name: "Jane Smith", email: "", notes: "" }, { email: "jane@example.com" });
+  assert.equal(blank.email, "jane@example.com");
+  const retained = applyUpdatePayload({ id: 42, name: "Jane Smith", email: "old@example.com", notes: "" }, { email: "jane@example.com" });
+  assert.equal(retained.email, "old@example.com");
 });
 
 test("review API requires explicit apply before invoking contact creation", async () => {

@@ -45,6 +45,7 @@
         .text-review-badge { position:absolute; top:-6px; right:-6px; min-width:18px; height:18px; padding:0 5px; display:none; align-items:center; justify-content:center; border:2px solid var(--surface); border-radius:9px; background:#b44b4b; color:#fff; font-size:10px; font-weight:700; }
         .text-review-badge.visible { display:inline-flex; }
         .text-review-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:16px; }
+        .text-review-header-actions { display:flex; gap:7px; align-items:center; }
         .text-review-section { padding:14px 0; border-top:1px solid var(--border); }
         .text-review-section:first-of-type { border-top:0; }
         .text-review-section-title { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; font-size:12px; font-weight:700; }
@@ -189,6 +190,7 @@
         <div class="communication-review-grid">
           ${create ? `${field("name", "Name", proposed.name)}${field("email", "Email", proposed.email)}${field("company", "Company", proposed.company)}${field("position", "Position", proposed.position)}
           <div class="communication-review-field"><label for="comm_tier_${item.id}">Relationship</label><select class="form-input" id="comm_tier_${item.id}">${[1,2,3,4].map((tier) => `<option value="${tier}" ${Number(proposed.tier) === tier ? "selected" : ""}>T${tier}</option>`).join("")}</select></div>` : ""}
+          ${!create && proposed.email ? field("email", "Email to save", proposed.email, "wide") : ""}
           <div class="communication-review-field"><label for="comm_status_${item.id}">Status</label><select class="form-input" id="comm_status_${item.id}"><option value="">No change</option><option value="follow_up" ${proposed.status === "follow_up" ? "selected" : ""}>Follow Up</option></select></div>
           <div class="communication-review-field"><label for="comm_followUpDate_${item.id}">Follow-up date</label><input class="form-input" type="date" id="comm_followUpDate_${item.id}" value="${escapeHtml(proposed.followUpDate)}"></div>
           <div class="communication-review-field wide"><label for="comm_note_${item.id}">Initial note</label><textarea class="text-review-summary" id="comm_note_${item.id}">${escapeHtml(proposed.notes || proposed.note)}</textarea></div>
@@ -209,7 +211,7 @@
     const total = pendingSummaries.length + pendingConversations.length + pendingProposals.length;
     content.innerHTML = `<div class="text-review-header">
       <div><h2 style="margin:0">Communication Review</h2><div class="text-summary-subtitle">Review SMS and email proposals before changing the CRM</div></div>
-      <button class="btn btn-ghost btn-sm" onclick="closeTextReview()" aria-label="Close">×</button>
+      <div class="text-review-header-actions"><button class="btn btn-ghost btn-sm" onclick="refreshEmailReview()">Check email</button><button class="btn btn-ghost btn-sm" onclick="enrichContactEmails()">Find missing emails</button><button class="btn btn-ghost btn-sm" onclick="closeTextReview()" aria-label="Close">×</button></div>
     </div>
     ${total ? `
       ${pendingConversations.length ? `<section class="text-review-section"><div class="text-review-section-title"><span>Needs matching</span><span>${pendingConversations.length}</span></div><div class="text-review-list">${pendingConversations.map(renderConversation).join("")}</div></section>` : ""}
@@ -266,6 +268,35 @@
     document.getElementById("textReviewModal")?.classList.remove("open");
   };
 
+  window.refreshEmailReview = async function refreshEmailReview() {
+    try {
+      const response = await fetch("/api/crm/gmail-review-sync", { method: "POST" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error?.message || "Could not check Gmail.");
+      await window.loadTextSummaries();
+      if (typeof window.toast === "function") {
+        window.toast(data.proposed ? `${data.proposed} email proposal${data.proposed === 1 ? "" : "s"} ready for review` : "No new email proposals");
+      }
+    } catch (error) {
+      if (typeof window.toast === "function") window.toast(error.message);
+    }
+  };
+
+  window.enrichContactEmails = async function enrichContactEmails() {
+    try {
+      const response = await fetch("/api/crm/gmail-email-enrichment", { method: "POST" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error?.message || "Could not look for missing emails.");
+      await window.loadTextSummaries();
+      if (typeof window.toast === "function") {
+        const suffix = data.completed ? " Email archive scan complete." : " More archive messages remain; run again for the next batch.";
+        window.toast(data.proposed ? `${data.proposed} email suggestion${data.proposed === 1 ? "" : "s"} ready for review.${suffix}` : `No new email suggestions.${suffix}`);
+      }
+    } catch (error) {
+      if (typeof window.toast === "function") window.toast(error.message);
+    }
+  };
+
   async function patchReview(body) {
     const response = await fetch("/api/crm/text-summaries", {
       method: "PATCH",
@@ -290,7 +321,7 @@
     const item = pendingProposals.find((candidate) => Number(candidate.id) === Number(id));
     if (!item) return null;
     const value = (name) => document.getElementById(`comm_${name}_${id}`)?.value.trim() || "";
-    const common = { note: value("note"), notes: value("note"), status: value("status"), followUpDate: value("followUpDate"), lastContact: item.proposed?.lastContact || "" };
+    const common = { note: value("note"), notes: value("note"), email: value("email"), status: value("status"), followUpDate: value("followUpDate"), lastContact: item.proposed?.lastContact || "" };
     return item.proposal_type === "create_contact" ? {
       ...common, name: value("name"), email: value("email"), company: value("company"), position: value("position"), tier: Number(value("tier")) || 3
     } : common;
