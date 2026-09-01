@@ -89,6 +89,7 @@ test("email enrichment only proposes a blank email for a unique direct-conversat
       getAccessToken: async () => "access-token", loadEnrichmentState: async () => null,
       listMessages: async () => ({ messages: [{ id: "gmail-123" }], nextPageToken: "next-page" }), getMessage: async () => gmailMessage(),
       findUniqueContactByName: async (_sql, name, missing) => name === "Lisa Cassidy" && missing ? { id: "55", name: "Lisa Cassidy", email: "" } : null,
+      hasPendingEmailEnrichment: async () => false,
       insertProposal: async (_sql, proposal) => { saved.push(proposal); return "created"; }, saveEnrichmentState: async () => {}
     }
   });
@@ -97,6 +98,23 @@ test("email enrichment only proposes a blank email for a unique direct-conversat
   assert.equal(saved[0].proposalType, "update_contact");
   assert.equal(saved[0].proposed.email, "lisa@cassidylab.com");
   assert.equal(saved[0].proposed.note, "");
+});
+
+test("email enrichment does not queue a second pending suggestion for the same contact and email", async () => {
+  let inserted = false;
+  const result = await runGmailEmailEnrichment({
+    sql: {}, env: { NETWORK_CRM_GMAIL_MAILBOX: "andre@example.com" },
+    dependencies: {
+      getAccessToken: async () => "access-token", loadEnrichmentState: async () => null,
+      listMessages: async () => ({ messages: [{ id: "gmail-123" }] }), getMessage: async () => gmailMessage(),
+      findUniqueContactByName: async () => ({ id: "55", name: "Lisa Cassidy", email: "" }),
+      hasPendingEmailEnrichment: async (_sql, contactId, email) => contactId === "55" && email === "lisa@cassidylab.com",
+      insertProposal: async () => { inserted = true; return "created"; }, saveEnrichmentState: async () => {}
+    }
+  });
+  assert.equal(inserted, false);
+  assert.equal(result.proposed, 0);
+  assert.equal(result.duplicates, 1);
 });
 
 function responseRecorder() {
