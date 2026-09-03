@@ -135,7 +135,7 @@
           if (!document.hidden && cloudSyncReady && !cloudSyncTimer && !cloudSaveInFlight) {
             pullState().catch(() => setStatus('error', 'Cloud offline'));
           }
-        }, 5 * 60 * 1000);
+        }, 15 * 60 * 1000);
       }
       if (typeof window.loadTextSummaries === 'function') await window.loadTextSummaries();
     } finally {
