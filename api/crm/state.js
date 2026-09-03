@@ -10,12 +10,36 @@ function parseBody(request) {
   }
 }
 
-async function getState(sql) {
-  const rows = await sql`
-    SELECT record_type, record_id, payload, version, updated_at
-    FROM crm_records
-    ORDER BY record_type, record_id
-  `;
+function validCursor(value) {
+  const parsed = new Date(String(value || ""));
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}
+
+async function getState(sql, since) {
+  const cursor = validCursor(since);
+  // Keep the upper bound stable so writes during this request arrive on the
+  // next incremental sync rather than falling between cursor windows.
+  const syncedAt = new Date().toISOString();
+  const rows = cursor
+    ? await sql`
+      SELECT record_type, record_id, payload, version, updated_at
+      FROM crm_records
+      WHERE updated_at >= ${cursor} AND updated_at <= ${syncedAt}
+      ORDER BY record_type, record_id
+    `
+    : await sql`
+      SELECT record_type, record_id, payload, version, updated_at
+      FROM crm_records
+      ORDER BY record_type, record_id
+    `;
+  const deleted = cursor
+    ? await sql`
+      SELECT record_type, record_id
+      FROM crm_deleted_records
+      WHERE deleted_at >= ${cursor} AND deleted_at <= ${syncedAt}
+      ORDER BY record_type, record_id
+    `
+    : [];
   const contacts = [];
   const apps = [];
   const engagements = [];
@@ -29,7 +53,20 @@ async function getState(sql) {
     else if (row.record_type === "application") apps.push(record);
     else if (row.record_type === "engagement") engagements.push(record);
   }
-  return { contacts, apps, engagements, syncedAt: new Date().toISOString() };
+  const deletedContacts = [];
+  const deletedApps = [];
+  const deletedEngagements = [];
+  for (const row of deleted) {
+    if (row.record_type === "contact") deletedContacts.push({ id: row.record_id });
+    else if (row.record_type === "application") deletedApps.push({ id: row.record_id });
+    else if (row.record_type === "engagement") deletedEngagements.push({ id: row.record_id });
+  }
+  return {
+    mode: cursor ? "delta" : "full",
+    contacts, apps, engagements,
+    deletedContacts, deletedApps, deletedEngagements,
+    syncedAt
+  };
 }
 
 async function createRecord(sql, recordType, record) {
@@ -119,9 +156,17 @@ async function deleteRecord(sql, recordType, record) {
   const version = Number(record.version || 0);
   if (!id || !version) return { id, status: "invalid" };
   const rows = await sql`
-    DELETE FROM crm_records
-    WHERE record_type = ${recordType} AND record_id = ${id} AND version = ${version}
-    RETURNING record_id
+    WITH removed AS (
+      DELETE FROM crm_records
+      WHERE record_type = ${recordType} AND record_id = ${id} AND version = ${version}
+      RETURNING record_type, record_id
+    ), tombstone AS (
+      INSERT INTO crm_deleted_records (record_type, record_id, deleted_at)
+      SELECT record_type, record_id, NOW() FROM removed
+      ON CONFLICT (record_type, record_id) DO UPDATE SET deleted_at = EXCLUDED.deleted_at
+      RETURNING record_id
+    )
+    SELECT record_id FROM tombstone
   `;
   return { id, status: rows.length ? "deleted" : "conflict" };
 }
@@ -140,7 +185,11 @@ function createHandler(dependencies = {}) {
   try {
     const sql = getSqlDependency();
     await ensureSchemaDependency(sql);
-    if (request.method === "GET") return response.status(200).json(await getStateDependency(sql));
+    if (request.method === "GET") {
+      const url = new URL(request.url || "", "https://network-crm.local");
+      const since = request.query?.since || url.searchParams.get("since");
+      return response.status(200).json(await getStateDependency(sql, since));
+    }
     if (request.method !== "PATCH") {
       response.setHeader("Allow", "GET, PATCH");
       return response.status(405).json({ error: { message: "Method not allowed" } });
@@ -175,3 +224,4 @@ module.exports.createHandler = createHandler;
 module.exports.createRecord = createRecord;
 module.exports.updateRecord = updateRecord;
 module.exports.getState = getState;
+module.exports.validCursor = validCursor;

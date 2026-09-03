@@ -14,6 +14,19 @@
     return revisionAtStart === currentRevision && !hasPendingSave && !saveInFlight;
   }
 
+  function mergeRemoteRecords(current, changed, deleted, decorate) {
+    const incoming = new Map((changed || []).map((record) => [String(record.id), decorate(record)]));
+    const removed = new Set((deleted || []).map((record) => String(record.id ?? record)));
+    const merged = (current || [])
+      .filter((record) => !removed.has(String(record.id)))
+      .map((record) => incoming.has(String(record.id)) ? incoming.get(String(record.id)) : record);
+    const known = new Set(merged.map((record) => String(record.id)));
+    for (const record of incoming.values()) {
+      if (!known.has(String(record.id))) merged.push(record);
+    }
+    return merged;
+  }
+
   function changedRecords(records, versions, fingerprints, payload, fingerprint) {
     return records
       .filter((record) => fingerprint(record) !== fingerprints.get(String(record.id)))
@@ -71,5 +84,5 @@
     return { remaps, conflicts };
   }
 
-  return { applyResults, changedRecords, createTemporaryId, shouldApplyPull };
+  return { applyResults, changedRecords, createTemporaryId, mergeRemoteRecords, shouldApplyPull };
 });

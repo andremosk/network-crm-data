@@ -72,6 +72,20 @@ test('cloud state separates engagements from contacts and applications', async (
   assert.equal(state.apps.length, 1);
   assert.equal(state.engagements.length, 1);
   assert.equal(state.engagements[0].title, 'Pursuit');
+  assert.equal(state.mode, 'full');
+});
+
+test('cloud state returns only changed records and deletion markers for an incremental cursor', async () => {
+  const sql = queuedSql([
+    [{ record_type: 'contact', record_id: '1', payload: { id: 1, name: 'Changed' }, version: 3, updated_at: '2026-08-21T10:00:00Z' }],
+    [{ record_type: 'engagement', record_id: '3' }]
+  ]);
+  const state = await getState(sql, '2026-08-21T00:00:00Z');
+  assert.equal(state.mode, 'delta');
+  assert.equal(state.contacts[0].name, 'Changed');
+  assert.deepEqual(state.deletedEngagements, [{ id: '3' }]);
+  assert.match(sql.calls[0].query, /updated_at >=/);
+  assert.match(sql.calls[1].query, /crm_deleted_records/);
 });
 
 test('schema and browser sync both include the engagement record lane', () => {

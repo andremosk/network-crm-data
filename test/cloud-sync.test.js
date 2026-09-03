@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
 
-const { applyResults, changedRecords, createTemporaryId, shouldApplyPull } = require('../cloud-sync-core');
+const { applyResults, changedRecords, createTemporaryId, mergeRemoteRecords, shouldApplyPull } = require('../cloud-sync-core');
 
 function payload(record) {
   const data = { ...record };
@@ -34,6 +34,21 @@ test('an older cloud pull cannot replace a contact queued while it was in flight
   assert.equal(shouldApplyPull(4, 5, true, false), false);
   assert.equal(shouldApplyPull(4, 4, false, true), false);
   assert.equal(shouldApplyPull(4, 4, false, false), true);
+});
+
+test('incremental cloud pulls merge changed records and apply remote deletions', () => {
+  const current = [{ id: 1, name: 'Keep' }, { id: 2, name: 'Replace' }, { id: 3, name: 'Remove' }];
+  const merged = mergeRemoteRecords(
+    current,
+    [{ id: 2, name: 'Updated' }, { id: 4, name: 'New' }],
+    [{ id: 3 }],
+    (record) => ({ ...record, decorated: true })
+  );
+  assert.deepEqual(merged, [
+    { id: 1, name: 'Keep' },
+    { id: 2, name: 'Updated', decorated: true },
+    { id: 4, name: 'New', decorated: true }
+  ]);
 });
 
 test('server-assigned IDs remap sequential creates and preserve unsaved edits', () => {

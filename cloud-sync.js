@@ -1,4 +1,7 @@
 (function () {
+  const CLOUD_CURSOR_KEY = 'andre_crm_cloud_cursor';
+  let cloudSyncCursor = localStorage.getItem(CLOUD_CURSOR_KEY) || '';
+
   function payload(record) {
     const data = { ...(record || {}) };
     Object.keys(data).forEach((key) => { if (key.startsWith('_sync')) delete data[key]; });
@@ -85,7 +88,10 @@
     cloudPullInFlight = true;
     setStatus('syncing', 'Loading cloud...');
     try {
-      const response = await fetch('/api/crm/state', { cache: 'no-store' });
+      const stateUrl = cloudSyncCursor
+        ? `/api/crm/state?since=${encodeURIComponent(cloudSyncCursor)}`
+        : '/api/crm/state';
+      const response = await fetch(stateUrl, { cache: 'no-store' });
       if (response.status === 401) {
         cloudSyncReady = false;
         showLogin();
@@ -93,21 +99,32 @@
       }
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error?.message || 'Could not load cloud CRM.');
-      if (!Array.isArray(data.contacts) || data.contacts.length < 100) throw new Error('Cloud CRM is not initialized yet.');
+      const isDelta = data.mode === 'delta';
+      if (!Array.isArray(data.contacts) || (!isDelta && data.contacts.length < 100)) throw new Error('Cloud CRM is not initialized yet.');
       if (!window.CloudSyncCore.shouldApplyPull(revisionAtStart, cloudLocalRevision, !!cloudSyncTimer, cloudSaveInFlight)) {
         setStatus('syncing', 'Saving...');
         return;
       }
-      contacts = data.contacts.map(withFitDefaults);
-      apps = Array.isArray(data.apps) ? data.apps.map((app) => ({ statusLog: [], ...app })) : apps;
-      engagements = Array.isArray(data.engagements)
-        ? data.engagements.map(window.EngagementCore.withDefaults)
-        : engagements;
+      if (isDelta) {
+        contacts = window.CloudSyncCore.mergeRemoteRecords(contacts, data.contacts, data.deletedContacts, withFitDefaults);
+        apps = window.CloudSyncCore.mergeRemoteRecords(apps, data.apps, data.deletedApps, (app) => ({ statusLog: [], ...app }));
+        engagements = window.CloudSyncCore.mergeRemoteRecords(engagements, data.engagements, data.deletedEngagements, window.EngagementCore.withDefaults);
+      } else {
+        contacts = data.contacts.map(withFitDefaults);
+        apps = Array.isArray(data.apps) ? data.apps.map((app) => ({ statusLog: [], ...app })) : apps;
+        engagements = Array.isArray(data.engagements)
+          ? data.engagements.map(window.EngagementCore.withDefaults)
+          : engagements;
+      }
       rememberState();
       cloudSyncReady = true;
       localStorage.setItem('andre_crm_v2', JSON.stringify(contacts));
       localStorage.setItem('andre_apps_v1', JSON.stringify(apps));
       localStorage.setItem('andre_engagements_v1', JSON.stringify(engagements));
+      if (typeof data.syncedAt === 'string' && !Number.isNaN(Date.parse(data.syncedAt))) {
+        cloudSyncCursor = data.syncedAt;
+        localStorage.setItem(CLOUD_CURSOR_KEY, cloudSyncCursor);
+      }
       localStorage.removeItem('andre_crm_local_dirty');
       if (currentView === 'contacts') renderList();
       else if (currentView === 'apps') renderApps();
