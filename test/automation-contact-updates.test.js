@@ -100,16 +100,49 @@ test("updates an existing contact and preserves a later follow-up date", async (
   assert.match(repository.values.get("42").notes, /reconciliation/);
 });
 
+test("allows only the requested profile fields for an existing contact", async () => {
+  const repository = fakeRepository([contact(42, { tier: 3, clientFitTier: 4, status: "network" })]);
+  const handler = makeHandler(repository);
+  const response = responseRecorder();
+  await handler(request({
+    request_id: "profile-update-0001", contact: { id: 42 },
+    profile: { tier: 1, client_fit_tier: 2, status: "network_closely" }
+  }), response);
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(response.body.profile, { tier: 1, client_fit_tier: 2, status: "network_closely" });
+  const saved = repository.values.get("42");
+  assert.equal(saved.tier, 1);
+  assert.equal(saved.clientFitTier, 2);
+  assert.equal(saved.status, "network_closely");
+});
+
+test("rejects profile values outside the tier and status allowlists", async () => {
+  const handler = makeHandler(fakeRepository([contact(42)]));
+  const badTier = responseRecorder();
+  await handler(request({ request_id: "bad-profile-tier", contact: { id: 42 }, profile: { tier: 5 } }), badTier);
+  assert.equal(badTier.statusCode, 400);
+  const badStatus = responseRecorder();
+  await handler(request({ request_id: "bad-profile-status", contact: { id: 42 }, profile: { status: "anything_goes" } }), badStatus);
+  assert.equal(badStatus.statusCode, 400);
+});
+
 test("returns ambiguity and rejects conflicting selectors without writing", async () => {
-  const repository = fakeRepository([contact(1), contact(2, { email: "other@example.com" })]);
+  const repository = fakeRepository([
+    contact(1, { company: "Yarn", position: "Publisher", lastContact: "2026-08-04", notes: "Family yarn business and magazine pursuit." }),
+    contact(2, { email: "other@example.com", company: "Other Co.", position: "Engineer" })
+  ]);
   const handler = makeHandler(repository);
   const ambiguous = responseRecorder();
   await handler(request({ request_id: "ambiguous-0001", contact: { name: "Nicole Heid-Arce" }, note: "Do not add" }), ambiguous);
   assert.equal(ambiguous.statusCode, 409);
+  assert.deepEqual(ambiguous.body.error.candidates[0], {
+    id: "1", name: "Nicole Heid-Arce", company: "Yarn", position: "Publisher",
+    last_contact: "2026-08-04", note_summary: "Family yarn business and magazine pursuit."
+  });
   const conflicting = responseRecorder();
   await handler(request({ request_id: "conflict-0001", contact: { id: 1, email: "other@example.com" }, note: "Do not add" }), conflicting);
   assert.equal(conflicting.statusCode, 409);
-  assert.equal(repository.values.get("1").notes, "");
+  assert.equal(repository.values.get("1").notes, "Family yarn business and magazine pursuit.");
 });
 
 test("validates bad input and permits lookup without writes", async () => {

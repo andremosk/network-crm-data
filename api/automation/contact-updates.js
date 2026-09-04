@@ -52,7 +52,16 @@ async function findByRequestId(sql, requestId) {
 
 function candidateSummary(records) {
   return records.slice(0, 10).map((record) => ({
-    id: String(record._recordId ?? record.id), name: String(record.name || ""), email: String(record.email || "")
+    id: String(record._recordId ?? record.id),
+    name: String(record.name || ""),
+    company: String(record.company || ""),
+    position: String(record.position || ""),
+    last_contact: String(record.lastContact || ""),
+    note_summary: String(record.notes || "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 280)
   }));
 }
 
@@ -89,6 +98,14 @@ function followUpState(contact, keptLaterDate = false) {
     status: contact.status === "follow_up" ? "follow_up" : null,
     date: contact.followUpDate || "",
     kept_later_date: keptLaterDate
+  };
+}
+
+function profileState(contact) {
+  return {
+    tier: Number(contact.tier) || null,
+    client_fit_tier: Number(contact.clientFitTier) || null,
+    status: contact.status || null
   };
 }
 
@@ -166,7 +183,7 @@ function createHandler(dependencies = {}) {
       repository = repositoryFactory(sql);
       if (input.action === "lookup") {
         const resolved = await resolveContact(repository, input.selector);
-        if (resolved.type === "resolved") return response.status(200).json({ request_id: input.requestId, found: true, contact: publicContact(resolved.contact), follow_up: followUpState(resolved.contact) });
+        if (resolved.type === "resolved") return response.status(200).json({ request_id: input.requestId, found: true, contact: publicContact(resolved.contact), profile: profileState(resolved.contact), follow_up: followUpState(resolved.contact) });
         if (resolved.type === "not_found") return response.status(404).json({ request_id: input.requestId, found: false, error: { message: "Contact not found." } });
         return response.status(409).json({ request_id: input.requestId, error: { message: "Contact selector is ambiguous or conflicting.", candidates: resolved.candidates } });
       }
@@ -226,6 +243,7 @@ function createHandler(dependencies = {}) {
       const result = {
         request_id: input.requestId, outcome: created ? "created" : "updated",
         contact: publicContact(contact, created), note_id: null,
+        profile: profileState(contact),
         follow_up: followUpState(contact, keptLaterDate)
       };
       await repository.complete(input.requestId, result);
@@ -242,4 +260,5 @@ const handler = createHandler();
 handler.createHandler = createHandler;
 handler.resolveContact = resolveContact;
 handler.createRepository = createRepository;
+handler.candidateSummary = candidateSummary;
 module.exports = handler;

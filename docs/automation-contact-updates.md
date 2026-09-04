@@ -37,6 +37,24 @@ follow-up. A later existing follow-up date is retained.
 }
 ```
 
+For an existing resolved contact, `profile` may update only relationship tier,
+client-fit tier, and status. Each tier must be an integer from `1` to `4`.
+Allowed statuses are `network_closely`, `network`, `came_through`, `follow_up`,
+`call_scheduled`, `interesting`, `recruiter`, and `cant_help`.
+
+```json
+{
+  "request_id": "cos-2026-09-04-profile-update-1",
+  "contact": { "id": "874" },
+  "profile": {
+    "tier": 1,
+    "client_fit_tier": 2,
+    "status": "network_closely"
+  },
+  "note": "Nice walking conversation. Discussed a possible Belmont app code review."
+}
+```
+
 Create only when no unambiguous active CRM contact matches, then add the note and
 follow-up in the same request. `tier` is relationship tier and defaults to `3`.
 
@@ -67,6 +85,9 @@ follow-up in the same request. `tier` is relationship tier and defaults to `3`.
 - Current later follow-up dates win over an earlier proposed date.
 - Notes are stored in the existing contact notes field; `note_id` is therefore
   always `null` in the response.
+- When a name or email selector is ambiguous, the `409` response includes each
+  candidate's ID, company, position, last-contact date, and a clipped note
+  summary. Email addresses are intentionally omitted from this context.
 
 ## Engagement creation
 
