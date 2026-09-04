@@ -2294,6 +2294,13 @@ function renderDetailContent(c) {
     </div>
     <div class="d-meta">
       <div class="meta-card">
+        <div class="meta-lbl">Name</div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input id="contactName_${c.id}" class="inline-edit" type="text" value="${esc(c.name||'')}" placeholder="Full name" onkeydown="if(event.key==='Enter'){event.preventDefault();saveContactName(${c.id})}" style="font-size:13px;font-weight:500;width:100%;min-width:0">
+          <button class="btn btn-primary btn-sm" onclick="saveContactName(${c.id})">Save</button>
+        </div>
+      </div>
+      <div class="meta-card">
         <div class="meta-lbl">Relationship</div>
         <div class="tier-sel">${[1,2,3,4].map(t => `<div class="tier-opt ${c.tier===t?'sel':''}" style="background:${TB[t]};color:${TC[t]}" onclick="updateTier(${c.id},${t})">${t}</div>`).join('')}</div>
       </div>
@@ -2373,6 +2380,17 @@ function parseNotes(str) {
 
 function toggleField(id,field){const c=contacts.find(x=>x.id===id);if(!c)return;c[field]=!c[field];saveContacts(contacts);openDetail(id);}
 function updateField(id,field,val){const c=contacts.find(x=>x.id===id);if(!c)return;c[field]=val;saveContacts(contacts);renderList();}
+function saveContactName(id){
+  const c=contacts.find(x=>x.id===id);const input=document.getElementById('contactName_'+id);if(!c||!input)return;
+  const name=input.value.trim().replace(/\s+/g,' ');
+  if(!name){toast('Enter a contact name');input.focus();return;}
+  if(name.length>200){toast('Name is too long');input.focus();return;}
+  const parts=name.split(' ');
+  c.name=name;c.firstName=parts[0]||'';c.lastName=parts.slice(1).join(' ');
+  saveContacts(contacts);renderDetailContent(c);renderList();
+  document.getElementById('detailBreadcrumb').textContent=c.name;
+  toast('Name saved');
+}
 function saveContactEmail(id){
   const c=contacts.find(x=>x.id===id);const input=document.getElementById('contactEmail_'+id);if(!c||!input)return;
   const email=input.value.trim();
