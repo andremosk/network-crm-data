@@ -67,3 +67,30 @@ follow-up in the same request. `tier` is relationship tier and defaults to `3`.
 - Current later follow-up dates win over an earlier proposed date.
 - Notes are stored in the existing contact notes field; `note_id` is therefore
   always `null` in the response.
+
+## Engagement creation
+
+`POST /api/automation/engagements` uses the same bearer token and requires a
+stable `request_id`. It can only create an engagement; it cannot list, edit, or
+delete engagements.
+
+```json
+{
+  "request_id": "cos-2026-09-04-seo-training-lead-1",
+  "engagement": {
+    "title": "SEO / Paid Media AI Training Lead",
+    "organization": "Unnamed SEO / paid media business",
+    "status": "pursuit",
+    "current_state": "Melissa Murphy shared a warm lead for a half-day AI training session. Andre expressed interest and gave Melissa his website to share.",
+    "opportunity": "Half-day practical AI training session; approximate budget is $5,000.",
+    "next_milestone": "Melissa shares Andre's website with the prospect and facilitates an introduction.",
+    "linked_contact_ids": []
+  }
+}
+```
+
+Accepted statuses: `pursuit`, `discovery`, `proposal`, `active_client`,
+`on_hold`, and `closed`. Optional fields are `commercial`,
+`next_milestone_date` (`YYYY-MM-DD`), and up to 50 `linked_contact_ids`. Every
+linked contact ID must be an active CRM contact. A repeat of the same request
+returns the original engagement without creating another one.
