@@ -4,6 +4,8 @@
   let pendingProposals = [];
   let pendingCreateKey = null;
   let contactChoices = new Map();
+  let emailReviewStatus = null;
+  let emailReviewBusy = "";
 
   function escapeHtml(value) {
     return String(value || "")
@@ -46,6 +48,9 @@
         .text-review-badge.visible { display:inline-flex; }
         .text-review-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:16px; }
         .text-review-header-actions { display:flex; gap:7px; align-items:center; }
+        .text-review-header-actions button[disabled] { cursor:wait; opacity:.65; }
+        .email-review-status { margin:-5px 0 14px; padding:9px 11px; border:1px solid var(--border); border-radius:6px; background:var(--surface2); color:var(--muted); font-size:12px; line-height:1.45; }
+        .email-review-status.error { border-color:#e6c1c1; background:#fff7f7; color:#a33f3f; }
         .text-review-section { padding:14px 0; border-top:1px solid var(--border); }
         .text-review-section:first-of-type { border-top:0; }
         .text-review-section-title { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; font-size:12px; font-weight:700; }
@@ -211,8 +216,9 @@
     const total = pendingSummaries.length + pendingConversations.length + pendingProposals.length;
     content.innerHTML = `<div class="text-review-header">
       <div><h2 style="margin:0">Communication Review</h2><div class="text-summary-subtitle">Review SMS and email proposals before changing the CRM</div></div>
-      <div class="text-review-header-actions"><button class="btn btn-ghost btn-sm" onclick="refreshEmailReview()">Check email</button><button class="btn btn-ghost btn-sm" onclick="enrichContactEmails()">Find missing emails</button><button class="btn btn-ghost btn-sm" onclick="closeTextReview()" aria-label="Close">×</button></div>
+      <div class="text-review-header-actions"><button class="btn btn-ghost btn-sm" id="checkEmailButton" onclick="refreshEmailReview()" ${emailReviewBusy ? "disabled" : ""}>${emailReviewBusy === "review" ? "Checking…" : "Check email"}</button><button class="btn btn-ghost btn-sm" id="findEmailsButton" onclick="enrichContactEmails()" ${emailReviewBusy ? "disabled" : ""}>${emailReviewBusy === "enrichment" ? "Searching…" : "Find missing emails"}</button><button class="btn btn-ghost btn-sm" onclick="closeTextReview()" aria-label="Close">×</button></div>
     </div>
+    ${emailReviewStatus ? `<div class="email-review-status ${emailReviewStatus.kind === "error" ? "error" : ""}" id="emailReviewStatus">${escapeHtml(emailReviewStatus.message)}</div>` : ""}
     ${total ? `
       ${pendingConversations.length ? `<section class="text-review-section"><div class="text-review-section-title"><span>Needs matching</span><span>${pendingConversations.length}</span></div><div class="text-review-list">${pendingConversations.map(renderConversation).join("")}</div></section>` : ""}
       ${pendingSummaries.length ? `<section class="text-review-section"><div class="text-review-section-title"><span>Summary review</span><span>${pendingSummaries.length}</span></div><div class="text-review-list">${pendingSummaries.map(renderSummary).join("")}</div></section>` : ""}
@@ -269,31 +275,76 @@
   };
 
   window.refreshEmailReview = async function refreshEmailReview() {
+    if (emailReviewBusy) return;
+    emailReviewBusy = "review";
+    emailReviewStatus = { kind: "info", message: "Checking a small recent batch of inbox email against your CRM contacts…" };
+    renderTextReviewModal();
     try {
       const response = await fetch("/api/crm/gmail-review-sync", { method: "POST" });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error?.message || "Could not check Gmail.");
       await window.loadTextSummaries();
+      const scanned = Number(data.scanned) || 0;
+      const skipped = Number(data.skipped) || 0;
+      const duplicates = Number(data.duplicates) || 0;
+      emailReviewStatus = {
+        kind: "info",
+        message: data.proposed
+          ? `${data.proposed} email proposal${data.proposed === 1 ? " is" : "s are"} ready for review. Checked ${scanned} recent email${scanned === 1 ? "" : "s"}.`
+          : `Checked ${scanned} recent email${scanned === 1 ? "" : "s"}. ${skipped} did not meet the direct relationship rules${duplicates ? `; ${duplicates} was already queued` : ""}.`
+      };
       if (typeof window.toast === "function") {
-        window.toast(data.proposed ? `${data.proposed} email proposal${data.proposed === 1 ? "" : "s"} ready for review` : "No new email proposals");
+        if (data.proposed) {
+          window.toast(`${data.proposed} email proposal${data.proposed === 1 ? "" : "s"} ready for review (${scanned} checked)`);
+        } else if (scanned) {
+          window.toast(`Checked ${scanned} recent emails. No new proposals (${skipped} skipped by the review rules).`);
+        } else {
+          window.toast("No recent inbox emails found to review.");
+        }
       }
     } catch (error) {
-      if (typeof window.toast === "function") window.toast(error.message);
+      const message = /quota|rate limit/i.test(error.message)
+        ? "Gmail is temporarily rate-limited. Try again in about a minute; no CRM records were changed."
+        : error.message;
+      emailReviewStatus = { kind: "error", message };
+      if (typeof window.toast === "function") window.toast(message);
+    } finally {
+      emailReviewBusy = "";
+      renderTextReviewModal();
     }
   };
 
   window.enrichContactEmails = async function enrichContactEmails() {
+    if (emailReviewBusy) return;
+    emailReviewBusy = "enrichment";
+    emailReviewStatus = { kind: "info", message: "Searching a small archive batch for unique email matches. Suggestions always require review." };
+    renderTextReviewModal();
     try {
       const response = await fetch("/api/crm/gmail-email-enrichment", { method: "POST" });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error?.message || "Could not look for missing emails.");
       await window.loadTextSummaries();
+      const suffix = data.completed ? " Email archive scan complete." : " More archive messages remain; run again for the next batch.";
+      const scanned = Number(data.scanned) || 0;
+      const duplicates = Number(data.duplicates) || 0;
+      emailReviewStatus = {
+        kind: "info",
+        message: data.proposed
+          ? `${data.proposed} email suggestion${data.proposed === 1 ? " is" : "s are"} ready for review from ${scanned} archive message${scanned === 1 ? "" : "s"}.${suffix}`
+          : `No new email suggestions from ${scanned} archive message${scanned === 1 ? "" : "s"}${duplicates ? `; ${duplicates} was already queued` : ""}.${suffix}`
+      };
       if (typeof window.toast === "function") {
-        const suffix = data.completed ? " Email archive scan complete." : " More archive messages remain; run again for the next batch.";
         window.toast(data.proposed ? `${data.proposed} email suggestion${data.proposed === 1 ? "" : "s"} ready for review.${suffix}` : `No new email suggestions.${suffix}`);
       }
     } catch (error) {
-      if (typeof window.toast === "function") window.toast(error.message);
+      const message = /quota|rate limit/i.test(error.message)
+        ? "Gmail is temporarily rate-limited. Try again in about a minute; no CRM records were changed."
+        : error.message;
+      emailReviewStatus = { kind: "error", message };
+      if (typeof window.toast === "function") window.toast(message);
+    } finally {
+      emailReviewBusy = "";
+      renderTextReviewModal();
     }
   };
 
