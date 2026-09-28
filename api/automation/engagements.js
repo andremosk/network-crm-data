@@ -28,9 +28,20 @@ async function findEngagementByRequestId(sql, requestId) {
   return rows[0] ? recordFromRow(rows[0]) : null;
 }
 
+async function findPursuitGroup(sql, id) {
+  const rows = await sql`
+    SELECT record_id, payload, version FROM crm_records
+    WHERE record_type = 'engagement' AND record_id = ${id}
+    LIMIT 1
+  `;
+  const group = rows[0] ? recordFromRow(rows[0]) : null;
+  return group && active(group) && group.isGroup === true && !group.groupId ? group : null;
+}
+
 function createRepository(sql) {
   return {
     resolveContacts: async (ids) => Promise.all(ids.map((id) => findContact(sql, id))),
+    findGroup: (id) => findPursuitGroup(sql, id),
     findByRequestId: (requestId) => findEngagementByRequestId(sql, requestId),
     create: (payload) => createRecord(sql, "engagement", { id: "", create: true, data: payload }),
     async claim(requestId, hash) {
@@ -106,6 +117,13 @@ function createHandler(dependencies = {}) {
         await repository.fail(input.requestId);
         return response.status(400).json({ error: { message: "One or more linked_contact_ids do not identify active CRM contacts.", contact_ids: missing } });
       }
+      if (input.engagement.groupId) {
+        const group = await repository.findGroup(input.engagement.groupId);
+        if (!group) {
+          await repository.fail(input.requestId);
+          return response.status(400).json({ error: { message: "group_id must identify an active top-level pursuit group." } });
+        }
+      }
       const created = await repository.create(createPayload(input.engagement, input.requestId));
       const item = { ...created.data, _recordId: created.id, _syncVersion: created.version };
       const result = { request_id: input.requestId, outcome: "created", engagement: publicEngagement(item) };
@@ -122,4 +140,5 @@ function createHandler(dependencies = {}) {
 const handler = createHandler();
 handler.createHandler = createHandler;
 handler.createRepository = createRepository;
+handler.findPursuitGroup = findPursuitGroup;
 module.exports = handler;

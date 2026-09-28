@@ -112,6 +112,8 @@ delete engagements.
 
 Accepted statuses: `pursuit`, `discovery`, `proposal`, `active_client`,
 `on_hold`, and `closed`. Optional fields are `commercial`,
-`next_milestone_date` (`YYYY-MM-DD`), and up to 50 `linked_contact_ids`. Every
-linked contact ID must be an active CRM contact. A repeat of the same request
-returns the original engagement without creating another one.
+`next_milestone_date` (`YYYY-MM-DD`), up to 50 `linked_contact_ids`, an active
+top-level `group_id`, and up to 10 dated `initial_notes` (`{ "date":
+"YYYY-MM-DD", "text": "..." }`). Every linked contact ID must be an active
+CRM contact. A repeat of the same request returns the original engagement
+without creating another one.

@@ -19,6 +19,7 @@ function fakeRepository({ contacts = ["42"] } = {}) {
   return {
     items,
     async resolveContacts(ids) { return ids.map((id) => contacts.includes(String(id)) ? { _recordId: String(id), name: "Known person" } : null); },
+    async findGroup(id) { return String(id) === "group-1" ? { _recordId: "group-1", isGroup: true } : null; },
     async findByRequestId(requestId) { return [...items.values()].find((item) => item.automationRequestIds?.includes(requestId)) || null; },
     async create(payload) {
       const id = String(nextId++); const item = { ...payload, id: Number(id), _recordId: id, _syncVersion: 1 };
@@ -92,6 +93,32 @@ test("rejects invalid engagement fields and unknown linked contacts", async () =
   await handler(request(body({ linked_contact_ids: ["unknown"] })), unknown);
   assert.equal(unknown.statusCode, 400);
   assert.equal(repository.items.size, 0);
+});
+
+test("creates a child pursuit only under an active top-level group", async () => {
+  const repository = fakeRepository();
+  const handler = makeHandler(repository);
+  const response = responseRecorder();
+  await handler(request(body({ group_id: "group-1" })), response);
+  assert.equal(response.statusCode, 201);
+  assert.equal([...repository.items.values()][0].groupId, "group-1");
+
+  const invalid = responseRecorder();
+  await handler(request({ ...body({ group_id: "not-a-group" }), request_id: "seo-training-lead-0002" }), invalid);
+  assert.equal(invalid.statusCode, 400);
+});
+
+test("stores dated initial notes for a child pursuit without accepting raw HTML", async () => {
+  const repository = fakeRepository();
+  const handler = makeHandler(repository);
+  const response = responseRecorder();
+  await handler(request(body({
+    group_id: "group-1",
+    initial_notes: [{ date: "2026-09-23", text: "Working notes: <script>ignore()</script> verify this." }]
+  })), response);
+  assert.equal(response.statusCode, 201);
+  assert.equal([...repository.items.values()][0].notes[0].date, "2026-09-23");
+  assert.match([...repository.items.values()][0].notes[0].html, /&lt;script&gt;/);
 });
 
 test("only accepts POST", async () => {

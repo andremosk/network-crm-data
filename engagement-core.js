@@ -52,6 +52,9 @@
       commercial: text(item.commercial || item.commercialHypothesis || item.estimate),
       nextMilestone: text(item.nextMilestone || item.next_milestone),
       nextMilestoneDate: text(item.nextMilestoneDate || item.next_milestone_date).slice(0, 10),
+      // A pursuit can belong to one shared group, but groups cannot nest.
+      isGroup: item.isGroup === true || item.is_group === true || item.type === 'pursuit_group',
+      groupId: text(item.groupId || item.group_id || item.pursuitGroupId),
       contactIds: normalizeContactIds(item.contactIds || item.linkedContactIds),
       links: Array.isArray(item.links) ? item.links.join('\n') : text(item.links),
       notes: normalizeNotes(item.notes, createdDate),

@@ -1,6 +1,7 @@
 (function () {
   let engagementFilter = 'open';
   let newContactIds = [];
+  let newGroupId = '';
 
   const style = document.createElement('style');
   style.textContent = `
@@ -14,6 +15,11 @@
     .eng-status { display:inline-flex;align-items:center;width:max-content;padding:5px 8px;border-radius:6px;background:#e5f1ee;color:#176d62;font-size:11px;font-weight:650; }
     .eng-status.closed { background:#edf0ef;color:#68736f; }
     .eng-status.on_hold { background:#f4eee0;color:#86631b; }
+    .eng-group-badge { display:inline-flex;align-items:center;margin-left:7px;padding:3px 6px;border:1px solid #a9d5cd;border-radius:5px;color:#176d62;background:#eef8f5;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px; }
+    .eng-group-rollup { margin:8px 0 20px;border:1px solid var(--border);border-radius:7px;background:var(--surface);overflow:hidden; }
+    .eng-group-rollup-row { display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 14px;border:0;border-bottom:1px solid var(--border);background:transparent;text-align:left;color:var(--text);cursor:pointer;font:inherit; }
+    .eng-group-rollup-row:last-child { border-bottom:0; }
+    .eng-group-rollup-row:hover { background:var(--surface2); }
     .eng-date { font-size:12px;color:var(--muted); }
     .eng-date.overdue { color:#b74343;font-weight:650; }
     .eng-detail-content { overflow:auto;padding:26px 30px 60px; }
@@ -58,6 +64,14 @@
 
   function findEngagement(id) {
     return engagements.find(item => String(item.id) === String(id));
+  }
+
+  function groupFor(item) {
+    return item.groupId ? findEngagement(item.groupId) : null;
+  }
+
+  function childrenForGroup(id) {
+    return window.EngagementCore.sort(engagements.filter(item => String(item.groupId) === String(id) && !item.isGroup));
   }
 
   function statusOptions(selected) {
@@ -129,7 +143,9 @@
     const query = document.getElementById('searchInput').value.toLowerCase().trim();
     const visible = window.EngagementCore.sort(engagements).filter(item => {
       if (engagementFilter === 'open' && item.status === 'closed') return false;
-      if (engagementFilter !== 'all' && engagementFilter !== 'open' && item.status !== engagementFilter) return false;
+      if (engagementFilter === 'groups' && !item.isGroup) return false;
+      if (engagementFilter === 'ungrouped' && (item.isGroup || item.groupId)) return false;
+      if (!['all', 'open', 'groups', 'ungrouped'].includes(engagementFilter) && item.status !== engagementFilter) return false;
       if (!query) return true;
       return [item.title, item.organization, item.currentState, item.opportunity, item.nextMilestone]
         .join(' ').toLowerCase().includes(query);
@@ -146,7 +162,7 @@
       ${visible.map(item => {
         const overdue = item.nextMilestoneDate && item.nextMilestoneDate < today() && item.status !== 'closed';
         return `<div class="eng-list-row ${String(item.id) === String(selectedEngagementId) ? 'selected' : ''}" onclick="openEngagementDetail('${esc(String(item.id))}')">
-          <div><div class="eng-title">${esc(item.title || 'Untitled engagement')}</div><div class="eng-subtle">${esc(item.currentState || 'No current state yet')}</div></div>
+          <div><div class="eng-title">${esc(item.title || 'Untitled engagement')}${item.isGroup ? '<span class="eng-group-badge">Group</span>' : ''}</div><div class="eng-subtle">${item.groupId && groupFor(item) ? `Part of ${esc(groupFor(item).title)} · ` : ''}${esc(item.currentState || 'No current state yet')}</div></div>
           <div class="eng-subtle">${esc(item.organization || '—')}</div>
           <div>${statusBadge(item.status)}</div>
           <div class="eng-subtle">${esc(item.nextMilestone || 'Needs a next milestone')}</div>
@@ -156,10 +172,14 @@
   };
 
   function renderEngagementSidebar() {
-    const filters = [['open', 'Open'], ['all', 'All'], ...window.EngagementCore.STATUSES];
+    const filters = [['open', 'Open'], ['groups', 'Pursuit groups'], ['ungrouped', 'Standalone'], ['all', 'All'], ...window.EngagementCore.STATUSES];
     document.getElementById('engagementsSidebar').innerHTML = `<div class="sidebar-section"><div class="sidebar-label">Engagements</div>
       ${filters.map(([value, label]) => {
-        const count = value === 'all' ? engagements.length : value === 'open' ? engagements.filter(item => item.status !== 'closed').length : engagements.filter(item => item.status === value).length;
+        const count = value === 'all' ? engagements.length
+          : value === 'open' ? engagements.filter(item => item.status !== 'closed').length
+          : value === 'groups' ? engagements.filter(item => item.isGroup).length
+          : value === 'ungrouped' ? engagements.filter(item => !item.isGroup && !item.groupId).length
+          : engagements.filter(item => item.status === value).length;
         return `<button class="tier-btn ${engagementFilter === value ? 'active' : ''}" onclick="setEngagementFilter('${value}')"><span class="tier-dot" style="background:${value === 'closed' ? '#87928e' : '#2f9185'}"></span>${esc(label)}<span class="tier-count">${count}</span></button>`;
       }).join('')}</div>`;
   }
@@ -170,9 +190,11 @@
     toggleMobileFilters(true);
   };
 
-  window.openAddEngagementModal = function openAddEngagementModal() {
+  window.openAddEngagementModal = function openAddEngagementModal(groupId = '') {
     newContactIds = [];
-    document.getElementById('addEngagementContent').innerHTML = `<h2 style="margin-bottom:18px">Add engagement</h2>
+    newGroupId = String(groupId || '');
+    const parent = newGroupId ? findEngagement(newGroupId) : null;
+    document.getElementById('addEngagementContent').innerHTML = `<h2 style="margin-bottom:18px">${parent ? `Add pursuit to ${esc(parent.title)}` : 'Add engagement'}</h2>
       <div class="eng-form-grid">
         <label class="form-group"><span class="form-label">Title</span><input class="form-input" id="engNewTitle" autofocus></label>
         <label class="form-group"><span class="form-label">Organization / client</span><input class="form-input" id="engNewOrg"></label>
@@ -190,12 +212,13 @@
         <div class="eng-add-contact"><input class="form-input" id="engNewContact" list="engContactOptions" placeholder="Search contacts"><button class="btn btn-ghost" type="button" onclick="addNewEngagementContact()">Add</button></div>
         <datalist id="engContactOptions">${contactOptions()}</datalist>
       </div>
-      <div class="eng-modal-actions"><button class="btn btn-ghost" onclick="closeAddEngagementModal()">Cancel</button><button class="btn btn-primary" onclick="saveNewEngagement()">Create engagement</button></div>`;
+      <div class="eng-modal-actions"><button class="btn btn-ghost" onclick="closeAddEngagementModal()">Cancel</button><button class="btn btn-primary" onclick="saveNewEngagement()">Create ${parent ? 'pursuit' : 'engagement'}</button></div>`;
     document.getElementById('addEngagementModal').classList.add('open');
   };
 
   window.closeAddEngagementModal = function closeAddEngagementModal() {
     document.getElementById('addEngagementModal').classList.remove('open');
+    newGroupId = '';
   };
 
   window.addNewEngagementContact = function addNewEngagementContact() {
@@ -228,6 +251,7 @@
       commercial: document.getElementById('engNewCommercial').value.trim(),
       nextMilestone: document.getElementById('engNewMilestone').value.trim(),
       nextMilestoneDate: document.getElementById('engNewDate').value,
+      groupId: newGroupId,
       contactIds: newContactIds,
       links: document.getElementById('engNewLinks').value.trim(),
       createdDate: today(),
@@ -326,11 +350,17 @@
   function renderEngagementDetail(item) {
     const links = safeLinks(item.links);
     const notes = [...item.notes].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    const children = item.isGroup ? childrenForGroup(item.id) : [];
+    const parent = !item.isGroup ? groupFor(item) : null;
+    const groupRollup = item.isGroup ? `<div class="eng-section"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div class="eng-section-title" style="margin:0">Pursuits in this group</div><button class="btn btn-ghost btn-sm" onclick="openAddEngagementModal('${esc(String(item.id))}')">+ Add pursuit</button></div><div class="eng-group-rollup">${children.length ? children.map(child => `<button class="eng-group-rollup-row" onclick="openEngagementDetail('${esc(String(child.id))}')"><span><strong>${esc(child.title || 'Untitled pursuit')}</strong><span class="eng-subtle" style="display:block;margin-top:3px">${esc(child.nextMilestone || child.currentState || 'No next milestone')}</span></span><span>${statusBadge(child.status)} ${child.nextMilestoneDate ? `<span class="eng-date" style="margin-left:8px">${fmtDate(child.nextMilestoneDate)}</span>` : ''}</span></button>`).join('') : '<div class="eng-subtle" style="padding:14px">No child pursuits yet.</div>'}</div></div>` : '';
+    const parentNotice = parent ? `<div class="eng-section" style="padding-top:0"><button class="eng-contact-chip" onclick="openEngagementDetail('${esc(String(parent.id))}')">Pursuit group: ${esc(parent.title)}</button></div>` : '';
     document.getElementById('engagementDetailPanel').innerHTML = `<div class="detail-topbar"><button class="back-btn" onclick="closeEngagementDetail()">← Back</button><span style="font-size:13px;color:var(--muted)">${esc(item.organization || item.title)}</span><span style="flex:1"></span><button class="btn btn-ghost btn-sm" style="color:#b74343;border-color:#d9b0b0" onclick="deleteEngagement('${esc(String(item.id))}')">Delete</button></div>
       <div class="eng-detail-content"><div class="eng-detail-shell">
-        <div class="eng-detail-heading"><div><input class="form-input eng-detail-title" value="${esc(item.title)}" onblur="updateEngagement('${esc(String(item.id))}','title',this.value)"><input class="form-input eng-org" value="${esc(item.organization)}" placeholder="Organization / client" onblur="updateEngagement('${esc(String(item.id))}','organization',this.value)"></div><select class="form-input" style="width:170px" onchange="updateEngagement('${esc(String(item.id))}','status',this.value)">${statusOptions(item.status)}</select></div>
+        <div class="eng-detail-heading"><div><input class="form-input eng-detail-title" value="${esc(item.title)}" onblur="updateEngagement('${esc(String(item.id))}','title',this.value)">${item.isGroup ? '<span class="eng-group-badge">Pursuit group</span>' : ''}<input class="form-input eng-org" value="${esc(item.organization)}" placeholder="Organization / client" onblur="updateEngagement('${esc(String(item.id))}','organization',this.value)"></div><select class="form-input" style="width:170px" onchange="updateEngagement('${esc(String(item.id))}','status',this.value)">${statusOptions(item.status)}</select></div>
+        ${parentNotice}
+        ${groupRollup}
         <div class="eng-focus-grid">
-          <div class="eng-focus"><div class="eng-section-title">Current state</div><textarea class="form-input" onblur="updateEngagement('${esc(String(item.id))}','currentState',this.value,false)">${esc(item.currentState)}</textarea></div>
+          <div class="eng-focus"><div class="eng-section-title">${item.isGroup ? 'Shared context' : 'Current state'}</div><textarea class="form-input" onblur="updateEngagement('${esc(String(item.id))}','currentState',this.value,false)">${esc(item.currentState)}</textarea></div>
           <div class="eng-focus"><div class="eng-section-title">Next milestone</div><div class="eng-milestone"><input class="form-input" value="${esc(item.nextMilestone)}" placeholder="Define the next milestone" onblur="updateEngagement('${esc(String(item.id))}','nextMilestone',this.value,false)"><input class="form-input" type="date" value="${esc(item.nextMilestoneDate)}" style="margin-top:8px" onchange="updateEngagement('${esc(String(item.id))}','nextMilestoneDate',this.value)"></div></div>
         </div>
         <div class="eng-form-grid eng-section"><label class="form-group"><span class="form-label">Opportunity / problem</span><textarea class="form-input" rows="4" onblur="updateEngagement('${esc(String(item.id))}','opportunity',this.value,false)">${esc(item.opportunity)}</textarea></label><label class="form-group"><span class="form-label">Commercial hypothesis / estimate</span><textarea class="form-input" rows="4" onblur="updateEngagement('${esc(String(item.id))}','commercial',this.value,false)">${esc(item.commercial)}</textarea></label></div>

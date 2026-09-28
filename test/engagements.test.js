@@ -32,6 +32,15 @@ test('legacy engagement values receive stable defaults', () => {
   assert.deepEqual(item.notes, [{ id: 'note-1', date: '2026-08-20', html: 'Initial context' }]);
 });
 
+test('pursuit groups and children preserve a single non-nested parent reference', () => {
+  const group = EngagementCore.withDefaults({ id: '20', title: 'Business Logistics', is_group: true });
+  const child = EngagementCore.withDefaults({ id: '21', title: 'Next Level Events', group_id: '20' });
+  assert.equal(group.isGroup, true);
+  assert.equal(group.groupId, '');
+  assert.equal(child.isGroup, false);
+  assert.equal(child.groupId, '20');
+});
+
 test('engagement list prioritizes active dated, active undated, then closed', () => {
   const sorted = EngagementCore.sort([
     { id: 1, title: 'Closed', status: 'closed', nextMilestoneDate: '2026-08-01' },
