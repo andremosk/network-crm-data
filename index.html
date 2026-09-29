@@ -32,6 +32,12 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .search-wrap input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 14px 7px 34px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; }
 .search-wrap input:focus { border-color: var(--accent); }
 .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; pointer-events: none; }
+.profile-search-results { position:absolute; top:calc(100% + 6px); left:0; right:0; max-height:300px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; background:var(--surface); box-shadow:var(--shadow); z-index:120; }
+.profile-search-result { width:100%; display:block; padding:9px 12px; border:0; border-bottom:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer; font:inherit; text-align:left; }
+.profile-search-result:last-child { border-bottom:0; }
+.profile-search-result:hover,.profile-search-result.active { background:var(--accent); color:#fff; }
+.profile-search-name { display:block; font-size:13px; font-weight:650; }
+.profile-search-sub { display:block; margin-top:2px; font-size:11px; opacity:.72; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .topbar-stat { text-align: center; }
 .stat-num { font-size: 17px; font-weight: 600; color: var(--accent); }
 .stat-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
@@ -452,6 +458,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   <div class="search-wrap">
     <span class="search-icon">🔍</span>
     <input type="text" id="searchInput" placeholder="Search..." oninput="onSearch()" onkeydown="onSearchKey(event)" autocomplete="off">
+    <div class="profile-search-results" id="profileSearchResults" style="display:none" role="listbox"></div>
   </div>
   <button class="btn btn-ghost mobile-filters-btn" id="mobileFiltersBtn" onclick="toggleMobileFilters()">Filters</button>
   <div class="topbar-stat"><div class="stat-num" id="statShowing">0</div><div class="stat-lbl">Showing</div></div>
@@ -1129,6 +1136,7 @@ let appSortKey = null, appSortDir = 1;
 let selectedId = null, selectedAppId = null, selectedRoundId = null;
 let selectedEngagementId = null;
 let filtered = [], filteredApps = [];
+let profileSearchMatches = [], profileSearchIndex = -1;
 let activeAppSection = 'overview';
 var cloudSyncReady = false;
 var cloudSyncTimer = null;
@@ -1202,20 +1210,58 @@ function switchView(v) {
 }
 
 function onSearch() {
-  if (currentView === 'contacts' && document.getElementById('detailPanel').classList.contains('open')) return;
+  if (currentView === 'contacts' && document.getElementById('detailPanel').classList.contains('open')) {
+    renderProfileSearchResults();
+    return;
+  }
   if(currentView==='contacts') renderList(); else if(currentView==='apps') renderApps(); else renderEngagements();
 }
 function onSearchKey(e) {
-  if (e.key !== 'Enter' || currentView !== 'contacts' || !document.getElementById('detailPanel').classList.contains('open')) return;
-  const input = document.getElementById('searchInput');
-  const q = input.value.toLowerCase().trim();
-  if (!q) return;
-  const match = contacts.find(c => String(c.name||'').toLowerCase().startsWith(q))
-    || contacts.find(c => `${c.name||''} ${c.company||''} ${c.position||''}`.toLowerCase().includes(q));
+  if (currentView !== 'contacts' || !document.getElementById('detailPanel').classList.contains('open')) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    if (!profileSearchMatches.length) return;
+    e.preventDefault();
+    profileSearchIndex = e.key === 'ArrowDown'
+      ? Math.min(profileSearchIndex + 1, profileSearchMatches.length - 1)
+      : Math.max(profileSearchIndex - 1, 0);
+    renderProfileSearchResults(false);
+    return;
+  }
+  if (e.key === 'Escape') { clearProfileSearch(); return; }
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const match = profileSearchMatches[profileSearchIndex >= 0 ? profileSearchIndex : 0];
   if (!match) { toast('No matching contact found'); return; }
-  input.value = '';
-  renderList();
+  clearProfileSearch();
   openDetail(match.id);
+}
+
+function renderProfileSearchResults(reset = true) {
+  const input = document.getElementById('searchInput');
+  const results = document.getElementById('profileSearchResults');
+  const query = input.value.toLowerCase().trim();
+  if (!query) { clearProfileSearch(false); return; }
+  profileSearchMatches = contacts.filter(contact => `${contact.name || ''} ${contact.company || ''} ${contact.position || ''}`.toLowerCase().includes(query)).slice(0, 8);
+  if (reset) profileSearchIndex = -1;
+  if (!profileSearchMatches.length) {
+    results.innerHTML = '<div class="profile-search-sub" style="padding:10px 12px">No matching contacts</div>';
+    results.style.display = 'block';
+    return;
+  }
+  results.innerHTML = profileSearchMatches.map((contact, index) => `<button class="profile-search-result ${index === profileSearchIndex ? 'active' : ''}" type="button" role="option" aria-selected="${index === profileSearchIndex}" onmousedown="openProfileSearchContact(${contact.id})"><span class="profile-search-name">${esc(contact.name)}</span><span class="profile-search-sub">${esc(contact.company || '')}${contact.position ? ` · ${esc(contact.position)}` : ''}</span></button>`).join('');
+  results.style.display = 'block';
+}
+
+function clearProfileSearch(clearInput = true) {
+  if (clearInput) document.getElementById('searchInput').value = '';
+  document.getElementById('profileSearchResults').style.display = 'none';
+  profileSearchMatches = [];
+  profileSearchIndex = -1;
+}
+
+function openProfileSearchContact(id) {
+  clearProfileSearch();
+  openDetail(id);
 }
 function openAddModal() { if(currentView==='contacts') openAddContactModal(); else if(currentView==='apps') openAddAppModal(); else openAddEngagementModal(); }
 
@@ -2243,7 +2289,7 @@ function openDetail(id) {
 
 function closeDetail() {
   document.getElementById('detailPanel').classList.remove('open');
-  document.getElementById('searchInput').value = '';
+  clearProfileSearch();
   document.getElementById('searchInput').placeholder = 'Search name, company, notes...';
   renderList();
 }
@@ -3487,7 +3533,12 @@ function onJumpKey(e) {
 }
 function jumpToContact(id) { clearJumpSearch(); openDetail(id); }
 function clearJumpSearch() { document.getElementById('jumpSearchInput').value=''; document.getElementById('jumpSearchResults').style.display='none'; jumpIdx=-1; }
-document.addEventListener('click', e => { const wrap=document.getElementById('jumpSearchWrap'); if(wrap&&!wrap.contains(e.target)) document.getElementById('jumpSearchResults').style.display='none'; });
+document.addEventListener('click', e => {
+  const jumpWrap = document.getElementById('jumpSearchWrap');
+  if (jumpWrap && !jumpWrap.contains(e.target)) document.getElementById('jumpSearchResults').style.display = 'none';
+  const searchWrap = document.querySelector('.search-wrap');
+  if (searchWrap && !searchWrap.contains(e.target)) document.getElementById('profileSearchResults').style.display = 'none';
+});
 
 // ─── TOAST ────────────────────────────────────────────────────────
 function toast(msg) { const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2500); }
