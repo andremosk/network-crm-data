@@ -1,4 +1,6 @@
 const { getSql } = require("../../lib/crm-db");
+const { tokenIsValid } = require("../../lib/crm-auth");
+const { getBearerToken } = require("../../lib/text-summaries");
 
 const MAX_LIMIT = 200;
 const DEFAULT_LIMIT = 50;
@@ -28,11 +30,6 @@ const MONTHS = {
   dec: 11,
   december: 11
 };
-
-function getHeader(request, name) {
-  const value = request.headers?.[name] || request.headers?.[name.toLowerCase()];
-  return Array.isArray(value) ? value[0] : value;
-}
 
 function parseQuery(request) {
   if (request.query) return request.query;
@@ -200,7 +197,8 @@ async function loadContacts() {
   return rows.map((row) => row.payload);
 }
 
-module.exports = async function handler(request, response) {
+async function handler(request, response, loadContactsDependency) {
+  response.setHeader("Cache-Control", "private, no-store");
   if (request.method !== "GET") {
     response.setHeader("Allow", "GET");
     return response.status(405).json({ error: { message: "Method not allowed" } });
@@ -211,8 +209,7 @@ module.exports = async function handler(request, response) {
     return response.status(500).json({ error: { message: "NETWORK_CRM_AUTOMATION_TOKEN is not set." } });
   }
 
-  const auth = getHeader(request, "authorization") || "";
-  if (auth !== `Bearer ${expectedToken}`) {
+  if (!tokenIsValid(getBearerToken(request))) {
     return response.status(401).json({ error: { message: "Unauthorized" } });
   }
 
@@ -229,7 +226,7 @@ module.exports = async function handler(request, response) {
     .filter(Boolean);
 
   try {
-    const contacts = await loadContacts();
+    const contacts = await loadContactsDependency();
     const notes = contacts
       .filter((contact) => !contact.deleted && !contact.archived)
       .flatMap((contact) => splitNoteEntries(contact).map((entry) => noteRecord(contact, entry)))
@@ -243,4 +240,11 @@ module.exports = async function handler(request, response) {
     console.error("Recent notes Neon query failed:", error);
     return response.status(500).json({ error: { message: "Could not load CRM notes." } });
   }
-};
+}
+
+function createHandler({ loadContacts: loadContactsDependency = loadContacts } = {}) {
+  return (request, response) => handler(request, response, loadContactsDependency);
+}
+
+module.exports = createHandler();
+module.exports.createHandler = createHandler;
