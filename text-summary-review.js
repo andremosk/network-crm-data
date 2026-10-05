@@ -1,5 +1,7 @@
 (function () {
   let pendingSummaries = [];
+  let engagementChoices = [];
+  const summaryDestinations = new Map();
   let pendingConversations = [];
   let pendingProposals = [];
   let pendingCreateKey = null;
@@ -152,21 +154,37 @@
     </div>`;
   }
 
-  function renderSummary(item) {
+  function destinationFor(item) {
+    return summaryDestinations.get(Number(item.id)) || (item.suggested_engagement_id ? `engagement:${item.suggested_engagement_id}` : 'contact');
+  }
+
+  function destinationControl(item) {
+    const selected = destinationFor(item);
+    return `<label class="form-group"><span class="form-label">Save to</span><select class="form-input" aria-label="Note destination" onchange="setTextSummaryDestination(${item.id},this.value,this)"><option value="contact" ${selected === 'contact' ? 'selected' : ''}>Contact notes</option>${engagementChoices.map(engagement => `<option value="engagement:${escapeHtml(engagement.id)}" ${selected === `engagement:${engagement.id}` ? 'selected' : ''}>Engagement: ${escapeHtml(engagement.title || engagement.organization)}</option>`).join('')}</select></label>`;
+  }
+
+  window.setTextSummaryDestination = function(id, value, select) {
+    summaryDestinations.set(Number(id), value);
+    const button = select.closest('.text-review-row')?.querySelector('[data-approve-summary]');
+    if (button) button.textContent = value === 'contact' ? 'Add to Contact Notes' : 'Add to Engagement';
+  };
+
+  function renderSummary(item, prefix = 'textReviewSummary') {
     const contact = contactById(item.contact_id);
     return `<div class="text-review-row">
       <div class="text-review-row-head">
         <div>
           <div class="text-review-name">${escapeHtml(contact?.name || "CRM contact")}</div>
           <div class="text-review-meta">${escapeHtml(formatDate(item.conversation_ended_at))} · ${Number(item.message_count) || 0} messages</div>
-          <div class="communication-review-labels"><span class="communication-review-label">SMS</span><span class="communication-review-label">Update contact</span></div>
+          <div class="communication-review-labels"><span class="communication-review-label">SMS</span></div>
         </div>
         <div class="text-review-contact">Ready for Notes</div>
       </div>
-      <textarea class="text-review-summary" id="textReviewSummary_${item.id}" aria-label="Edit text summary">${escapeHtml(item.summary)}</textarea>
+      ${destinationControl(item)}
+      <textarea class="text-review-summary" id="${prefix}_${item.id}" aria-label="Edit text summary">${escapeHtml(item.summary)}</textarea>
       <div class="text-review-actions">
         <button class="btn btn-ghost btn-sm" onclick="dismissTextSummary(${item.id})">Dismiss</button>
-        <button class="btn btn-primary btn-sm" onclick="approveTextSummary(${item.id},'${escapeHtml(String(item.contact_id))}')">Add to Notes</button>
+        <button class="btn btn-primary btn-sm" data-approve-summary onclick="approveTextSummary(${item.id},'${escapeHtml(String(item.contact_id))}','${prefix}')">${destinationFor(item) === 'contact' ? 'Add to Contact Notes' : 'Add to Engagement'}</button>
       </div>
     </div>`;
   }
@@ -221,7 +239,7 @@
     ${emailReviewStatus ? `<div class="email-review-status ${emailReviewStatus.kind === "error" ? "error" : ""}" id="emailReviewStatus">${escapeHtml(emailReviewStatus.message)}</div>` : ""}
     ${total ? `
       ${pendingConversations.length ? `<section class="text-review-section"><div class="text-review-section-title"><span>Needs matching</span><span>${pendingConversations.length}</span></div><div class="text-review-list">${pendingConversations.map(renderConversation).join("")}</div></section>` : ""}
-      ${pendingSummaries.length ? `<section class="text-review-section"><div class="text-review-section-title"><span>Summary review</span><span>${pendingSummaries.length}</span></div><div class="text-review-list">${pendingSummaries.map(renderSummary).join("")}</div></section>` : ""}
+      ${pendingSummaries.length ? `<section class="text-review-section"><div class="text-review-section-title"><span>Summary review</span><span>${pendingSummaries.length}</span></div><div class="text-review-list">${pendingSummaries.map(item => renderSummary(item)).join("")}</div></section>` : ""}
       ${pendingProposals.length ? `<section class="text-review-section"><div class="text-review-section-title"><span>Email proposals</span><span>${pendingProposals.length}</span></div><div class="text-review-list">${pendingProposals.map(renderProposal).join("")}</div></section>` : ""}
       <datalist id="textReviewContacts">${buildContactChoices()}</datalist>
     ` : `<div class="text-review-empty">No communications need attention.</div>`}`;
@@ -232,9 +250,19 @@
     if (!items.length) return "";
     return `<section class="text-summary-review" aria-label="Text summaries awaiting review">
       <div class="text-summary-heading"><div><div class="sec-title" style="margin:0">Text summaries</div><div class="text-summary-subtitle">Review before adding these to Notes</div></div><span class="text-summary-count">${items.length}</span></div>
-      ${items.map((item) => `<article class="text-summary-draft"><div class="text-summary-meta">${escapeHtml(formatDate(item.conversation_ended_at))} · ${Number(item.message_count) || 0} messages</div><textarea class="text-summary-editor" id="textSummary_${item.id}" aria-label="Edit text summary">${escapeHtml(item.summary)}</textarea><div class="text-summary-actions"><button class="btn btn-ghost btn-sm" onclick="dismissTextSummary(${item.id})">Dismiss</button><button class="btn btn-primary btn-sm" onclick="approveTextSummary(${item.id},'${escapeHtml(String(contactId))}')">Add to Notes</button></div></article>`).join("")}
+      ${items.map(item => renderSummary(item, 'textSummary')).join("")}
     </section>`;
   };
+
+  window.renderEngagementTextSummaries = function(id) {
+    const items = pendingSummaries.filter(item => destinationFor(item) === `engagement:${id}`);
+    return items.length ? `<section class="text-summary-review"><div class="sec-title">SMS awaiting review</div>${items.map(item => renderSummary(item, 'engagementTextSummary')).join('')}</section>` : '';
+  };
+
+  function updateEngagementReview() {
+    const slot = document.getElementById('engagementSmsReview');
+    if (slot) slot.innerHTML = window.renderEngagementTextSummaries(slot.dataset.engagementId);
+  }
 
   window.loadTextSummaries = async function loadTextSummaries() {
     try {
@@ -249,9 +277,11 @@
       if (!textResponse.ok) throw new Error(data.error?.message || "Could not load Communication Review.");
       if (!proposalResponse.ok) throw new Error(proposalData.error?.message || "Could not load email proposals.");
       pendingSummaries = Array.isArray(data.summaries) ? data.summaries : [];
+      engagementChoices = Array.isArray(data.engagements) ? data.engagements : [];
       pendingConversations = Array.isArray(data.conversations) ? data.conversations : [];
       pendingProposals = Array.isArray(proposalData.proposals) ? proposalData.proposals : [];
       updateBadge();
+      updateEngagementReview();
       if (document.getElementById("textReviewModal")?.classList.contains("open")) renderTextReviewModal();
       const signature = pendingConversations.map((item) => item.conversation_key).sort().join(",");
       if (signature && localStorage.getItem("network_crm_text_notice") !== signature) {
@@ -454,23 +484,32 @@
     setTimeout(() => window.reviewTextConversation(key, "match", contactId), 2200);
   };
 
-  async function reviewSummary(id, action, summary) {
-    const data = await patchReview({ id, action, summary });
+  async function reviewSummary(id, action, summary, engagementId) {
+    const data = await patchReview({ id, action, summary, engagementId });
     pendingSummaries = pendingSummaries.filter((item) => Number(item.id) !== Number(id));
     updateBadge();
     renderTextReviewModal();
+    updateEngagementReview();
     return data;
   }
 
-  window.approveTextSummary = async function approveTextSummary(id, contactId) {
-    const editor = document.getElementById(`textReviewSummary_${id}`) || document.getElementById(`textSummary_${id}`);
+  window.approveTextSummary = async function approveTextSummary(id, contactId, prefix = 'textReviewSummary') {
+    const editor = document.getElementById(`${prefix}_${id}`);
     const summary = editor?.value.trim() || "";
     if (!summary) return;
     try {
-      await reviewSummary(id, "approve", summary);
+      const item = pendingSummaries.find(item => Number(item.id) === Number(id));
+      const destination = destinationFor(item || { id });
+      const engagementId = destination.startsWith('engagement:') ? destination.slice(11) : undefined;
+      await reviewSummary(id, "approve", summary, engagementId);
       if (typeof window.refreshCloudState === "function") await window.refreshCloudState();
-      if (!document.getElementById("textReviewModal")?.classList.contains("open") && typeof window.openDetail === "function") window.openDetail(Number(contactId));
-      if (typeof window.toast === "function") window.toast("Text summary added to Notes");
+      if (!document.getElementById("textReviewModal")?.classList.contains("open")) {
+        if (engagementId && typeof window.openEngagementDetail === 'function') {
+          window.switchView('engagements');
+          window.openEngagementDetail(engagementId);
+        } else if (typeof window.openDetail === 'function') window.openDetail(Number(contactId));
+      }
+      if (typeof window.toast === "function") window.toast(engagementId ? "SMS added to engagement" : "SMS added to contact notes");
     } catch (error) {
       if (typeof window.toast === "function") window.toast(error.message);
     }

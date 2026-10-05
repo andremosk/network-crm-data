@@ -26,6 +26,7 @@
   function normalizeNotes(value, fallbackDate) {
     if (Array.isArray(value)) {
       return value.map((note, index) => ({
+        ...(note.source ? { source: text(note.source), sourceKey: text(note.sourceKey), contactId: text(note.contactId) } : {}),
         id: note.id || `note-${index + 1}`,
         date: text(note.date || fallbackDate),
         html: text(note.html || note.text)

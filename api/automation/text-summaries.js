@@ -1,5 +1,6 @@
 const { ensureSchema, getSql } = require("../../lib/crm-db");
 const { messagesTokenIsValid } = require("../../lib/crm-auth");
+const { suggestEngagement, activeEngagements } = require("../../lib/sms-routing");
 const {
   cleanTranscript,
   getBearerToken,
@@ -118,7 +119,11 @@ module.exports = async function handler(request, response) {
     if (!contacts.length) return response.status(404).json({ error: { message: "Contact not found." } });
 
     const contactName = contacts[0].payload.name || "Unknown contact";
-    const summary = await summarizeTranscript({ contactName, transcript, startedAt, endedAt });
+    const engagementRows = await sql`SELECT record_id, payload FROM crm_records WHERE record_type = 'engagement'`;
+    const engagements = activeEngagements(engagementRows.map(row => ({ ...row.payload, id: row.record_id })));
+    const engagementId = suggestEngagement({ ...contacts[0].payload, id: contacts[0].record_id }, transcript, engagements);
+    const engagement = engagements.find(item => String(item.id) === engagementId);
+    const summary = await summarizeTranscript({ contactName, transcript, startedAt, endedAt, engagement });
     if (!summary || summary.toUpperCase() === "SKIP") {
       return response.status(200).json({ status: "skipped" });
     }
