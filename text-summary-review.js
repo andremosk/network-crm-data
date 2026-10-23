@@ -283,10 +283,19 @@
       updateBadge();
       updateEngagementReview();
       if (document.getElementById("textReviewModal")?.classList.contains("open")) renderTextReviewModal();
-      const signature = pendingConversations.map((item) => item.conversation_key).sort().join(",");
-      if (signature && localStorage.getItem("network_crm_text_notice") !== signature) {
-        localStorage.setItem("network_crm_text_notice", signature);
-        if (typeof window.toast === "function") window.toast(`${pendingConversations.length} text conversation${pendingConversations.length === 1 ? "" : "s"} need review`);
+      const current = [
+        ...pendingConversations.map(item => `conversation:${item.conversation_key}`),
+        ...pendingSummaries.map(item => `sms:${item.id}`),
+        ...pendingProposals.map(item => `email:${item.id}`)
+      ];
+      let seen = [];
+      try { seen = JSON.parse(localStorage.getItem('network_crm_communication_notice') || '[]'); } catch {}
+      if (!Array.isArray(seen)) seen = [];
+      const known = new Set(seen);
+      const added = current.filter(id => !known.has(id));
+      localStorage.setItem('network_crm_communication_notice', JSON.stringify([...new Set([...seen, ...current])].slice(-1500)));
+      if (added.length && typeof window.toast === 'function') {
+        window.toast(`${added.length} new SMS or email item${added.length === 1 ? '' : 's'} in Communication Review`);
       }
     } catch (error) {
       console.warn("Communication Review unavailable:", error);

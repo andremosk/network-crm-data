@@ -1,6 +1,6 @@
 const { messagesTokenIsValid } = require("../../lib/crm-auth");
 const { ensureSchema, getSql } = require("../../lib/crm-db");
-const { getBearerToken } = require("../../lib/text-summaries");
+const { getBearerToken, parseBody } = require("../../lib/text-summaries");
 const { runGmailEmailEnrichment } = require("../../lib/gmail-review-sync");
 
 function createHandler(dependencies = {}) {
@@ -17,7 +17,9 @@ function createHandler(dependencies = {}) {
     try {
       const sql = sqlFactory();
       await schema(sql);
-      return response.status(200).json({ status: "completed", ...await enrich({ sql }) });
+      const body = parseBody(request);
+      if (body?.mode && !['recent', 'archive'].includes(body.mode)) return response.status(400).json({ error: { message: 'Invalid enrichment mode.' } });
+      return response.status(200).json({ status: "completed", ...await enrich({ sql, recent: body?.mode === 'recent' }) });
     } catch (error) {
       console.error("Automated Gmail email enrichment error:", error);
       return response.status(503).json({ error: { message: error.message || "Email enrichment failed." } });

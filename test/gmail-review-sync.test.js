@@ -136,6 +136,50 @@ function responseRecorder() {
   return { statusCode: 0, body: null, headers: {}, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; }, setHeader(name, value) { this.headers[name] = value; } };
 }
 
+test('recent enrichment has its own resumable checkpoint and keeps working after archive completion', async () => {
+  let state = null;
+  const queries = [];
+  let pages = 0;
+  const dependencies = {
+    getAccessToken: async () => 'token',
+    loadEnrichmentState: async () => { throw new Error('must not read archive checkpoint'); },
+    loadRecentEnrichmentState: async () => state,
+    listMessages: async (_token, page, query) => {
+      queries.push(query);
+      pages += 1;
+      if (pages === 1) return { messages: [], nextPageToken: 'next' };
+      if (pages === 2) assert.equal(page, 'next');
+      return { messages: [] };
+    },
+    saveRecentEnrichmentState: async (_sql, _mailbox, checkpoint, progress) => {
+      state = { last_successful_at: checkpoint, next_page_token: progress.nextPageToken,
+        window_since: progress.since, window_until: progress.until };
+    }
+  };
+  const options = { sql: {}, env: { NETWORK_CRM_GMAIL_MAILBOX: 'andre@example.com' }, recent: true, dependencies };
+  const first = await runGmailEmailEnrichment({ ...options, now: new Date('2026-10-23T15:00:00Z') });
+  assert.equal(first.completed, false);
+  assert.equal(state.last_successful_at, null);
+  await runGmailEmailEnrichment({ ...options, now: new Date('2026-10-23T16:00:00Z') });
+  assert.equal(state.last_successful_at, '2026-10-23T15:00:00.000Z');
+  assert.equal(queries[0], queries[1]);
+  await runGmailEmailEnrichment({ ...options, now: new Date('2026-10-24T15:00:00Z') });
+  assert.notEqual(queries[1], queries[2]);
+  assert.equal(pages, 3);
+});
+
+test('automated enrichment selects recent mode only when explicitly requested', async () => {
+  const { createHandler } = require('../api/automation/gmail-email-enrichment');
+  const modes = [];
+  const handler = createHandler({ auth: () => true, getSql: () => ({}), ensureSchema: async () => {},
+    runEnrichment: async ({ recent }) => { modes.push(recent); return { completed: true }; } });
+  const response = responseRecorder();
+  await handler({ method: 'POST', body: { mode: 'recent' } }, response);
+  assert.equal(response.statusCode, 200);
+  await handler({ method: 'POST', body: {} }, responseRecorder());
+  assert.deepEqual(modes, [true, false]);
+});
+
 test('HTML-only email yields substantive body text and ignores script, style, and quoted history', () => {
   const original = gmailMessage();
   const parsed = normalizedInboundMessage({ ...original, payload: {

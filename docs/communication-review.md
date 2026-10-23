@@ -1,5 +1,13 @@
 # Communication Review
 
+## Scheduled checks on Andre's Mac
+
+Run `python3 scripts/setup_gmail_sync.py` after deploying the backend. It reuses the private `messages-sync.json` key, installs a separate LaunchAgent at 11 AM, 3 PM, and 9:15 PM local time, and leaves SMS scheduling in place. The Mac must be online; launchd coalesces missed calendar runs when it wakes. The installed helper uses a lock to prevent overlapping local runs.
+
+Each run processes up to four review batches. Once daily it also processes up to three recent-address enrichment batches (continuing at later scheduled runs if a backlog remains). Recent enrichment calls the protected endpoint with `{"mode":"recent"}` and has a separate date-window/page checkpoint from the manual archive scan. Its first window covers 14 days, then advances incrementally. This metadata-only search uses unique names to propose missing addresses and never overwrites a populated email. All notes/addresses require approval. Logs show counts only in `~/Library/Application Support/Network CRM/gmail-sync.log`; failures retry at the next run. To disable: `launchctl bootout gui/$(id -u)/com.networkcrm.gmail-sync`.
+
+Communication Review shows one combined in-app notification for newly seen SMS/email proposal IDs when pending data refreshes. Previously seen items do not notify again just because other items were dismissed. This is an in-app notice, not a desktop push notification.
+
 Email review prefers the plain-text MIME body and falls back to HTML text when needed. It excludes empty bodies rather than generating subject-only notes. Proposed notes contain body excerpts, not an AI-generated interpretation.
 
 Review processes 25 messages per click by default. If Gmail returns more pages, the next click resumes that page in the same fixed date window. The completed checkpoint advances only after the last page; errors leave the checkpoint intact. The review status explicitly reports when more mail remains. Previously skipped messages from older checkpoints and previously queued proposals are not automatically repaired.
@@ -36,4 +44,4 @@ The initial deterministic rules recognize reconnecting, connecting, setting up t
 
 The server needs these Vercel environment variables: `GOOGLE_GMAIL_CLIENT_ID`, `GOOGLE_GMAIL_CLIENT_SECRET`, `GOOGLE_GMAIL_REFRESH_TOKEN`, and `NETWORK_CRM_GMAIL_MAILBOX`. The refresh token must have Gmail read access in addition to the existing draft-creation access. Gmail is read server-side; messages are evaluated by deterministic rules and are never sent to an LLM. The sync starts with a 14-day lookback, stores a per-mailbox checkpoint, and deduplicates by Gmail message ID.
 
-No cron schedule is configured yet. The protected automation endpoint is ready for either a Vercel Cron job or Gmail watch/push after the Gmail read authorization is in place.
+The Mac scheduler above calls the protected automation endpoints. No Vercel cron or Gmail watch/push is configured by this setup.
