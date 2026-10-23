@@ -13,6 +13,25 @@ SPEC.loader.exec_module(MODULE)
 
 
 class MessagesSyncTests(unittest.TestCase):
+    def test_business_gate_keeps_work_discussion(self):
+        for body in [
+            "I suggest waiting for BC Cloud before investing in the connector.",
+            "The invoice is ready.",
+            "Can I introduce you to a business owner?",
+        ]:
+            self.assertTrue(MODULE.has_business_context([{"body": body}]), body)
+
+    def test_business_gate_skips_personal_logistics_and_keyword_noise(self):
+        for body in [
+            "Can you pick up the kids at three?",
+            "Tuesday at noon works, see you then!",
+            "Sounds good!", "Let's go to the fair.",
+            'Liked “The client proposal is ready”',
+            "Look at this https://example.com/client/proposal",
+        ]:
+            self.assertFalse(MODULE.has_business_context([{"body": body}]), body)
+        self.assertFalse(MODULE.has_business_context([{"sender": "AI Consulting", "body": "Thanks!"}]))
+
     def test_parses_exporter_text(self):
         transcript = (
             "Jul 16, 2026  9:15:00 AM\nAndre\nWould next week work?\n\n"

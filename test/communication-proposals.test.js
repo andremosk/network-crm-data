@@ -40,6 +40,29 @@ function responseRecorder() {
   };
 }
 
+test('missing message body never creates a subject-only CRM note', () => {
+  assert.equal(analyzeOutboundEmail(inbound({ subject: 'Re: Garden Island Updated to Do', bodyText: '' }), { id: '55' }).status, 'excluded');
+});
+
+test('keeps a vacation opener inside a calendar counterproposal without Zoom boilerplate', () => {
+  const result = analyzeOutboundEmail(inbound({
+    subject: 'Proposed new time: Lisa / Andre',
+    bodyText: 'Lisa has declined this invitation and proposed a new time:\nFri Oct 23, 2026 1pm\n"Hi! Dave & I are taking a much needed vacation. Can we catch up on the 23rd instead?"\nJoin Zoom Meeting https://zoom.example/secret',
+    requireKnownContact: true
+  }), { id: '55', name: 'Lisa Cassidy' });
+  assert.equal(result.status, 'pending');
+  assert.match(result.proposed.note, /Dave & I.*vacation/);
+  assert.doesNotMatch(result.proposed.note, /zoom.example|declined this invitation/);
+  assert.equal(result.proposed.followUpDate, '');
+  assert.equal(result.proposed.status, null);
+});
+
+test('plain vacation news qualifies, but calendar logistics and unknown senders do not', () => {
+  assert.equal(analyzeOutboundEmail(inbound({ subject: 'Quick update', bodyText: 'Dave and I are taking a vacation next week.' }), { id: '55' }).status, 'pending');
+  assert.equal(analyzeOutboundEmail(inbound({ subject: 'Proposed new time: Lisa / Andre', bodyText: 'proposed a new time: Friday "Can we catch up at 3 instead?"' }), { id: '55' }).status, 'excluded');
+  assert.equal(analyzeOutboundEmail(inbound({ subject: 'Quick update', bodyText: 'I am taking a vacation.', requireKnownContact: true })).status, 'excluded');
+});
+
 test("creates a conservative new-contact proposal with a one-week follow-up", () => {
   const result = analyzeOutboundEmail(outbound());
   assert.equal(result.status, "pending");

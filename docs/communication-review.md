@@ -1,5 +1,11 @@
 # Communication Review
 
+Email review prefers the plain-text MIME body and falls back to HTML text when needed. It excludes empty bodies rather than generating subject-only notes. Proposed notes contain body excerpts, not an AI-generated interpretation.
+
+Review processes 25 messages per click by default. If Gmail returns more pages, the next click resumes that page in the same fixed date window. The completed checkpoint advances only after the last page; errors leave the checkpoint intact. The review status explicitly reports when more mail remains. Previously skipped messages from older checkpoints and previously queued proposals are not automatically repaired.
+
+Inbound email can also qualify through a specific personal conversation opener (for example a vacation, honeymoon, new baby, job change, or retirement). For a `Proposed new time:` calendar reply, only a quoted attendee comment containing that context qualifies; plain rescheduling does not. The comment is used as evidence instead of the calendar/Zoom boilerplate. A direct human sender may pass the calendar wrapper's Auto-Submitted header, while bulk/list/no-reply exclusions and existing-contact matching still apply. Proposals require approval and do not invent follow-up dates. This affects new scans, not previously skipped mail outside the sync window.
+
 Network.crm's Communication Review combines the existing SMS review queue with reviewable email proposals. Nothing in this feature sends email, creates a contact, or edits a contact automatically.
 
 ## Email ingestion endpoint

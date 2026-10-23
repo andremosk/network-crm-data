@@ -24,6 +24,27 @@ TIMESTAMP = re.compile(
     r"(?m)^(?P<stamp>[A-Z][a-z]{2} \d{1,2}, \d{4}  \d{1,2}:\d{2}:\d{2} [AP]M)(?: \([^\n]*\))?\n"
 )
 
+BUSINESS_CONTEXT = re.compile(
+    r"\b(clients?|customers?|projects?|proposals?|invoices?|contracts?|referrals?|"
+    r"business|workflow|automation|automate|dashboard|prototype|consulting|"
+    r"receivables|payables|profitability|implementation|deliverables?|scope|"
+    r"vendor|integration|connector|power bi|business central|bc cloud|"
+    r"ap/ar|ar/ap|nda|curriculum|website|webflow|software|sales|hiring|"
+    r"career|job offer|introduced you|introduce you|ai)\b", re.IGNORECASE
+)
+
+
+def has_business_context(messages):
+    """Gate unfamiliar senders locally; only inspect message bodies, not names/URLs."""
+    for message in messages:
+        body = str(message.get("body") or "").strip()
+        if re.match(r'^(Liked|Loved|Laughed at|Emphasized|Disliked|Questioned)\s+[“"]', body):
+            continue
+        body = re.sub(r"https?://\S+", "", body)
+        if len(re.findall(r"\b\w+\b", body)) >= 3 and BUSINESS_CONTEXT.search(body):
+            return True
+    return False
+
 
 def normalize_name(value):
     return " ".join(re.sub(r"[^a-z0-9]+", " ", str(value or "").lower()).split())
@@ -199,7 +220,7 @@ def main():
     contacts_by_id = {str(contact["id"]): contact for contact in contacts}
     decisions = {item.get("key"): item for item in directory.get("conversationDecisions", []) if item.get("key")}
     existing_unmatched = read_json(args.unmatched_report, {}).get("unmatched", [])
-    stats = {"files": 0, "matched": 0, "unmatched": 0, "ignored": 0, "group": 0, "submitted": 0, "skipped": 0}
+    stats = {"files": 0, "matched": 0, "unmatched": 0, "ignored": 0, "group": 0, "submitted": 0, "skipped": 0, "filtered": 0}
     unmatched = []
     unmatched_observations = []
 
@@ -234,13 +255,16 @@ def main():
                 "label": labels[0] if labels else stem,
                 "latestMessageAt": isoformat(messages[-1]["at"]),
             }
-            if decision.get("status") == "dismissed":
-                unmatched_observations.append(observation)
-                continue
             contact = contacts_by_id.get(str(decision.get("contactId"))) if decision.get("status") == "matched" else None
             if contact is None:
                 contact = match_contact(labels + [stem], indexes)
             if not contact:
+                if not has_business_context(messages):
+                    stats["filtered"] += 1
+                    continue
+                if decision.get("status") == "dismissed":
+                    unmatched_observations.append(observation)
+                    continue
                 stats["unmatched"] += 1
                 unmatched_observations.append(observation)
                 unmatched.append({
@@ -302,7 +326,7 @@ def main():
     })
     if not args.dry_run:
         write_private_json(args.state, {"lastCompletedAt": isoformat(now)})
-    print("Messages sync: {matched} matched, {submitted} awaiting review, {skipped} skipped, {unmatched} unmatched, {ignored} ignored, {group} group threads excluded.".format(**stats))
+    print("Messages sync: {matched} matched, {submitted} awaiting review, {skipped} skipped, {unmatched} unmatched, {filtered} unfamiliar personal threads filtered locally, {ignored} ignored, {group} group threads excluded.".format(**stats))
 
 
 if __name__ == "__main__":

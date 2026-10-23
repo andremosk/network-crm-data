@@ -317,12 +317,14 @@
       const scanned = Number(data.scanned) || 0;
       const skipped = Number(data.skipped) || 0;
       const duplicates = Number(data.duplicates) || 0;
+      const more = data.has_more ? ' More emails remain. Click Check email again for the next batch.' : ' This scan is complete.';
       emailReviewStatus = {
         kind: "info",
         message: data.proposed
           ? `${data.proposed} email proposal${data.proposed === 1 ? " is" : "s are"} ready for review. Checked ${scanned} recent email${scanned === 1 ? "" : "s"}.`
           : `Checked ${scanned} recent email${scanned === 1 ? "" : "s"}. ${skipped} did not meet the direct relationship rules${duplicates ? `; ${duplicates} was already queued` : ""}.`
       };
+      emailReviewStatus.message += more;
       if (typeof window.toast === "function") {
         if (data.proposed) {
           window.toast(`${data.proposed} email proposal${data.proposed === 1 ? "" : "s"} ready for review (${scanned} checked)`);

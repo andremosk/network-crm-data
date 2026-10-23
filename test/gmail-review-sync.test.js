@@ -33,6 +33,21 @@ test("normalizes only direct, non-automated inbound Gmail messages", () => {
   assert.equal(normalizedInboundMessage(gmailMessage({ payload: { ...gmailMessage().payload, headers: [...gmailMessage().payload.headers, { name: "List-Id", value: "newsletter.example" }] } }), "andre@example.com"), null);
 });
 
+test('allows a human calendar comment through the automated wrapper guard, but rejects bulk and no-reply mail', () => {
+  const original = gmailMessage();
+  const payload = {
+    ...original.payload,
+    headers: original.payload.headers.filter(h => h.name !== 'Subject').concat([
+      { name: 'Subject', value: 'Proposed new time: Lisa / Andre' },
+      { name: 'Auto-Submitted', value: 'auto-generated' }
+    ]),
+    parts: [{ mimeType: 'text/plain', body: { data: encoded('Lisa proposed a new time: Friday "Dave and I are taking a vacation."') } }]
+  };
+  assert.ok(normalizedInboundMessage({ ...original, payload }, 'andre@example.com'));
+  assert.equal(normalizedInboundMessage({ ...original, payload: { ...payload, headers: payload.headers.concat({ name: 'List-Id', value: 'bulk.example' }) } }, 'andre@example.com'), null);
+  assert.equal(normalizedInboundMessage({ ...original, payload: { ...payload, headers: payload.headers.map(h => h.name === 'From' ? { ...h, value: 'noreply@example.com' } : h) } }, 'andre@example.com'), null);
+});
+
 test("Gmail review sync proposes only a known contact and deduplicates source messages", async () => {
   const stored = new Set();
   const saved = [];
@@ -57,7 +72,7 @@ test("Gmail review sync proposes only a known contact and deduplicates source me
       saveSyncState: async () => {}
     }
   });
-  assert.deepEqual(result, { scanned: 3, proposed: 1, approximated: 0, duplicates: 1, skipped: 1 });
+  assert.deepEqual(result, { scanned: 3, proposed: 1, approximated: 0, duplicates: 1, skipped: 1, has_more: false });
   assert.equal(saved[0].matchedContactId, "55");
   assert.match(saved[0].proposed.note, /Received email from Lisa Cassidy/);
   assert.doesNotMatch(saved[0].proposed.note, /Forwarded message/);
@@ -120,6 +135,47 @@ test("email enrichment does not queue a second pending suggestion for the same c
 function responseRecorder() {
   return { statusCode: 0, body: null, headers: {}, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; }, setHeader(name, value) { this.headers[name] = value; } };
 }
+
+test('HTML-only email yields substantive body text and ignores script, style, and quoted history', () => {
+  const original = gmailMessage();
+  const parsed = normalizedInboundMessage({ ...original, payload: {
+    ...original.payload,
+    parts: [{ mimeType: 'text/html', body: { data: encoded('<style>invisible</style><p>Hi Andre,</p><p>Hope you are well. The garden project needs a revised vendor estimate &amp; delivery plan.</p><p>Could you introduce me to your supplier?</p><blockquote>Old message</blockquote><script>bad()</script>') } }]
+  } }, 'andre@example.com');
+  const proposal = require('../lib/communication-proposals').analyzeOutboundEmail(parsed, { id: '55', name: 'Kimberly Villani' });
+  assert.equal(proposal.status, 'pending');
+  assert.match(proposal.proposed.note, /revised vendor estimate & delivery plan/);
+  assert.match(proposal.proposed.note, /introduce me to your supplier/);
+  assert.doesNotMatch(proposal.proposed.note, /invisible|Old message|bad\(\)/);
+});
+
+test('review resumes a fixed scan window and advances checkpoint only after the last page', async () => {
+  let state = { last_successful_at: '2026-08-20T00:00:00Z' };
+  const requests = [];
+  const dependencies = {
+    getAccessToken: async () => 'token',
+    loadSyncState: async () => state,
+    listMessages: async (_token, since, page, until) => {
+      requests.push({ since, page, until });
+      return page ? { messages: [] } : { messages: [], nextPageToken: 'page-2' };
+    },
+    saveSyncState: async (_sql, _mailbox, checkpoint, progress) => {
+      state = { last_successful_at: checkpoint, next_page_token: progress.nextPageToken,
+        window_since: progress.since, window_until: progress.until };
+    }
+  };
+  const options = { sql: {}, env: { NETWORK_CRM_GMAIL_MAILBOX: 'andre@example.com' }, dependencies };
+  const first = await runGmailReviewSync({ ...options, now: new Date('2026-08-31T15:00:00Z') });
+  assert.equal(first.has_more, true);
+  assert.equal(state.last_successful_at, '2026-08-20T00:00:00Z');
+  const second = await runGmailReviewSync({ ...options, now: new Date('2026-08-31T16:00:00Z') });
+  assert.equal(second.has_more, false);
+  assert.equal(requests[1].page, 'page-2');
+  assert.equal(requests[1].since, requests[0].since);
+  assert.equal(requests[1].until, requests[0].until);
+  assert.equal(state.last_successful_at, '2026-08-31T15:00:00.000Z');
+  assert.equal(state.next_page_token, undefined);
+});
 
 test("manual and automation Gmail sync routes enforce their separate authentication", async () => {
   const { createHandler: createManual } = require("../api/crm/gmail-review-sync");

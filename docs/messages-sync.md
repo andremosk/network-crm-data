@@ -32,6 +32,10 @@ Open a matched contact in Network.crm. Pending summaries appear above Notes. Edi
 
 ## Matching
 
+Unfamiliar one-to-one senders enter the matching queue only when a local check finds explicit business/work context in the new message bodies. Names, URL text, reactions, and scheduling alone do not qualify. Their transcript stays on the Mac. This keyword check favors a quieter queue and can miss implicit business discussion; it does not permanently ignore the sender, so later substantive texts can still qualify.
+
+Matched contacts receive a stricter AI relevance screen in the existing summarization call. Routine personal texting and call logistics should return `SKIP`; substantive work discussion and exceptional durable relationship news may produce a note for approval. Engagement routing continues to suggest related client work. Existing pending items are retained for review; this change governs future imports. The helper must be copied to its installed location, and server prompt changes require deployment.
+
 The parser asks the local macOS Contacts database to resolve phone numbers and email addresses to names. The helper then requires one unambiguous match against Network.crm name, email, or mobile phone. Add a mobile number to a CRM profile when a conversation remains unmatched.
 
 The sync log reports only counts and errors; it never prints message contents. Logs and the private checkpoint live in `~/Library/Application Support/Network CRM/`.
