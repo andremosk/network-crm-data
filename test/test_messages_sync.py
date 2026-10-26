@@ -13,6 +13,23 @@ SPEC.loader.exec_module(MODULE)
 
 
 class MessagesSyncTests(unittest.TestCase):
+    def test_verified_alias_matches_without_guessing_nicknames(self):
+        samantha = {"id": "863", "name": "Samantha Rabinowicz Booth", "smsAliases": ["Sammy Booth"]}
+        self.assertEqual(MODULE.match_contact(["Sammy Booth"], MODULE.build_indexes([samantha]))["id"], "863")
+        self.assertIsNone(MODULE.match_contact(["Sam Booth"], MODULE.build_indexes([samantha])))
+        other = {"id": "999", "name": "Sammy Booth"}
+        self.assertIsNone(MODULE.match_contact(["Sammy Booth"], MODULE.build_indexes([samantha, other])))
+        self.assertIsNone(MODULE.match_contact(["Sammy Booth", "Other Person"], MODULE.build_indexes([samantha, {"id": "998", "name": "Other Person"}])))
+
+    def test_introduction_exchange_qualifies_for_review(self):
+        for body in [
+            "Yup happy to chat. You can connect us",
+            "She is a change management expert working with school districts / education groups.",
+            "Happy to make an intro.",
+            "Could you introduce her to the principal?",
+        ]:
+            self.assertTrue(MODULE.has_business_context([{"body": body}]), body)
+
     def test_business_gate_keeps_work_discussion(self):
         for body in [
             "I suggest waiting for BC Cloud before investing in the connector.",

@@ -32,6 +32,8 @@ Open a matched contact in Network.crm. Pending summaries appear above Notes. Edi
 
 ## Matching
 
+Verified alternate names can be stored on a contact as an `smsAliases` array. The private SMS directory exposes these to the Mac helper for exact alias matching. Nicknames are never guessed; conflicting names/aliases remain unmatched. This supports a verified Mac contact name such as Sammy Booth while preserving the CRM display name Samantha Rabinowicz Booth. The relevance gate also recognizes explicit introductions, “connect us,” change management, and school-district discussions.
+
 Unfamiliar one-to-one senders enter the matching queue only when a local check finds explicit business/work context in the new message bodies. Names, URL text, reactions, and scheduling alone do not qualify. Their transcript stays on the Mac. This keyword check favors a quieter queue and can miss implicit business discussion; it does not permanently ignore the sender, so later substantive texts can still qualify.
 
 Matched contacts receive a stricter AI relevance screen in the existing summarization call. Routine personal texting and call logistics should return `SKIP`; substantive work discussion and exceptional durable relationship news may produce a note for approval. Engagement routing continues to suggest related client work. Existing pending items are retained for review; this change governs future imports. The helper must be copied to its installed location, and server prompt changes require deployment.

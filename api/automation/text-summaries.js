@@ -26,7 +26,10 @@ async function contactDirectory(sql) {
     name: row.payload.name || [row.payload.firstName, row.payload.lastName].filter(Boolean).join(" "),
     normalizedName: normalizeName(row.payload.name || [row.payload.firstName, row.payload.lastName].filter(Boolean).join(" ")),
     email: normalizeEmail(row.payload.email),
-    phone: normalizePhone(row.payload.phone)
+    phone: normalizePhone(row.payload.phone),
+    smsAliases: Array.isArray(row.payload.smsAliases)
+      ? row.payload.smsAliases.filter(alias => typeof alias === 'string').map(normalizeName).filter(Boolean)
+      : []
   }));
 }
 

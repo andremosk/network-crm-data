@@ -30,7 +30,8 @@ BUSINESS_CONTEXT = re.compile(
     r"receivables|payables|profitability|implementation|deliverables?|scope|"
     r"vendor|integration|connector|power bi|business central|bc cloud|"
     r"ap/ar|ar/ap|nda|curriculum|website|webflow|software|sales|hiring|"
-    r"career|job offer|introduced you|introduce you|ai)\b", re.IGNORECASE
+    r"career|job offer|introductions?|introduce[ds]?|introducing|intro|"
+    r"connect (?:us|you|them|her|him)|change management|school districts?|ai)\b", re.IGNORECASE
 )
 
 
@@ -99,6 +100,11 @@ def build_indexes(contacts):
             value = normalizer(raw_value)
             if value:
                 indexes[field].setdefault(value, []).append(contact)
+        aliases = contact.get("smsAliases", [])
+        if isinstance(aliases, list):
+            for alias in {normalize_name(alias) for alias in aliases if isinstance(alias, str)}:
+                if alias and alias != normalize_name(contact.get("name") or contact.get("normalizedName")):
+                    indexes["name"].setdefault(alias, []).append(contact)
     return indexes
 
 
@@ -116,10 +122,14 @@ def match_contact(labels, indexes):
             ):
                 value = normalizer(candidate)
                 found = indexes[field].get(value, [])
+                if len(found) > 1:
+                    return None
                 if len(found) == 1:
                     matches[str(found[0]["id"])] = found[0]
     if len(matches) == 1:
         return next(iter(matches.values()))
+    if len(matches) > 1:
+        return None
 
     # Contact cards often include a maiden or married name that the Mac card omits.
     # Accept a token-subset match only when it identifies exactly one CRM contact.
