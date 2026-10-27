@@ -6,8 +6,8 @@ Network.crm can create reviewable CRM summaries from recent one-to-one conversat
 
 - Apple Messages remains the communication system.
 - The Mac helper reads a temporary, read-only export of recent conversations.
-- Only one-to-one threads that conservatively match a Network.crm contact are considered.
-- Group conversations are ignored.
+- One-to-one threads are conservatively matched to a Network.crm contact.
+- Detected group threads first pass a local business-context gate, then the AI relevance screen. Qualifying groups become unassigned review drafts, never automatic contact matches or notes. The reviewer explicitly chooses one contact or engagement before approval.
 - The raw transcript is sent to the private Network.crm automation endpoint for summarization and is not stored in Neon.
 - Neon stores only the proposed summary, timestamps, message count, contact ID, and a duplicate-prevention fingerprint.
 - Nothing sends, edits, or deletes a message.
@@ -31,6 +31,16 @@ The first run considers the previous 12 hours. Later runs scan an overlapping 72
 Open a matched contact in Network.crm. Pending summaries appear above Notes. Edit the wording if needed, then choose **Add to Notes** or **Dismiss**. Approved summaries become ordinary dated notes and update Last Contact.
 
 ## Matching
+
+### Group conversations
+
+The helper detects group threads from multiple observed non-Andre speakers or group-style exporter names (comma-separated participants, `Mike & Samantha`, or `and ... others`). A custom-named group with only one observed speaker and no group-style filename may not be detectable from this text export; it still follows conservative matching rather than guessing silent members. Only observed speakers are listed; the thread title may also identify silent participants.
+
+Substantive introductions, product feedback/opportunities, paid-work discussions, and business next steps can qualify even inside sports/community threads. Ordinary coaching, practice schedules, family coordination, reactions, and shared links alone stay filtered. For example, asking for a GameChanger product-manager introduction and receiving an offer to reach out is a professional next step, not merely a baseball update.
+
+Group drafts appear as **Group SMS** in Communication Review with the thread title, observed speakers, and editable summary. Choose an existing contact using the contact field or select an engagement. Approval adds the note only to that destination, never every participant. No new contact is created automatically. Existing single-contact drafts keep their current behavior. Dismissal affects that exchange; future substantive exchanges can still appear. Existing always-ignore thread decisions remain honored.
+
+The database migration adds `conversation_context` (default empty object for existing drafts) and permits null `contact_id` on unassigned group drafts. Group identity and source fingerprints dedupe retries independently of the eventual destination. Raw transcripts are not stored. Previously filtered history is not automatically replayed; individual missed exchanges can be recovered into review.
 
 Verified alternate names can be stored on a contact as an `smsAliases` array. The private SMS directory exposes these to the Mac helper for exact alias matching. Nicknames are never guessed; conflicting names/aliases remain unmatched. This supports a verified Mac contact name such as Sammy Booth while preserving the CRM display name Samantha Rabinowicz Booth. The relevance gate also recognizes explicit introductions, “connect us,” change management, and school-district discussions.
 

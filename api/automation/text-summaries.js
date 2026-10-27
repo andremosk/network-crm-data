@@ -77,8 +77,12 @@ async function recordUnmatchedConversations(sql, body) {
   return accepted;
 }
 
-module.exports = async function handler(request, response) {
-  if (!messagesTokenIsValid(getBearerToken(request))) {
+function createHandler(dependencies = {}) {
+  return (request, response) => handler(request, response, dependencies);
+}
+
+async function handler(request, response, dependencies) {
+  if (!(dependencies.auth || messagesTokenIsValid)(getBearerToken(request))) {
     return response.status(401).json({ error: { message: "Unauthorized" } });
   }
   if (!['GET', 'POST'].includes(request.method)) {
@@ -87,8 +91,8 @@ module.exports = async function handler(request, response) {
   }
 
   try {
-    const sql = getSql();
-    await ensureSchema(sql);
+    const sql = (dependencies.getSql || getSql)();
+    await (dependencies.ensureSchema || ensureSchema)(sql);
     if (request.method === 'GET') {
       const [contacts, decisions] = await Promise.all([
         contactDirectory(sql),
@@ -107,7 +111,18 @@ module.exports = async function handler(request, response) {
     const startedAt = validDate(body.startedAt);
     const endedAt = validDate(body.endedAt);
     const messageCount = Math.max(0, Math.min(Number(body.messageCount) || 0, 1000));
-    if (!body.contactId || !body.sourceKey || !transcript || !startedAt || !endedAt) {
+    const isGroup = body.isGroup === true;
+    const group = isGroup ? {
+      isGroup: true,
+      threadKey: String(body.threadKey || ''),
+      title: String(body.threadTitle || '').trim().slice(0, 200),
+      participants: [...new Set((Array.isArray(body.participants) ? body.participants : [])
+        .filter(name => typeof name === 'string').map(name => name.trim().slice(0, 120)).filter(Boolean))].slice(0, 30)
+    } : null;
+    if (isGroup && (!/^[a-f0-9]{64}$/.test(group.threadKey) || !group.title || !group.participants.length || body.contactId)) {
+      return response.status(400).json({ error: { message: 'Group proposals need a thread identity and speakers, not an automatic contact match.' } });
+    }
+    if ((!isGroup && !body.contactId) || !body.sourceKey || !transcript || !startedAt || !endedAt || endedAt < startedAt) {
       return response.status(400).json({ error: { message: "Missing or invalid text-summary fields." } });
     }
 
@@ -115,18 +130,18 @@ module.exports = async function handler(request, response) {
     const existing = await sql`SELECT id, status FROM crm_text_summaries WHERE source_key = ${sourceKey}`;
     if (existing.length) return response.status(200).json({ status: "duplicate", id: existing[0].id });
 
-    const contacts = await sql`
+    const contacts = isGroup ? [] : await sql`
       SELECT record_id, payload FROM crm_records
       WHERE record_type = 'contact' AND record_id = ${String(body.contactId)}
     `;
-    if (!contacts.length) return response.status(404).json({ error: { message: "Contact not found." } });
+    if (!isGroup && !contacts.length) return response.status(404).json({ error: { message: "Contact not found." } });
 
-    const contactName = contacts[0].payload.name || "Unknown contact";
-    const engagementRows = await sql`SELECT record_id, payload FROM crm_records WHERE record_type = 'engagement'`;
+    const contactName = isGroup ? group.title : contacts[0].payload.name || "Unknown contact";
+    const engagementRows = isGroup ? [] : await sql`SELECT record_id, payload FROM crm_records WHERE record_type = 'engagement'`;
     const engagements = activeEngagements(engagementRows.map(row => ({ ...row.payload, id: row.record_id })));
-    const engagementId = suggestEngagement({ ...contacts[0].payload, id: contacts[0].record_id }, transcript, engagements);
+    const engagementId = isGroup ? null : suggestEngagement({ ...contacts[0].payload, id: contacts[0].record_id }, transcript, engagements);
     const engagement = engagements.find(item => String(item.id) === engagementId);
-    const summary = await summarizeTranscript({ contactName, transcript, startedAt, endedAt, engagement });
+    const summary = await (dependencies.summarizeTranscript || summarizeTranscript)({ contactName, transcript, startedAt, endedAt, engagement, group });
     if (!summary || summary.toUpperCase() === "SKIP") {
       return response.status(200).json({ status: "skipped" });
     }
@@ -134,10 +149,10 @@ module.exports = async function handler(request, response) {
     const inserted = await sql`
       INSERT INTO crm_text_summaries (
         contact_id, source_key, summary, conversation_started_at,
-        conversation_ended_at, message_count
+        conversation_ended_at, message_count, conversation_context
       ) VALUES (
-        ${String(body.contactId)}, ${sourceKey}, ${summary}, ${startedAt.toISOString()},
-        ${endedAt.toISOString()}, ${messageCount}
+        ${isGroup ? null : String(body.contactId)}, ${sourceKey}, ${summary}, ${startedAt.toISOString()},
+        ${endedAt.toISOString()}, ${messageCount}, ${JSON.stringify(group || {})}::jsonb
       )
       ON CONFLICT (source_key) DO NOTHING
       RETURNING id
@@ -149,4 +164,6 @@ module.exports = async function handler(request, response) {
     console.error("Text summary automation error:", error);
     return response.status(500).json({ error: { message: error.message || "Text summary import failed." } });
   }
-};
+}
+module.exports = createHandler();
+module.exports.createHandler = createHandler;

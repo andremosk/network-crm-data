@@ -32,7 +32,7 @@ BUSINESS_CONTEXT = re.compile(
     r"vendor|integration|connector|power bi|business central|bc cloud|"
     r"ap/ar|ar/ap|nda|curriculum|website|webflow|software|sales|hiring|"
     r"career|job offer|introductions?|introduce[ds]?|introducing|intro|"
-    r"connect (?:us|you|them|her|him)|change management|school districts?|ai)\b", re.IGNORECASE
+    r"connect (?:me|us|you|them|her|him)|product manager|change management|school districts?|ai)\b", re.IGNORECASE
 )
 
 
@@ -148,7 +148,7 @@ def match_contact(labels, indexes):
 
 
 def is_likely_group(stem, other_senders, indexes):
-    if len(other_senders) > 1 or " and " in stem.lower() and " others" in stem.lower():
+    if len(other_senders) > 1 or " & " in stem or " and " in stem.lower() and " others" in stem.lower():
         return True
     exact_name = indexes["name"].get(normalize_name(stem), [])
     return ", " in stem and len(exact_name) != 1
@@ -293,14 +293,32 @@ def main():
                 continue
             other_senders = sorted({item["sender"] for item in all_messages if normalize_name(item["sender"]) != normalize_name(SELF_NAME)})
             labels = other_senders or [stem]
-            if is_likely_group(stem, other_senders, indexes):
-                stats["group"] += 1
-                record_outcome(key, all_messages, "group")
-                continue
+            is_group = is_likely_group(stem, other_senders, indexes)
             decision = decisions.get(key, {})
             if decision.get("status") == "ignored":
                 stats["ignored"] += 1
                 record_outcome(key, all_messages, "ignored")
+                continue
+            if is_group:
+                if not has_business_context(messages):
+                    stats["group"] += 1
+                    record_outcome(key, all_messages, "group_no_business_signal")
+                    continue
+                transcript = "\n\n".join("{}\n{}: {}".format(item["at"].isoformat(), item["sender"], item["body"]) for item in messages)[-24000:]
+                if args.dry_run:
+                    continue
+                response = api_request(base_url, token, "/api/automation/text-summaries", "POST", {
+                    "isGroup": True, "threadKey": key, "threadTitle": stem,
+                    "participants": other_senders,
+                    "sourceKey": conversation_key("group\n" + key + "\n" + transcript),
+                    "startedAt": isoformat(messages[0]["at"]), "endedAt": isoformat(messages[-1]["at"]),
+                    "messageCount": len(messages), "transcript": transcript,
+                })
+                outcome = response.get("status")
+                if outcome not in ("pending", "duplicate", "skipped"):
+                    raise RuntimeError("Unexpected group SMS import outcome; checkpoint not advanced.")
+                record_outcome(key, all_messages, "group_" + outcome)
+                stats["submitted" if outcome == "pending" else "skipped"] += 1
                 continue
             observation = {
                 "key": key,
@@ -386,7 +404,7 @@ def main():
             if value.get("checkedAt", "") >= isoformat(now - dt.timedelta(days=7))}
         write_private_json(args.receipts, receipts)
         write_private_json(args.state, {"lastCompletedAt": isoformat(now)})
-    print("Messages sync: {matched} matched, {submitted} awaiting review, {skipped} skipped, {unmatched} unmatched, {filtered} unfamiliar personal threads filtered locally, {ignored} ignored, {group} group threads excluded.".format(**stats))
+    print("Messages sync: {matched} matched, {submitted} awaiting review, {skipped} skipped, {unmatched} unmatched, {filtered} unfamiliar personal threads filtered locally, {ignored} ignored, {group} low-signal group threads filtered.".format(**stats))
 
 
 if __name__ == "__main__":

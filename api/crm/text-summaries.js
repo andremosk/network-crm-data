@@ -44,7 +44,7 @@ async function handler(request, response, dependencies) {
     if (request.method === 'GET') {
       const summaries = await sql`
         SELECT id, contact_id, summary, conversation_started_at,
-               conversation_ended_at, message_count, created_at
+               conversation_ended_at, message_count, created_at, conversation_context
         FROM crm_text_summaries
         WHERE status = 'pending'
         ORDER BY conversation_ended_at DESC
@@ -59,12 +59,12 @@ async function handler(request, response, dependencies) {
       `;
       const engagementRows = await sql`SELECT record_id, payload FROM crm_records WHERE record_type = 'engagement'`;
       const engagements = activeEngagements(engagementRows.map(row => ({ ...row.payload, id: row.record_id })));
-      const contactIds = [...new Set(summaries.map(item => String(item.contact_id)))];
+      const contactIds = [...new Set(summaries.filter(item => item.contact_id != null).map(item => String(item.contact_id)))];
       const contactRows = contactIds.length ? await sql`SELECT record_id, payload FROM crm_records
         WHERE record_type = 'contact' AND record_id = ANY(${contactIds}::text[])` : [];
       const contacts = new Map(contactRows.map(row => [String(row.record_id), { ...row.payload, id: row.record_id }]));
       return response.status(200).json({
-        summaries: summaries.map(item => ({ ...item, suggested_engagement_id:
+        summaries: summaries.map(item => ({ ...item, suggested_engagement_id: item.conversation_context?.isGroup ? null :
           suggestEngagement(contacts.get(String(item.contact_id)) || { id: item.contact_id }, item.summary, engagements) })),
         conversations,
         engagements: engagements.map(item => ({ id: String(item.id), title: item.title, organization: item.organization }))
@@ -119,21 +119,22 @@ async function handler(request, response, dependencies) {
     const editedSummary = String(body.summary || "").trim().slice(0, 4000);
     if (!editedSummary) return response.status(400).json({ error: { message: "Summary cannot be empty." } });
     const drafts = await sql`
-      SELECT contact_id, conversation_ended_at, source_key
+      SELECT contact_id, conversation_ended_at, source_key, conversation_context
       FROM crm_text_summaries
       WHERE id = ${id} AND status = 'pending'
     `;
     if (!drafts.length) return response.status(404).json({ error: { message: "Pending summary not found." } });
 
     const endedAt = new Date(drafts[0].conversation_ended_at);
+    const group = drafts[0].conversation_context?.isGroup ? drafts[0].conversation_context : null;
     if (body.engagementId != null && String(body.engagementId).trim()) {
       const engagementId = String(body.engagementId).trim();
       const contactRows = await sql`SELECT payload FROM crm_records
         WHERE record_type = 'contact' AND record_id = ${drafts[0].contact_id}`;
-      const name = contactRows[0]?.payload.name || "Contact";
+      const name = group ? group.title : contactRows[0]?.payload.name || "Contact";
       const date = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(endedAt);
       const note = { id: `text-summary-${id}`, date, source: "sms", sourceKey: drafts[0].source_key,
-        contactId: String(drafts[0].contact_id),
+        ...(drafts[0].contact_id ? { contactId: String(drafts[0].contact_id) } : {}),
         html: `<strong>SMS - ${escapeHtml(name)}</strong><br>${escapeHtml(editedSummary).replace(/\n/g, "<br>")}` };
       const rows = await sql`
         WITH target AS (
@@ -164,13 +165,21 @@ async function handler(request, response, dependencies) {
         ? { status: "approved", contactId: drafts[0].contact_id, engagementId: rows[0].engagement_id }
         : { error: { message: "Engagement unavailable or summary already reviewed." } });
     }
+    const targetContactId = group ? String(body.contactId || '').trim() : String(drafts[0].contact_id || '');
+    if (!targetContactId) return response.status(400).json({ error: { message: 'Choose a contact or engagement for this group summary.' } });
     const entry = `${noteDate(endedAt)}: <strong>Text summary</strong> — ${escapeHtml(editedSummary)}`;
     const contactDate = endedAt.toISOString().slice(0, 10);
     const rows = await sql`
-      WITH claimed_summary AS (
+      WITH target AS (
+        SELECT record_id FROM crm_records
+        WHERE record_type = 'contact' AND record_id = ${targetContactId}
+          AND COALESCE(payload->>'deleted', 'false') <> 'true'
+          AND COALESCE(payload->>'archived', 'false') <> 'true'
+        FOR UPDATE
+      ), claimed_summary AS (
         UPDATE crm_text_summaries
-        SET status = 'approved', summary = ${editedSummary}, reviewed_at = NOW()
-        WHERE id = ${id} AND status = 'pending'
+        SET status = 'approved', summary = ${editedSummary}, reviewed_at = NOW(), contact_id = ${targetContactId}
+        WHERE id = ${id} AND status = 'pending' AND EXISTS (SELECT 1 FROM target)
         RETURNING contact_id
       ), updated_contact AS (
         UPDATE crm_records

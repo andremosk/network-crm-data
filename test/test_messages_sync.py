@@ -3,6 +3,9 @@ import importlib.util
 from pathlib import Path
 import unittest
 import tempfile
+from unittest.mock import patch
+import json
+import types
 
 
 SPEC = importlib.util.spec_from_file_location(
@@ -13,6 +16,39 @@ SPEC.loader.exec_module(MODULE)
 
 
 class MessagesSyncTests(unittest.TestCase):
+    def test_group_run_queues_business_without_matching_and_dedupes_second_run(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            exporter = root / 'exporter'
+            exporter.touch()
+            config = root / 'config.json'
+            config.write_text(json.dumps({'token': 'synthetic', 'exporter': str(exporter)}))
+            now = dt.datetime.now().astimezone()
+            stamp = (now - dt.timedelta(minutes=10)).strftime('%b %d, %Y  %I:%M:%S %p')
+            (root / 'state.json').write_text(json.dumps({'lastCompletedAt': MODULE.isoformat(now - dt.timedelta(hours=1))}))
+            requests = []
+            def api(url, token, path, method='GET', payload=None):
+                if method == 'GET':
+                    return {'contacts': [{'id': '789', 'name': 'Mike Example'}], 'conversationDecisions': []}
+                requests.append(payload)
+                return {'status': 'pending', 'id': '91'}
+            def export(command, **kwargs):
+                target = Path(command[command.index('--export-path') + 1])
+                (target / 'Mike & Samantha.txt').write_text(stamp + '\nAndre\nCould you connect me to the product manager?\n\n' + stamp + '\nSamantha Example\nI will reach out to him.\n')
+                (target / 'Parents & Coaches.txt').write_text(stamp + '\nCoach\nCan you bring the bats to practice tomorrow?\n')
+                return types.SimpleNamespace(returncode=0)
+            args = ['messages_sync.py', '--config', str(config), '--state', str(root / 'state.json'), '--receipts', str(root / 'receipts.json'), '--unmatched-report', str(root / 'unmatched.json')]
+            with patch('sys.argv', args), patch.object(MODULE, 'api_request', side_effect=api), patch.object(MODULE.subprocess, 'run', side_effect=export):
+                MODULE.main()
+                MODULE.main()
+            self.assertEqual(len(requests), 1)
+            self.assertTrue(requests[0]['isGroup'])
+            self.assertNotIn('contactId', requests[0])
+            self.assertEqual(requests[0]['participants'], ['Samantha Example'])
+            receipts = json.loads((root / 'receipts.json').read_text())['conversations']
+            self.assertEqual(receipts[MODULE.conversation_key('Mike & Samantha')]['outcome'], 'group_pending')
+            self.assertEqual(receipts[MODULE.conversation_key('Parents & Coaches')]['outcome'], 'group_no_business_signal')
+
     def test_overlap_catches_late_arrivals_without_repeating_processed_messages(self):
         since = dt.datetime(2026, 10, 27, 15, tzinfo=dt.timezone.utc)
         old = {"at": since - dt.timedelta(hours=2), "sender": "Greg Booth", "body": "An earlier text"}
@@ -40,6 +76,7 @@ class MessagesSyncTests(unittest.TestCase):
     def test_introduction_exchange_qualifies_for_review(self):
         for body in [
             "Yup happy to chat. You can connect us",
+            "Would you possibly be able to connect me? I have feedback and add-on ideas for their product manager.",
             "She is a change management expert working with school districts / education groups.",
             "Happy to make an intro.",
             "Could you introduce her to the principal?",
@@ -95,6 +132,9 @@ class MessagesSyncTests(unittest.TestCase):
         indexes = MODULE.build_indexes(contacts)
         self.assertEqual(MODULE.match_contact(["Mary Claire Sullivan"], indexes)["id"], "1")
         self.assertTrue(MODULE.is_likely_group("Mary Claire Sullivan, Jennifer Greene", ["Mary Claire Sullivan"], indexes))
+        self.assertTrue(MODULE.is_likely_group("Mike & Samantha", ["Samantha Pessiki"], indexes))
+        self.assertTrue(MODULE.is_likely_group("Named group", ["Mike", "Samantha"], indexes))
+        self.assertFalse(MODULE.is_likely_group("Jennifer Greene", ["Jennifer Greene"], indexes))
 
     def test_writes_private_json(self):
         with tempfile.TemporaryDirectory() as folder:

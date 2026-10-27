@@ -160,25 +160,29 @@
 
   function destinationControl(item) {
     const selected = destinationFor(item);
-    return `<label class="form-group"><span class="form-label">Save to</span><select class="form-input" aria-label="Note destination" onchange="setTextSummaryDestination(${item.id},this.value,this)"><option value="contact" ${selected === 'contact' ? 'selected' : ''}>Contact notes</option>${engagementChoices.map(engagement => `<option value="engagement:${escapeHtml(engagement.id)}" ${selected === `engagement:${engagement.id}` ? 'selected' : ''}>Engagement: ${escapeHtml(engagement.title || engagement.organization)}</option>`).join('')}</select></label>`;
+    return `<label class="form-group"><span class="form-label">Save to</span><select class="form-input" aria-label="Note destination" onchange="setTextSummaryDestination(${item.id},this.value,this)"><option value="contact" ${selected === 'contact' ? 'selected' : ''}>Contact notes</option>${engagementChoices.map(engagement => `<option value="engagement:${escapeHtml(engagement.id)}" ${selected === `engagement:${engagement.id}` ? 'selected' : ''}>Engagement: ${escapeHtml(engagement.title || engagement.organization)}</option>`).join('')}</select></label>${item.conversation_context?.isGroup ? `<label class="form-group" data-group-contact style="${selected === 'contact' ? '' : 'display:none'}"><span class="form-label">Contact</span><input class="form-input" id="groupContact_${item.id}" list="textReviewContacts" placeholder="Choose a contact" aria-label="Group note contact"></label>` : ''}`;
   }
 
   window.setTextSummaryDestination = function(id, value, select) {
     summaryDestinations.set(Number(id), value);
     const button = select.closest('.text-review-row')?.querySelector('[data-approve-summary]');
     if (button) button.textContent = value === 'contact' ? 'Add to Contact Notes' : 'Add to Engagement';
+    const contactField = select.closest('.text-review-row')?.querySelector('[data-group-contact]');
+    if (contactField) contactField.style.display = value === 'contact' ? '' : 'none';
   };
 
   function renderSummary(item, prefix = 'textReviewSummary') {
     const contact = contactById(item.contact_id);
+    const group = item.conversation_context?.isGroup ? item.conversation_context : null;
     return `<div class="text-review-row">
       <div class="text-review-row-head">
         <div>
-          <div class="text-review-name">${escapeHtml(contact?.name || "CRM contact")}</div>
+          <div class="text-review-name">${escapeHtml(group ? group.title : contact?.name || "CRM contact")}</div>
           <div class="text-review-meta">${escapeHtml(formatDate(item.conversation_ended_at))} · ${Number(item.message_count) || 0} messages</div>
-          <div class="communication-review-labels"><span class="communication-review-label">SMS</span></div>
+          ${group ? `<div class="text-review-meta">Speakers: ${escapeHtml(group.participants.join(', '))}</div>` : ''}
+          <div class="communication-review-labels"><span class="communication-review-label">${group ? 'Group SMS' : 'SMS'}</span></div>
         </div>
-        <div class="text-review-contact">Ready for Notes</div>
+        <div class="text-review-contact">${group ? 'Choose destination' : 'Ready for Notes'}</div>
       </div>
       ${destinationControl(item)}
       <textarea class="text-review-summary" id="${prefix}_${item.id}" aria-label="Edit text summary">${escapeHtml(item.summary)}</textarea>
@@ -495,8 +499,8 @@
     setTimeout(() => window.reviewTextConversation(key, "match", contactId), 2200);
   };
 
-  async function reviewSummary(id, action, summary, engagementId) {
-    const data = await patchReview({ id, action, summary, engagementId });
+  async function reviewSummary(id, action, summary, engagementId, contactId) {
+    const data = await patchReview({ id, action, summary, engagementId, contactId });
     pendingSummaries = pendingSummaries.filter((item) => Number(item.id) !== Number(id));
     updateBadge();
     renderTextReviewModal();
@@ -512,7 +516,12 @@
       const item = pendingSummaries.find(item => Number(item.id) === Number(id));
       const destination = destinationFor(item || { id });
       const engagementId = destination.startsWith('engagement:') ? destination.slice(11) : undefined;
-      await reviewSummary(id, "approve", summary, engagementId);
+      if (item?.conversation_context?.isGroup && !engagementId) {
+        buildContactChoices();
+        contactId = contactChoices.get(document.getElementById(`groupContact_${id}`)?.value || '');
+        if (!contactId) throw new Error('Choose a contact from the list or select an engagement.');
+      }
+      await reviewSummary(id, "approve", summary, engagementId, contactId);
       if (typeof window.refreshCloudState === "function") await window.refreshCloudState();
       if (!document.getElementById("textReviewModal")?.classList.contains("open")) {
         if (engagementId && typeof window.openEngagementDetail === 'function') {
