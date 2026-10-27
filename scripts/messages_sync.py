@@ -18,6 +18,7 @@ APP_DIR = Path.home() / "Library" / "Application Support" / "Network CRM"
 DEFAULT_CONFIG = APP_DIR / "messages-sync.json"
 DEFAULT_STATE = APP_DIR / "messages-sync-state.json"
 DEFAULT_UNMATCHED = APP_DIR / "messages-sync-unmatched.json"
+DEFAULT_RECEIPTS = APP_DIR / "messages-sync-receipts.json"
 DEFAULT_EXPORTER = APP_DIR / "bin" / "imessage-exporter"
 SELF_NAME = "Andre"
 TIMESTAMP = re.compile(
@@ -196,11 +197,25 @@ def conversation_key(value):
     return hashlib.sha256(str(value or "").encode("utf-8")).hexdigest()
 
 
+def message_key(message):
+    return conversation_key(isoformat(message["at"]) + "\n" + message["sender"] + "\n" + message["body"])
+
+
+def select_unseen(messages, since, receipt):
+    # Bootstrap without replaying old reviewed conversations. Subsequent runs
+    # scan the overlap by message fingerprint, including late Mac arrivals.
+    if receipt is None:
+        return [item for item in messages if item["at"] > since]
+    seen = set(receipt.get("seen", []))
+    return [item for item in messages if message_key(item) not in seen]
+
+
 def main():
     parser = argparse.ArgumentParser(description="Create Network.crm text-summary drafts.")
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--state", type=Path, default=DEFAULT_STATE)
     parser.add_argument("--unmatched-report", type=Path, default=DEFAULT_UNMATCHED)
+    parser.add_argument("--receipts", type=Path, default=DEFAULT_RECEIPTS)
     parser.add_argument("--lookback-hours", type=int, default=12)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -224,6 +239,26 @@ def main():
     if since is None:
         since = now - dt.timedelta(hours=max(1, args.lookback_hours))
 
+    receipts = read_json(args.receipts)
+    receipt_baseline_exists = receipts is not None
+    receipts = receipts or {"conversations": {}}
+    conversation_receipts = receipts.setdefault("conversations", {})
+    scan_since = min(since, now - dt.timedelta(hours=72))
+
+    def record_outcome(key, all_messages, outcome, contact=None):
+        if args.dry_run:
+            return
+        conversation_receipts[key] = {
+            "seen": [message_key(item) for item in all_messages],
+            "outcome": outcome,
+            "contactId": str(contact["id"]) if contact else None,
+            "checkedAt": isoformat(now),
+            "latestMessageAt": isoformat(all_messages[-1]["at"]),
+        }
+        write_private_json(args.receipts, receipts)
+        print("Messages outcome: conversation={} contact={} outcome={} at={}".format(
+            key[:16], str(contact["id"]) if contact else "unmatched", outcome, isoformat(now)))
+
     directory = api_request(base_url, token, "/api/automation/text-summaries")
     contacts = directory.get("contacts", [])
     indexes = build_indexes(contacts)
@@ -237,7 +272,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix="network-crm-messages-") as folder:
         command = [
             str(exporter), "--format", "txt", "--copy-method", "disabled",
-            "--export-path", folder, "--start-date", since.astimezone().strftime("%Y-%m-%d"),
+            "--export-path", folder, "--start-date", scan_since.astimezone().strftime("%Y-%m-%d"),
             "--custom-name", SELF_NAME, "--no-progress"
         ]
         result = subprocess.run(command, capture_output=True, text=True, timeout=300)
@@ -246,19 +281,26 @@ def main():
 
         for path in Path(folder).rglob("*.txt"):
             stats["files"] += 1
-            messages = [item for item in parse_export(path.read_text(encoding="utf-8", errors="replace")) if item["at"] > since]
-            if not messages:
+            all_messages = [item for item in parse_export(path.read_text(encoding="utf-8", errors="replace")) if item["at"] > scan_since]
+            if not all_messages:
                 continue
-            other_senders = sorted({item["sender"] for item in messages if normalize_name(item["sender"]) != normalize_name(SELF_NAME)})
             stem = re.sub(r" - \d+$", "", path.stem)
             key = conversation_key(stem)
+            messages = select_unseen(all_messages, since, conversation_receipts.get(key, {"seen": []} if receipt_baseline_exists else None))
+            if not messages:
+                if key not in conversation_receipts:
+                    record_outcome(key, all_messages, "baseline")
+                continue
+            other_senders = sorted({item["sender"] for item in all_messages if normalize_name(item["sender"]) != normalize_name(SELF_NAME)})
             labels = other_senders or [stem]
             if is_likely_group(stem, other_senders, indexes):
                 stats["group"] += 1
+                record_outcome(key, all_messages, "group")
                 continue
             decision = decisions.get(key, {})
             if decision.get("status") == "ignored":
                 stats["ignored"] += 1
+                record_outcome(key, all_messages, "ignored")
                 continue
             observation = {
                 "key": key,
@@ -271,6 +313,7 @@ def main():
             if not contact:
                 if not has_business_context(messages):
                     stats["filtered"] += 1
+                    record_outcome(key, all_messages, "unfamiliar_no_business_signal")
                     continue
                 if decision.get("status") == "dismissed":
                     unmatched_observations.append(observation)
@@ -300,6 +343,10 @@ def main():
                 "messageCount": len(messages),
                 "transcript": transcript,
             })
+            outcome = response.get("status")
+            if outcome not in ("pending", "duplicate", "skipped"):
+                raise RuntimeError("Unexpected SMS import outcome; checkpoint not advanced.")
+            record_outcome(key, all_messages, outcome, contact)
             if response.get("status") == "pending":
                 stats["submitted"] += 1
             else:
@@ -335,6 +382,9 @@ def main():
         "unmatched": sorted(retained_unmatched, key=lambda item: item["latestMessageAt"], reverse=True),
     })
     if not args.dry_run:
+        receipts["conversations"] = {key: value for key, value in conversation_receipts.items()
+            if value.get("checkedAt", "") >= isoformat(now - dt.timedelta(days=7))}
+        write_private_json(args.receipts, receipts)
         write_private_json(args.state, {"lastCompletedAt": isoformat(now)})
     print("Messages sync: {matched} matched, {submitted} awaiting review, {skipped} skipped, {unmatched} unmatched, {filtered} unfamiliar personal threads filtered locally, {ignored} ignored, {group} group threads excluded.".format(**stats))
 

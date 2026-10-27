@@ -24,7 +24,7 @@ The helper uses the pinned `imessage-exporter` 4.2.0 release because it handles 
 6. Run `/usr/bin/python3 ~/Library/Application\ Support/Network\ CRM/messages_sync.py --dry-run`.
 7. Run `/usr/bin/python3 ~/Library/Application\ Support/Network\ CRM/messages_sync.py` to create the first review drafts.
 
-The first run considers the previous 12 hours. Later runs continue from the last successful checkpoint. The installed schedule runs at 11 AM, 3 PM, and 9:15 PM local time.
+The first run considers the previous 12 hours. Later runs scan an overlapping 72-hour window to catch messages that arrive on the Mac late. A private per-conversation receipt file stores message hashes (not bodies), contact ID, timestamps, and the last outcome (`pending`, `skipped`, `duplicate`, or a local exclusion). Already processed messages are not re-summarized, including skipped chatter. The first run after upgrading establishes a baseline without replaying old conversations. Receipt history is retained for seven days; messages arriving more than 72 hours late still need manual recovery. The installed schedule runs at 11 AM, 3 PM, and 9:15 PM local time.
 
 ## Review flow
 
@@ -40,6 +40,8 @@ Matched contacts receive a stricter AI relevance screen in the existing summariz
 
 The parser asks the local macOS Contacts database to resolve phone numbers and email addresses to names. The helper then requires one unambiguous match against Network.crm name, email, or mobile phone. Add a mobile number to a CRM profile when a conversation remains unmatched.
 
-The sync log reports only counts and errors; it never prints message contents. Logs and the private checkpoint live in `~/Library/Application Support/Network CRM/`.
+Explicit paid/contract-work offers receive a factual quoted fallback proposal if the summarizer incorrectly returns `SKIP`; this does not approve a note or imply an accepted contract. Routine Little League/team coaching and parent coordination are explicitly excluded from business commitments in the relevance prompt. Genuine durable personal updates remain eligible. Empty provider responses are errors to retry, not relevance skips.
+
+The sync log reports counts, hashed conversation identifiers, contact IDs, timestamps, and per-thread outcomes; it never prints message contents or names. Logs, the private `messages-sync-receipts.json`, and checkpoint live in `~/Library/Application Support/Network CRM/`. Receipts distinguish AI relevance skips from duplicates and local filters, but do not claim to record the model's internal reasoning.
 
 Unmatched one-to-one conversations are listed in `messages-sync-unmatched.json` in that same private folder. The report contains only the participant label and latest message date, never message content. Entries remain until they match a CRM contact or are more than 30 days old.

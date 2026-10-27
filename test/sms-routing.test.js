@@ -3,7 +3,17 @@ const test = require('node:test');
 const { suggestEngagement, relatedEngagements } = require('../lib/sms-routing');
 const { withDefaults } = require('../engagement-core');
 const endpoint = require('../api/crm/text-summaries');
-const { summarizeTranscript } = require('../lib/text-summaries');
+const { summarizeTranscript, protectOpportunity } = require('../lib/text-summaries');
+
+test('explicit contract offer cannot silently become SKIP; sports chatter has no fallback', () => {
+  const offer = 'Greg Booth: Good afternoon sir. Would you be interested in some contract work on the strokepages.com project?';
+  assert.match(protectOpportunity('SKIP', offer), /strokepages.com/);
+  assert.match(protectOpportunity('SKIP', offer), /not confirmed/);
+  assert.equal(protectOpportunity('SKIP', 'Matt: Can you coach Little League practice tomorrow?'), 'SKIP');
+  assert.equal(protectOpportunity('SKIP', 'Liked “Would you be interested in some contract work?”'), 'SKIP');
+  assert.equal(protectOpportunity('SKIP', 'There is no project opportunity for you.'), 'SKIP');
+  assert.equal(protectOpportunity('A factual summary', offer), 'A factual summary');
+});
 
 const contact = { id: 459, name: 'Mike Example', company: 'Belmont Metals Inc.' };
 const engagement = { id: 1, title: 'Belmont Metals', organization: 'Belmont Metals',
@@ -124,4 +134,14 @@ test('client-work summarization adds detail in one mocked provider call', async 
   assert.equal(bodies[0].max_tokens, 550);
   assert.match(bodies[0].messages[0].content, /3-5 concise factual bullets/);
   assert.match(bodies[0].messages[0].content, /Distinguish proposals from agreed decisions/);
+  assert.match(bodies[0].messages[0].content, /Routine Little League/);
+  assert.match(bodies[0].messages[0].content, /explicit offers of paid\/contract work/);
+});
+
+test('empty provider output fails for retry rather than counting as irrelevant', async t => {
+  const oldFetch = global.fetch, oldKey = process.env.ANTHROPIC_API_KEY;
+  process.env.ANTHROPIC_API_KEY = 'test-only';
+  t.after(() => { global.fetch = oldFetch; if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY; else process.env.ANTHROPIC_API_KEY = oldKey; });
+  global.fetch = async () => ({ ok: true, json: async () => ({ content: [] }) });
+  await assert.rejects(summarizeTranscript({ contactName: 'Example', transcript: 'Test', startedAt: new Date(), endedAt: new Date() }), /retry rather than discard/);
 });

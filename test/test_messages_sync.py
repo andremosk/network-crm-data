@@ -13,6 +13,22 @@ SPEC.loader.exec_module(MODULE)
 
 
 class MessagesSyncTests(unittest.TestCase):
+    def test_overlap_catches_late_arrivals_without_repeating_processed_messages(self):
+        since = dt.datetime(2026, 10, 27, 15, tzinfo=dt.timezone.utc)
+        old = {"at": since - dt.timedelta(hours=2), "sender": "Greg Booth", "body": "An earlier text"}
+        late = {"at": since - dt.timedelta(hours=1), "sender": "Greg Booth", "body": "Would you be interested in some contract work on the strokepages.com project?"}
+        receipt = {"seen": [MODULE.message_key(old)], "outcome": "skipped"}
+        self.assertEqual(MODULE.select_unseen([old, late], since, receipt), [late])
+        self.assertEqual(MODULE.select_unseen([old, late], since, {"seen": [MODULE.message_key(old), MODULE.message_key(late)]}), [])
+        self.assertEqual(MODULE.select_unseen([late], since, {"seen": []}), [late])
+        self.assertEqual(MODULE.select_unseen([old, late], since, None), [])
+
+    def test_link_preview_text_survives_parsing(self):
+        text = 'Oct 26, 2026  12:16:00 PM\nGreg Booth\nGood afternoon sir. Would you be interested in some contract work on the strokepages.com project?\nhttps://strokepages.com\n\n'
+        messages = MODULE.parse_export(text)
+        self.assertIn('interested in some contract work', messages[0]['body'])
+        self.assertTrue(MODULE.has_business_context(messages))
+
     def test_verified_alias_matches_without_guessing_nicknames(self):
         samantha = {"id": "863", "name": "Samantha Rabinowicz Booth", "smsAliases": ["Sammy Booth"]}
         self.assertEqual(MODULE.match_contact(["Sammy Booth"], MODULE.build_indexes([samantha]))["id"], "863")
