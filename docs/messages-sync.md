@@ -30,6 +30,8 @@ The first run considers the previous 12 hours. Later runs scan an overlapping 72
 
 Open a matched contact in Network.crm. Pending summaries appear above Notes. Edit the wording if needed, then choose **Add to Notes** or **Dismiss**. Approved summaries become ordinary dated notes and update Last Contact.
 
+SMS and email reviews also offer the full contact status list, a custom follow-up date, and 1-week / 1-month / 3-month shortcuts. Dates use the New York calendar day at review time, not the message's date. Month shortcuts clamp to the month's last day. Changes apply only on approval (or email Apply); email Save Edit saves the proposal, not the contact. No change preserves the contact's status/date. Manual status/date choices override suggested scheduling, including an existing later date; untouched automated email suggestions retain later-date protection. A non-Follow-Up status clears the active follow-up flag/date. Engagement-only approval does not change a contact's status. Group drafts require selecting the destination contact first.
+
 ## Matching
 
 ### Group conversations

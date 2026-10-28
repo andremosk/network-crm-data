@@ -2,6 +2,7 @@ const { hasValidSession } = require("../../lib/crm-auth");
 const { ensureSchema, getSql } = require("../../lib/crm-db");
 const { parseBody } = require("../../lib/text-summaries");
 const { activeEngagements, suggestEngagement } = require("../../lib/sms-routing");
+const { contactStatusPatch } = require('../../lib/review-contact-status');
 
 function noteDate(date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -118,6 +119,8 @@ async function handler(request, response, dependencies) {
 
     const editedSummary = String(body.summary || "").trim().slice(0, 4000);
     if (!editedSummary) return response.status(400).json({ error: { message: "Summary cannot be empty." } });
+    const contactPatch = contactStatusPatch(body.contactUpdate);
+    if (body.engagementId && Object.keys(contactPatch).length) return response.status(400).json({ error: { message: 'Contact status changes require a contact destination.' } });
     const drafts = await sql`
       SELECT contact_id, conversation_ended_at, source_key, conversation_context
       FROM crm_text_summaries
@@ -165,7 +168,7 @@ async function handler(request, response, dependencies) {
         ? { status: "approved", contactId: drafts[0].contact_id, engagementId: rows[0].engagement_id }
         : { error: { message: "Engagement unavailable or summary already reviewed." } });
     }
-    const targetContactId = group ? String(body.contactId || '').trim() : String(drafts[0].contact_id || '');
+    const targetContactId = group ? String(body.contactId ?? '').trim() : String(drafts[0].contact_id ?? '');
     if (!targetContactId) return response.status(400).json({ error: { message: 'Choose a contact or engagement for this group summary.' } });
     const entry = `${noteDate(endedAt)}: <strong>Text summary</strong> — ${escapeHtml(editedSummary)}`;
     const contactDate = endedAt.toISOString().slice(0, 10);
@@ -197,7 +200,7 @@ async function handler(request, response, dependencies) {
                 WHEN COALESCE(payload->>'lastContact', '') > ${contactDate} THEN payload->>'lastContact'
                 ELSE ${contactDate}
               END)
-            ),
+            ) || ${JSON.stringify(contactPatch)}::jsonb,
             version = version + 1,
             updated_at = NOW()
         FROM claimed_summary
@@ -211,7 +214,7 @@ async function handler(request, response, dependencies) {
       : { error: { message: "Could not approve this summary." } });
   } catch (error) {
     console.error("Text summary review error:", error);
-    return response.status(500).json({ error: { message: error.message || "Text summary review failed." } });
+    return response.status(error.statusCode === 400 ? 400 : 500).json({ error: { message: error.message || "Text summary review failed." } });
   }
 }
 

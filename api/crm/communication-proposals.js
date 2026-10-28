@@ -2,6 +2,7 @@ const { hasValidSession } = require("../../lib/crm-auth");
 const { ensureSchema, getSql } = require("../../lib/crm-db");
 const { parseBody } = require("../../lib/text-summaries");
 const { createContactPayload, sanitizeProposal } = require("../../lib/communication-proposals");
+const { contactStatusPatch } = require('../../lib/review-contact-status');
 
 function noteDate(value) {
   const date = new Date(value);
@@ -125,7 +126,7 @@ async function applyUpdate(sql, draft, proposed) {
               WHEN ${clean.status || ""} <> 'follow_up' OR ${clean.followUpDate} = '' THEN NULL
               WHEN COALESCE(r.payload->>'followUpDate', '') > ${clean.followUpDate} THEN r.payload->>'followUpDate'
               ELSE ${clean.followUpDate} END
-          )),
+          )) || ${JSON.stringify(contactStatusPatch(clean.contactUpdate))}::jsonb,
           version = version + 1,
           updated_at = NOW()
       FROM target
@@ -191,7 +192,7 @@ function createHandler(dependencies = {}) {
         : { error: { message: "This proposal could not be applied." } });
     } catch (error) {
       console.error("Communication review error:", error);
-      return response.status(500).json({ error: { message: error.message || "Communication review failed." } });
+      return response.status(error.statusCode === 400 ? 400 : 500).json({ error: { message: error.message || "Communication review failed." } });
     }
   };
 }

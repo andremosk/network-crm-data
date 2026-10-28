@@ -2,6 +2,50 @@
   let pendingSummaries = [];
   let engagementChoices = [];
   const summaryDestinations = new Map();
+  const contactReviewUpdates = new Map();
+  const reviewStatuses = [['network_closely', 'Network Closely'], ['network', 'Network Regularly'], ['came_through', 'Came Through'], ['follow_up', 'Follow Up'], ['call_scheduled', 'Call Scheduled'], ['interesting', 'Interesting'], ['recruiter', 'Recruiter'], ['cant_help', "Can't Help"]];
+
+  function followUpPreset(period) {
+    const today = new Intl.DateTimeFormat('en-CA', {timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date());
+    const date = new Date(`${today}T12:00:00Z`);
+    if (period === 'week') date.setUTCDate(date.getUTCDate() + 7);
+    else {
+      const day = date.getUTCDate();
+      date.setUTCDate(1);
+      date.setUTCMonth(date.getUTCMonth() + (period === 'quarter' ? 3 : 1));
+      const last = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
+      date.setUTCDate(Math.min(day, last));
+    }
+    return date.toISOString().slice(0, 10);
+  }
+
+  function statusControls(key, prefix, current, suggested = {}) {
+    const selected = contactReviewUpdates.get(key) || suggested;
+    const status = selected.status || '';
+    const currentLabel = current ? `${reviewStatuses.find(([value]) => value === current.status)?.[1] || 'No status'}${current.status === 'follow_up' && current.followUpDate ? ` · ${current.followUpDate}` : ''}` : '';
+    return `<div class="communication-review-field"><label for="${prefix}_reviewStatus">Contact status${currentLabel ? ` <span class="text-review-meta">(current: ${escapeHtml(currentLabel)})</span>` : ''}</label><select class="form-input" id="${prefix}_reviewStatus" onchange="setReviewContactStatus('${key}','${prefix}',this.value)"><option value="">No change</option><option value="none" ${status === 'none' ? 'selected' : ''}>No status</option>${reviewStatuses.map(([value, label]) => `<option value="${value}" ${status === value ? 'selected' : ''}>${label}</option>`).join('')}</select></div>
+      <div class="communication-review-field"><label for="${prefix}_reviewDate">Follow-up date</label><input class="form-input" type="date" id="${prefix}_reviewDate" value="${escapeHtml(selected.followUpDate || '')}" onchange="setReviewFollowUpDate('${key}','${prefix}',this.value)"></div>
+      <div class="communication-review-field wide review-follow-up-presets" role="group" aria-label="Follow-up timing"><button type="button" class="btn btn-ghost btn-sm" onclick="setReviewFollowUpPreset('${key}','${prefix}','week')">1 week</button><button type="button" class="btn btn-ghost btn-sm" onclick="setReviewFollowUpPreset('${key}','${prefix}','month')">1 month</button><button type="button" class="btn btn-ghost btn-sm" onclick="setReviewFollowUpPreset('${key}','${prefix}','quarter')">3 months</button></div>`;
+  }
+
+  window.setReviewContactStatus = function(key, prefix, status) {
+    const field = document.getElementById(`${prefix}_reviewDate`);
+    const followUpDate = status === 'follow_up' ? (field?.value || followUpPreset('week')) : '';
+    contactReviewUpdates.set(key, {status, followUpDate});
+    if (field) field.value = followUpDate;
+  };
+  window.setReviewFollowUpDate = function(key, prefix, date) {
+    const statusField = document.getElementById(`${prefix}_reviewStatus`);
+    const status = date ? 'follow_up' : (statusField?.value || '');
+    if (statusField) statusField.value = status;
+    contactReviewUpdates.set(key, {status, followUpDate: date});
+  };
+  window.setReviewFollowUpPreset = function(key, prefix, period) {
+    const date = followUpPreset(period);
+    const field = document.getElementById(`${prefix}_reviewDate`);
+    if (field) field.value = date;
+    window.setReviewFollowUpDate(key, prefix, date);
+  };
   let pendingConversations = [];
   let pendingProposals = [];
   let pendingCreateKey = null;
@@ -75,6 +119,7 @@
         .communication-review-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
         .communication-review-grid .wide { grid-column:1 / -1; }
         .communication-review-field label { display:block; margin-bottom:4px; color:var(--muted); font-size:10px; font-weight:700; text-transform:uppercase; }
+        .review-follow-up-presets { display:flex; flex-wrap:wrap; gap:6px; }
         @media (max-width:700px) {
           .text-review-trigger { grid-column:auto; grid-row:auto; }
           .text-review-controls { grid-template-columns:1fr; }
@@ -169,6 +214,8 @@
     if (button) button.textContent = value === 'contact' ? 'Add to Contact Notes' : 'Add to Engagement';
     const contactField = select.closest('.text-review-row')?.querySelector('[data-group-contact]');
     if (contactField) contactField.style.display = value === 'contact' ? '' : 'none';
+    const statusFields = select.closest('.text-review-row')?.querySelector('[data-review-contact-status]');
+    if (statusFields) statusFields.style.display = value === 'contact' ? '' : 'none';
   };
 
   function renderSummary(item, prefix = 'textReviewSummary') {
@@ -185,6 +232,7 @@
         <div class="text-review-contact">${group ? 'Choose destination' : 'Ready for Notes'}</div>
       </div>
       ${destinationControl(item)}
+      <div class="communication-review-grid" data-review-contact-status style="${destinationFor(item) === 'contact' ? '' : 'display:none'}">${statusControls(`sms:${item.id}`, `${prefix}_${item.id}`, contact)}</div>
       <textarea class="text-review-summary" id="${prefix}_${item.id}" aria-label="Edit text summary">${escapeHtml(item.summary)}</textarea>
       <div class="text-review-actions">
         <button class="btn btn-ghost btn-sm" onclick="dismissTextSummary(${item.id})">Dismiss</button>
@@ -218,8 +266,7 @@
           ${create ? `${field("name", "Name", proposed.name)}${field("email", "Email", proposed.email)}${field("company", "Company", proposed.company)}${field("position", "Position", proposed.position)}
           <div class="communication-review-field"><label for="comm_tier_${item.id}">Relationship</label><select class="form-input" id="comm_tier_${item.id}">${[1,2,3,4].map((tier) => `<option value="${tier}" ${Number(proposed.tier) === tier ? "selected" : ""}>T${tier}</option>`).join("")}</select></div>` : ""}
           ${!create && proposed.email ? field("email", "Email to save", proposed.email, "wide") : ""}
-          <div class="communication-review-field"><label for="comm_status_${item.id}">Status</label><select class="form-input" id="comm_status_${item.id}"><option value="">No change</option><option value="follow_up" ${proposed.status === "follow_up" ? "selected" : ""}>Follow Up</option></select></div>
-          <div class="communication-review-field"><label for="comm_followUpDate_${item.id}">Follow-up date</label><input class="form-input" type="date" id="comm_followUpDate_${item.id}" value="${escapeHtml(proposed.followUpDate)}"></div>
+          ${statusControls(`email:${item.id}`, `comm_${item.id}`, contactById(item.matched_contact_id), proposed.contactUpdate || proposed)}
           <div class="communication-review-field wide"><label for="comm_note_${item.id}">Initial note</label><textarea class="text-review-summary" id="comm_note_${item.id}">${escapeHtml(proposed.notes || proposed.note)}</textarea></div>
         </div>
       </details>
@@ -417,7 +464,8 @@
     const item = pendingProposals.find((candidate) => Number(candidate.id) === Number(id));
     if (!item) return null;
     const value = (name) => document.getElementById(`comm_${name}_${id}`)?.value.trim() || "";
-    const common = { note: value("note"), notes: value("note"), email: value("email"), status: value("status"), followUpDate: value("followUpDate"), lastContact: item.proposed?.lastContact || "" };
+    const manual = contactReviewUpdates.get(`email:${id}`) || item.proposed?.contactUpdate;
+    const common = { note: value("note"), notes: value("note"), email: value("email"), status: manual ? null : item.proposed?.status, followUpDate: manual ? '' : item.proposed?.followUpDate || '', lastContact: item.proposed?.lastContact || "", ...(manual ? {contactUpdate: manual} : {}) };
     return item.proposal_type === "create_contact" ? {
       ...common, name: value("name"), email: value("email"), company: value("company"), position: value("position"), tier: Number(value("tier")) || 3
     } : common;
@@ -499,8 +547,8 @@
     setTimeout(() => window.reviewTextConversation(key, "match", contactId), 2200);
   };
 
-  async function reviewSummary(id, action, summary, engagementId, contactId) {
-    const data = await patchReview({ id, action, summary, engagementId, contactId });
+  async function reviewSummary(id, action, summary, engagementId, contactId, contactUpdate) {
+    const data = await patchReview({ id, action, summary, engagementId, contactId, contactUpdate });
     pendingSummaries = pendingSummaries.filter((item) => Number(item.id) !== Number(id));
     updateBadge();
     renderTextReviewModal();
@@ -521,7 +569,7 @@
         contactId = contactChoices.get(document.getElementById(`groupContact_${id}`)?.value || '');
         if (!contactId) throw new Error('Choose a contact from the list or select an engagement.');
       }
-      await reviewSummary(id, "approve", summary, engagementId, contactId);
+      await reviewSummary(id, "approve", summary, engagementId, contactId, engagementId ? undefined : contactReviewUpdates.get(`sms:${id}`));
       if (typeof window.refreshCloudState === "function") await window.refreshCloudState();
       if (!document.getElementById("textReviewModal")?.classList.contains("open")) {
         if (engagementId && typeof window.openEngagementDetail === 'function') {
