@@ -74,6 +74,7 @@
       projectedStartDate: dateOnly(item.projectedStartDate),
       projectedEndDate: dateOnly(item.projectedEndDate),
       expectedValue: money(item.expectedValue),
+      forecastConfidence: ['confirmed', 'proposal', 'at_risk'].includes(item.forecastConfidence) ? item.forecastConfidence : '',
       payments: payments(item.payments),
       nextMilestone: text(item.nextMilestone || item.next_milestone),
       nextMilestoneDate: text(item.nextMilestoneDate || item.next_milestone_date).slice(0, 10),
@@ -109,7 +110,7 @@
 
   function forecastRows(items, activeOnly = true) {
     return sort(items).filter(item => !item.isGroup && !item.deleted && !item.archived &&
-      (!activeOnly || !['closed', 'on_hold'].includes(item.status))).map(item => {
+      (!activeOnly || item.status !== 'closed')).map(item => {
       const knownPayments = item.payments.filter(payment => payment.amount !== null);
       const plannedTotal = knownPayments.reduce((sum, payment) => sum + Math.round(payment.amount * 100), 0) / 100;
       const expectedFees = item.expectedValue ?? (knownPayments.length ? plannedTotal : null);
@@ -176,5 +177,70 @@
     }).join('\n\n') + '\n\nProjected fees and receipts, not guaranteed revenue. TBD = not yet estimated.'};
   }
 
-  return { STATUSES, STATUS_LABELS, withDefaults, sort, normalizeContactIds, dateOnly, money, payments, forecastRows, cashFlow, currency, forecastCsv, forecastRecap };
+  const CONFIDENCE_LABELS = {confirmed: 'Confirmed', proposal: 'Proposal / tentative', at_risk: 'At risk / on hold'};
+  function confidenceFor(item) {
+    return item.forecastConfidence || (item.status === 'on_hold' ? 'at_risk' : item.status === 'active_client' ? 'confirmed' : 'proposal');
+  }
+
+  function monthKeys(start, count = 12) {
+    if (!dateOnly(`${start}-01`)) return [];
+    const date = new Date(`${start}-01T12:00:00Z`);
+    return Array.from({length: Math.min(24, Math.max(1, Number(count) || 12))}, (_, index) => {
+      const month = new Date(date);
+      month.setUTCMonth(month.getUTCMonth() + index);
+      return month.toISOString().slice(0, 7);
+    });
+  }
+
+  function monthLabel(month) {
+    return new Intl.DateTimeFormat('en-US', {month:'short',year:'numeric',timeZone:'UTC'}).format(new Date(`${month}-01T12:00:00Z`));
+  }
+
+  function cashTimeline(rows, start, count = 12) {
+    const months = monthKeys(start, count);
+    const totals = Object.fromEntries(Object.keys(CONFIDENCE_LABELS).map(key => [key, months.map(() => ({amount:0,unknown:0}))]));
+    const entries = rows.map(row => {
+      const confidence = confidenceFor(row);
+      const cells = months.map((month, index) => {
+        const receipts = row.outstanding.filter(payment => payment.expectedDate.startsWith(month));
+        const amount = receipts.reduce((sum, payment) => sum + (payment.amount === null ? 0 : Math.round(payment.amount * 100)), 0) / 100;
+        const unknown = receipts.filter(payment => payment.amount === null).length;
+        totals[confidence][index].amount += Math.round(amount * 100);
+        totals[confidence][index].unknown += unknown;
+        const first = `${month}-01`;
+        const lastDay = new Date(Date.UTC(Number(month.slice(0,4)), Number(month.slice(5)), 0)).getUTCDate();
+        const last = `${month}-${String(lastDay).padStart(2,'0')}`;
+        const running = !!(row.projectedStartDate && row.projectedEndDate && row.projectedStartDate <= last && row.projectedEndDate >= first && row.projectedStartDate <= row.projectedEndDate);
+        const left = running && row.projectedStartDate.startsWith(month) ? (Number(row.projectedStartDate.slice(8)) - 1) / lastDay * 100 : 0;
+        const right = running && row.projectedEndDate.startsWith(month) ? (lastDay - Number(row.projectedEndDate.slice(8))) / lastDay * 100 : 0;
+        return {month, amount, unknown, receipts, running, left, right};
+      });
+      const outside = row.outstanding.filter(payment => payment.expectedDate && !months.includes(payment.expectedDate.slice(0,7)));
+      const undated = row.outstanding.filter(payment => !payment.expectedDate);
+      return {...row, confidence, cells, outside,
+        unscheduled: (Math.round(row.unallocatedFees * 100) + undated.reduce((sum, payment) => sum + (payment.amount === null ? 0 : Math.round(payment.amount * 100)),0)) / 100,
+        unscheduledUnknown: undated.filter(payment => payment.amount === null).length};
+    });
+    for (const values of Object.values(totals)) for (const cell of values) cell.amount /= 100;
+    return {months, entries, totals};
+  }
+
+  function cashTimelineExport(rows, start, count = 12) {
+    const timeline = cashTimeline(rows, start, count);
+    const headers = ['Client', 'Opportunity', 'Confidence', 'Projected start', 'Projected end', ...timeline.months.map(monthLabel), 'Unscheduled (USD)', 'Outside view (USD)'];
+    const amountText = cell => (cell.receipts.length ? currency(cell.amount) : '') + (cell.unknown ? ' + TBD' : '');
+    const cells = row => [row.organization, row.title, CONFIDENCE_LABELS[row.confidence], row.projectedStartDate || 'TBD', row.projectedEndDate || 'TBD',
+      ...row.cells.map(amountText), currency(row.unscheduled) + (row.unscheduledUnknown ? ' + TBD' : ''), row.outside.map(payment => `${currency(payment.amount)} on ${payment.expectedDate}`).join('; ')];
+    const escape = value => text(value).replace(/[&<>"']/g, char => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[char]));
+    const palette = {confirmed:'#d7eee1', proposal:'#fff1bd', at_risk:'#f8dada'};
+    const th = 'padding:8px;border:1px solid #d7dfdb;font:11px Arial,sans-serif;text-align:left;';
+    const tableHeaders = ['Client', 'Opportunity', ...timeline.months.map(monthLabel), 'Unscheduled'];
+    const footers = Object.entries(timeline.totals).map(([key, values]) => `<tr><th colspan="2" style="${th}background:${palette[key]}">${escape(CONFIDENCE_LABELS[key])} receipts</th>${values.map(cell => `<td style="${th}">${currency(cell.amount)}${cell.unknown ? ' + TBD' : ''}</td>`).join('')}<td style="${th}"></td></tr>`).join('');
+    const html = `<div style="font-family:Arial,sans-serif;color:#20332d"><h3 style="margin:0 0 10px;font-size:16px">Cash-flow timeline · USD</h3><p style="font-size:11px">Green: confirmed · Yellow: proposal / tentative · Red: at risk / on hold</p><table style="border-collapse:collapse;width:100%"><thead><tr>${tableHeaders.map(label => `<th style="${th}background:#f0f5f2">${escape(label)}</th>`).join('')}</tr></thead><tbody>${timeline.entries.map(row => `<tr><td style="${th}">${escape(row.organization)}</td><td style="${th}">${escape(row.title)}<br><small>${escape(CONFIDENCE_LABELS[row.confidence])} · ${escape(row.projectedStartDate || 'TBD')} to ${escape(row.projectedEndDate || 'TBD')}</small></td>${row.cells.map(cell => `<td style="${th}${cell.running ? `background:${palette[row.confidence]};border-top:5px solid ${row.confidence === 'confirmed' ? '#379768' : row.confidence === 'proposal' ? '#d4a425' : '#c65a5a'};` : ''}">${escape(amountText(cell))}</td>`).join('')}<td style="${th}">${currency(row.unscheduled)}${row.unscheduledUnknown ? ' + TBD' : ''}${row.outside.length ? `<br><small>Outside view: ${escape(row.outside.map(payment => `${currency(payment.amount)} on ${payment.expectedDate}`).join('; '))}</small>` : ''}</td></tr>`).join('')}${footers}</tbody></table><p style="font-size:11px">Projected receipts, not guaranteed revenue. Received payments excluded. Run dates and receipt dates are independent.</p></div>`;
+    const csvCell = value => { const raw = text(value); return `"${(/^[\s]*[=+\-@\t\r]/.test(raw) ? "'" + raw : raw).replace(/"/g,'""')}"`; };
+    const csvRows = [headers, ...timeline.entries.map(cells), ...Object.entries(timeline.totals).map(([key, values]) => ['', `${CONFIDENCE_LABELS[key]} receipts`, '', '', '', ...values.map(cell => `${cell.amount}${cell.unknown ? ' + TBD' : ''}`), '', ''])];
+    return {html, text:'Cash-flow timeline · USD\n\n' + timeline.entries.map(row => `${row.organization} / ${row.title} [${CONFIDENCE_LABELS[row.confidence]}]\nRun: ${row.projectedStartDate || 'TBD'} to ${row.projectedEndDate || 'TBD'}\n${row.cells.filter(cell => cell.receipts.length).map(cell => `${monthLabel(cell.month)}: ${amountText(cell)}`).join(' | ') || 'No dated expected receipts in view'}\nUnscheduled: ${currency(row.unscheduled)}${row.unscheduledUnknown ? ' + TBD' : ''}${row.outside.length ? '\nOutside view: ' + row.outside.map(payment => `${currency(payment.amount)} on ${payment.expectedDate}`).join('; ') : ''}`).join('\n\n'), csv:csvRows.map(row => row.map(csvCell).join(',')).join('\r\n')};
+  }
+
+  return { STATUSES, STATUS_LABELS, withDefaults, sort, normalizeContactIds, dateOnly, money, payments, forecastRows, cashFlow, currency, forecastCsv, forecastRecap, CONFIDENCE_LABELS, confidenceFor, monthKeys, monthLabel, cashTimeline, cashTimelineExport };
 });

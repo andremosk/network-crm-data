@@ -5,6 +5,8 @@
   let engagementView = 'forecast';
   let forecastExpanded = new Set();
   let displayedForecast = [];
+  let timelineStart = new Intl.DateTimeFormat('en-CA', {timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()).slice(0,7);
+  let timelineMonths = 12;
 
   const style = document.createElement('style');
   style.textContent = `
@@ -31,6 +33,41 @@
     .eng-payment-actions { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:12px; }
     .eng-plan-warning { color:#9a5f16;font-size:12px; }
     .eng-forecast-expanded td { background:var(--surface2); }
+    .eng-timeline-tools { display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--border); }
+    .eng-timeline-tools > div { display:flex;gap:8px;align-items:center;flex-wrap:wrap; }
+    .eng-timeline-tools .form-input { width:auto;font-size:12px; }
+    .eng-timeline-key { display:flex;gap:15px;flex-wrap:wrap;font-size:11px;color:var(--muted); }
+    .eng-timeline-key span::before { content:'';display:inline-block;width:10px;height:10px;margin-right:5px;background:var(--run-color);border-radius:2px; }
+    .eng-confirmed { --run-color:#419c70;--run-bg:#dfefe5; }
+    .eng-proposal { --run-color:#d2a42f;--run-bg:#fff4cc; }
+    .eng-at_risk { --run-color:#c36565;--run-bg:#f9e2e2; }
+    .eng-timeline-scroll { overflow:auto;max-height:72vh;padding-bottom:12px; }
+    .eng-timeline { border-collapse:separate;border-spacing:0;table-layout:fixed;width:max-content;min-width:100%; }
+    .eng-timeline th,.eng-timeline td { box-sizing:border-box;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:left;vertical-align:top;background:var(--surface);font-size:12px; }
+    .eng-timeline thead th { position:sticky;top:0;z-index:5;padding:13px 10px;background:var(--surface2);font-size:11px;font-weight:700; }
+    .eng-client-cell { position:sticky;left:0;z-index:3;width:180px;min-width:180px;padding:13px 12px;font-weight:600;overflow-wrap:anywhere; }
+    .eng-opportunity-cell { position:sticky;left:180px;z-index:3;width:240px;min-width:240px;padding:12px;overflow-wrap:anywhere;box-shadow:2px 0 0 var(--border); }
+    .eng-timeline thead .eng-client-cell,.eng-timeline thead .eng-opportunity-cell { z-index:7; }
+    .eng-timeline .eng-month-cell { width:116px;min-width:116px;height:86px;position:relative;padding:33px 7px 10px;text-align:center; }
+    .eng-run-bar { position:absolute;top:8px;height:15px;background:var(--run-color);pointer-events:none;min-width:2px; }
+    .eng-month-cell.running { background:var(--run-bg); }
+    .eng-receipt { border:0;background:transparent;color:var(--text);padding:4px 0;font:inherit;font-weight:700;width:100%;cursor:pointer;white-space:nowrap; }
+    .eng-receipt.empty { color:var(--muted);font-weight:400;opacity:.4; }
+    .eng-receipt:hover { text-decoration:underline;opacity:1; }
+    .eng-timeline small { display:block;margin-top:4px;color:var(--muted);font-size:10px;line-height:1.5; }
+    .eng-timeline .eng-undated { width:150px;min-width:150px;padding:16px 10px;text-align:right; }
+    .eng-timeline tfoot td,.eng-timeline tfoot th { padding:11px 8px;background:var(--run-bg);text-align:right;font-weight:700;font-variant-numeric:tabular-nums; }
+    .eng-timeline tfoot th { position:sticky;left:0;z-index:3;text-align:left; }
+    .eng-timeline .eng-edit-row > td { padding:16px 20px;background:var(--surface2); }
+    .eng-cash-editor { max-width:1000px; }
+    .eng-cash-editor .eng-form-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    @media(max-width:650px) {
+      .eng-client-cell { width:140px;min-width:140px; }
+      .eng-opportunity-cell { position:static; }
+      .eng-timeline thead .eng-opportunity-cell { position:sticky;left:auto;z-index:5; }
+      .eng-timeline tfoot th { position:static; }
+      .eng-cash-editor .eng-form-grid { grid-template-columns:1fr; }
+    }
     .eng-list-head,.eng-list-row { display:grid;grid-template-columns:minmax(220px,1.5fr) minmax(150px,.9fr) 132px minmax(220px,1.35fr) 120px;gap:14px;align-items:center;padding:0 22px; }
     .eng-list-head { height:44px;border-bottom:1px solid var(--border);color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;position:sticky;top:0;background:var(--bg);z-index:2; }
     .eng-list-row { min-height:70px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--surface); }
@@ -168,7 +205,7 @@
     const query = document.getElementById('searchInput').value.toLowerCase().trim();
     const visible = window.EngagementCore.sort(engagements).filter(item => {
       if (item.deleted || item.archived) return false;
-      if (engagementFilter === 'open' && (item.status === 'closed' || (engagementView === 'forecast' && item.status === 'on_hold'))) return false;
+      if (engagementFilter === 'open' && item.status === 'closed') return false;
       if (engagementFilter === 'groups' && !item.isGroup) return false;
       if (engagementFilter === 'ungrouped' && (item.isGroup || item.groupId)) return false;
       if (!['all', 'open', 'groups', 'ungrouped'].includes(engagementFilter) && item.status !== engagementFilter) return false;
@@ -180,7 +217,7 @@
     document.getElementById('statTotal').textContent = engagements.length;
     renderEngagementSidebar();
     const view = document.getElementById('engagementsView');
-    const tools = `<div class="eng-view-tools"><div role="group" aria-label="Engagement view"><button class="btn btn-ghost btn-sm" aria-pressed="${engagementView === 'forecast'}" onclick="setEngagementView('forecast')">Forecast</button><button class="btn btn-ghost btn-sm" aria-pressed="${engagementView === 'list'}" onclick="setEngagementView('list')">List</button></div>${engagementView === 'forecast' ? '<div><button class="btn btn-ghost btn-sm" onclick="copyEngagementForecast()">Copy recap</button><button class="btn btn-ghost btn-sm" onclick="downloadEngagementForecast()" title="Download opportunities as CSV">&#8595; CSV</button></div>' : ''}</div>`;
+    const tools = `<div class="eng-view-tools"><div role="group" aria-label="Engagement view"><button class="btn btn-ghost btn-sm" aria-pressed="${engagementView === 'forecast'}" onclick="setEngagementView('forecast')">Cash flow</button><button class="btn btn-ghost btn-sm" aria-pressed="${engagementView === 'list'}" onclick="setEngagementView('list')">List</button></div>${engagementView === 'forecast' ? '<div><button class="btn btn-ghost btn-sm" onclick="copyEngagementForecast()">Copy recap</button><button class="btn btn-ghost btn-sm" onclick="downloadEngagementForecast()" title="Download cash-flow timeline as CSV">&#8595; CSV</button></div>' : ''}</div>`;
     if (engagementView === 'forecast') {
       displayedForecast = window.EngagementCore.forecastRows(visible, engagementFilter === 'open');
       document.getElementById('statShowing').textContent = displayedForecast.length;
@@ -216,18 +253,37 @@
 
   function renderForecast(rows) {
     const core = window.EngagementCore;
-    if (!rows.length) return '<div class="empty-list">No opportunities in this view.</div>';
-    const known = rows.filter(row => row.expectedFees !== null);
-    const sum = list => core.currency(list.reduce((total, amount) => total + Math.round(amount * 100), 0) / 100);
-    const flow = core.cashFlow(rows);
-    return `<div class="eng-forecast-totals"><div>Opportunities<strong>${rows.length}</strong></div><div>Known expected fees · USD<strong>${sum(known.map(row => row.expectedFees))}</strong></div><div>Expected receipts · USD<strong>${sum([...rows.flatMap(row => row.outstanding).filter(payment => payment.amount !== null).map(payment => payment.amount), ...rows.map(row => row.unallocatedFees)])}</strong></div><div>Fees incomplete / TBD<strong>${rows.filter(row => row.feesIncomplete).length}</strong></div></div>
-      ${flow.length ? `<div class="eng-cash-flow" aria-label="Expected receipts by month">${flow.map(bucket => `<div><span>${esc(bucket.month)}</span><b>${core.currency(bucket.amount)}</b>${bucket.unknown ? ` + ${bucket.unknown} TBD` : ''}</div>`).join('')}</div>` : ''}
-      <div class="eng-forecast-scroll" role="region" aria-label="Opportunity forecast" tabindex="0"><table class="eng-forecast"><colgroup><col style="width:20%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:11%"><col style="width:16%"><col style="width:17%"></colgroup><thead><tr><th scope="col">Opportunity / client</th><th scope="col">Stage</th><th scope="col">Projected start</th><th scope="col">Projected end</th><th scope="col">Expected fees · USD</th><th scope="col">Next receipt</th><th scope="col">Next milestone</th></tr></thead><tbody>${rows.map(item => {
-        const id = esc(String(item.id));
-        const next = item.nextPayment || (item.unallocatedFees ? {amount: item.unallocatedFees, expectedDate: ''} : null);
-        return `<tr><td><button class="eng-forecast-title" onclick="openEngagementDetail('${id}')">${esc(item.title)}</button><small>${esc(item.organization || 'Organization TBD')}${groupFor(item) ? ` · ${esc(groupFor(item).title)}` : ''}</small></td><td><select class="form-input" aria-label="Stage for ${esc(item.title)}" onchange="updateForecastField('${id}','status',this.value)">${statusOptions(item.status)}</select></td><td>${forecastField(item, 'projectedStartDate', 'date', item.projectedStartDate, 'Projected start')}</td><td>${forecastField(item, 'projectedEndDate', 'date', item.projectedEndDate, 'Projected end')}</td><td>${forecastField(item, 'expectedValue', 'number', item.expectedFees, 'Expected fees')}<small>${item.expectedValue === null && item.expectedFees !== null ? 'From payment plan' : ''}</small></td><td>${next ? `${core.currency(next.amount)} · ${esc(next.expectedDate || 'Date TBD')}` : item.payments.length ? 'No expected receipts' : 'Schedule TBD'}<br><button class="btn btn-ghost btn-sm" style="margin-top:7px" aria-expanded="${forecastExpanded.has(String(item.id))}" onclick="toggleForecastPayments('${id}')">${forecastExpanded.has(String(item.id)) ? 'Hide payments' : 'Payments'}</button></td><td>${esc(item.nextMilestone || 'TBD')}<small>${esc(item.nextMilestoneDate || '')}</small></td></tr>${forecastExpanded.has(String(item.id)) ? `<tr class="eng-forecast-expanded"><td colspan="7">${paymentEditor(item)}</td></tr>` : ''}`;
-      }).join('')}</tbody></table></div>`;
+    const timeline = core.cashTimeline(rows, timelineStart, timelineMonths);
+    const tools = `<div class="eng-timeline-tools"><div><button class="btn btn-ghost btn-sm" aria-label="Previous three months" title="Previous three months" onclick="shiftCashTimeline(-3)">&#8592;</button><input class="form-input" type="month" aria-label="First month" value="${timelineStart}" onchange="setCashTimelineStart(this.value)"><button class="btn btn-ghost btn-sm" aria-label="Next three months" title="Next three months" onclick="shiftCashTimeline(3)">&#8594;</button><select class="form-input" aria-label="Months shown" onchange="setCashTimelineMonths(this.value)">${[6,12,18].map(count => `<option value="${count}" ${count === timelineMonths ? 'selected' : ''}>${count} months</option>`).join('')}</select><span class="eng-subtle">USD</span></div><div class="eng-timeline-key">${Object.entries(core.CONFIDENCE_LABELS).map(([key,label]) => `<span class="eng-${key}">${esc(label)}</span>`).join('')}</div></div>`;
+    if (!rows.length) return tools + '<div class="empty-list">No opportunities in this view.</div>';
+    const amount = cell => `${core.currency(cell.amount)}${cell.unknown ? ' + TBD' : ''}`;
+    return tools + `<div class="eng-timeline-scroll" role="region" aria-label="Cash-flow timeline" tabindex="0"><table class="eng-timeline"><thead><tr><th class="eng-client-cell" scope="col">Client</th><th class="eng-opportunity-cell" scope="col">Opportunity</th>${timeline.months.map(month => `<th scope="col" style="width:116px;min-width:116px;text-align:center">${core.monthLabel(month)}</th>`).join('')}<th scope="col" class="eng-undated">Unscheduled</th></tr></thead><tbody>${timeline.entries.map(item => {
+      const id = esc(String(item.id));
+      const runTitle = `${core.CONFIDENCE_LABELS[item.confidence]} · ${item.projectedStartDate || 'Start TBD'} to ${item.projectedEndDate || 'End TBD'}`;
+      return `<tr class="eng-${item.confidence}"><td class="eng-client-cell">${esc(item.organization || 'Client TBD')}</td><td class="eng-opportunity-cell"><button class="eng-forecast-title" onclick="openEngagementDetail('${id}')">${esc(item.title)}</button><small>${esc(core.CONFIDENCE_LABELS[item.confidence])}${!item.projectedStartDate || !item.projectedEndDate ? ' · Run dates TBD' : ''}</small><button class="btn btn-ghost btn-sm" style="margin-top:8px" aria-expanded="${forecastExpanded.has(String(item.id))}" onclick="toggleForecastPayments('${id}')">${forecastExpanded.has(String(item.id)) ? 'Close' : 'Edit plan'}</button></td>${item.cells.map(cell => `<td class="eng-month-cell ${cell.running ? 'running' : ''}" title="${esc(runTitle)}">${cell.running ? `<span class="eng-run-bar" aria-label="${esc(runTitle)}" style="left:${cell.left}%;right:${cell.right}%"></span>` : ''}<button class="eng-receipt ${cell.receipts.length ? '' : 'empty'}" title="Edit receipts for ${esc(item.title)} · ${core.monthLabel(cell.month)}" aria-label="Edit receipts for ${esc(item.title)} in ${core.monthLabel(cell.month)}" onclick="toggleForecastPayments('${id}',true)">${cell.receipts.length ? amount(cell) : '+'}</button>${cell.receipts.length > 1 ? `<small>${cell.receipts.length} payments</small>` : ''}</td>`).join('')}<td class="eng-undated">${core.currency(item.unscheduled)}${item.unscheduledUnknown ? ' + TBD' : ''}${item.outside.length ? `<small>Outside view: ${esc(item.outside.map(payment => `${core.currency(payment.amount)} · ${payment.expectedDate}`).join('; '))}</small>` : ''}</td></tr>${forecastExpanded.has(String(item.id)) ? `<tr class="eng-edit-row"><td colspan="${timeline.months.length + 3}">${cashPlanEditor(item)}</td></tr>` : ''}`;
+    }).join('')}</tbody><tfoot>${Object.entries(timeline.totals).map(([key, values]) => `<tr class="eng-${key}"><th colspan="2" scope="row">${esc(core.CONFIDENCE_LABELS[key])} receipts</th>${values.map(cell => `<td>${amount(cell)}</td>`).join('')}<td></td></tr>`).join('')}</tfoot></table></div>`;
   }
+
+  function confidenceControl(item) {
+    return `<label class="form-group"><span class="form-label">Timeline confidence</span><select class="form-input" aria-label="Timeline confidence for ${esc(item.title)}" onchange="updateForecastField('${esc(String(item.id))}','forecastConfidence',this.value)"><option value="">By engagement stage</option>${Object.entries(window.EngagementCore.CONFIDENCE_LABELS).map(([value,label]) => `<option value="${value}" ${item.forecastConfidence === value ? 'selected' : ''}>${esc(label)}</option>`).join('')}</select></label>`;
+  }
+
+  function cashPlanEditor(item) {
+    return `<div class="eng-cash-editor"><div class="eng-form-grid"><label class="form-group"><span class="form-label">Projected start</span>${forecastField(item,'projectedStartDate','date',item.projectedStartDate,'Projected start')}</label><label class="form-group"><span class="form-label">Projected end</span>${forecastField(item,'projectedEndDate','date',item.projectedEndDate,'Projected end')}</label>${confidenceControl(item)}<label class="form-group"><span class="form-label">Expected fees · USD</span>${forecastField(item,'expectedValue','number',item.expectedValue,'Expected fees')}</label><label class="form-group"><span class="form-label">Stage</span><select class="form-input" aria-label="Stage for ${esc(item.title)}" onchange="updateForecastField('${esc(String(item.id))}','status',this.value)">${statusOptions(item.status)}</select></label></div>${paymentEditor(item)}</div>`;
+  }
+
+  window.setCashTimelineStart = function(value) {
+    if (!window.EngagementCore.monthKeys(value).length) return;
+    timelineStart = value; renderEngagements();
+  };
+  window.setCashTimelineMonths = function(value) {
+    if (![6,12,18].includes(Number(value))) return;
+    timelineMonths = Number(value); renderEngagements();
+  };
+  window.shiftCashTimeline = function(amount) {
+    const date = new Date(`${timelineStart}-01T12:00:00Z`); date.setUTCMonth(date.getUTCMonth() + amount);
+    timelineStart = date.toISOString().slice(0,7); renderEngagements();
+  };
 
   function paymentEditor(value) {
     const item = window.EngagementCore.withDefaults(value);
@@ -246,8 +302,9 @@
 
   window.updateForecastField = function(id, field, value) {
     const item = findEngagement(id), core = window.EngagementCore;
-    if (!item || !['projectedStartDate', 'projectedEndDate', 'expectedValue', 'status'].includes(field)) return;
-    const clean = field === 'expectedValue' ? core.money(value) : field === 'status' ? value : core.dateOnly(value);
+    if (!item || !['projectedStartDate', 'projectedEndDate', 'expectedValue', 'status', 'forecastConfidence'].includes(field)) return;
+    if (field === 'forecastConfidence' && value && !core.CONFIDENCE_LABELS[value]) return;
+    const clean = field === 'expectedValue' ? core.money(value) : ['status','forecastConfidence'].includes(field) ? value : core.dateOnly(value);
     if (value && (clean === null || clean === '' || (field === 'status' && !core.STATUS_LABELS[value]))) { toast('Enter a valid value.'); renderEngagements(); return; }
     const start = field === 'projectedStartDate' ? clean : item.projectedStartDate;
     const end = field === 'projectedEndDate' ? clean : item.projectedEndDate;
@@ -256,9 +313,9 @@
     saveForecast(item);
   };
 
-  window.toggleForecastPayments = function(id) {
+  window.toggleForecastPayments = function(id, open) {
     id = String(id);
-    if (forecastExpanded.has(id)) forecastExpanded.delete(id); else forecastExpanded.add(id);
+    if (forecastExpanded.has(id) && !open) forecastExpanded.delete(id); else forecastExpanded.add(id);
     renderEngagements();
   };
   window.addEngagementPayment = function(id) {
@@ -283,7 +340,7 @@
     saveForecast(item);
   };
   window.copyEngagementForecast = async function() {
-    const recap = window.EngagementCore.forecastRecap(displayedForecast);
+    const recap = window.EngagementCore.cashTimelineExport(displayedForecast, timelineStart, timelineMonths);
     try {
       if (navigator.clipboard?.write && window.ClipboardItem) await navigator.clipboard.write([new ClipboardItem({'text/html': new Blob([recap.html], {type: 'text/html'}), 'text/plain': new Blob([recap.text], {type: 'text/plain'})})]);
       else { await navigator.clipboard.writeText(recap.text); toast('Copied as plain text.'); return; }
@@ -291,8 +348,8 @@
     } catch (_) { toast('Clipboard unavailable. Download the CSV instead.'); }
   };
   window.downloadEngagementForecast = function() {
-    const url = URL.createObjectURL(new Blob(['\uFEFF' + window.EngagementCore.forecastCsv(displayedForecast)], {type: 'text/csv;charset=utf-8'}));
-    const link = document.createElement('a'); link.href = url; link.download = `opportunity-forecast-${today()}.csv`; link.click();
+    const url = URL.createObjectURL(new Blob(['\uFEFF' + window.EngagementCore.cashTimelineExport(displayedForecast, timelineStart, timelineMonths).csv], {type: 'text/csv;charset=utf-8'}));
+    const link = document.createElement('a'); link.href = url; link.download = `cash-flow-${timelineStart}.csv`; link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
@@ -303,7 +360,7 @@
     document.getElementById('engagementsSidebar').innerHTML = `<div class="sidebar-section"><div class="sidebar-label">Engagements</div>
       ${filters.map(([value, label]) => {
         const count = value === 'all' ? source.length
-          : value === 'open' ? source.filter(item => item.status !== 'closed' && (!forecast || item.status !== 'on_hold')).length
+          : value === 'open' ? source.filter(item => item.status !== 'closed').length
           : value === 'groups' ? source.filter(item => item.isGroup).length
           : value === 'ungrouped' ? source.filter(item => !item.isGroup && !item.groupId).length
           : source.filter(item => item.status === value).length;
@@ -491,7 +548,7 @@
           <div class="eng-focus"><div class="eng-section-title">${item.isGroup ? 'Shared context' : 'Current state'}</div><textarea class="form-input" onblur="updateEngagement('${esc(String(item.id))}','currentState',this.value,false)">${esc(item.currentState)}</textarea></div>
           <div class="eng-focus"><div class="eng-section-title">Next milestone</div><div class="eng-milestone"><input class="form-input" value="${esc(item.nextMilestone)}" placeholder="Define the next milestone" onblur="updateEngagement('${esc(String(item.id))}','nextMilestone',this.value,false)"><input class="form-input" type="date" value="${esc(item.nextMilestoneDate)}" style="margin-top:8px" onchange="updateEngagement('${esc(String(item.id))}','nextMilestoneDate',this.value)"></div></div>
         </div>
-        ${!item.isGroup ? `<div class="eng-section"><div class="eng-section-title">Forecast · USD</div><div class="eng-form-grid"><label class="form-group"><span class="form-label">Projected start</span>${forecastField(item, 'projectedStartDate', 'date', item.projectedStartDate || '', 'Projected start')}</label><label class="form-group"><span class="form-label">Projected end</span>${forecastField(item, 'projectedEndDate', 'date', item.projectedEndDate || '', 'Projected end')}</label><label class="form-group"><span class="form-label">Expected fees</span>${forecastField(item, 'expectedValue', 'number', item.expectedValue ?? '', 'Expected fees')}</label></div>${paymentEditor(item)}</div>` : ''}
+        ${!item.isGroup ? `<div class="eng-section"><div class="eng-section-title">Cash-flow plan · USD</div>${cashPlanEditor(item)}</div>` : ''}
         <div class="eng-form-grid eng-section"><label class="form-group"><span class="form-label">Opportunity / problem</span><textarea class="form-input" rows="4" onblur="updateEngagement('${esc(String(item.id))}','opportunity',this.value,false)">${esc(item.opportunity)}</textarea></label><label class="form-group"><span class="form-label">Commercial hypothesis / estimate</span><textarea class="form-input" rows="4" onblur="updateEngagement('${esc(String(item.id))}','commercial',this.value,false)">${esc(item.commercial)}</textarea></label></div>
         <div class="eng-section"><div class="eng-section-title">Linked people</div><div class="eng-contact-list">${item.contactIds.length ? item.contactIds.map(contactId => { const contact = contactFor(contactId); return `<span class="eng-contact-chip"><button style="border:0;background:transparent;padding:0;cursor:pointer;color:inherit" onclick="openEngagementContact('${esc(String(contactId))}')">${esc(contact ? contact.name : `Contact ${contactId}`)}</button><button style="border:0;background:transparent;cursor:pointer;color:var(--muted)" title="Remove" onclick="removeEngagementContact('${esc(String(item.id))}','${esc(String(contactId))}')">&times;</button></span>`; }).join('') : '<span class="eng-subtle">No linked people</span>'}</div><div class="eng-add-contact"><input class="form-input" id="engDetailContact" list="engDetailContactOptions" placeholder="Search contacts"><button class="btn btn-ghost" onclick="addEngagementContact('${esc(String(item.id))}')">Add</button></div><datalist id="engDetailContactOptions">${contactOptions()}</datalist></div>
         <div class="eng-section"><div class="eng-section-title">Drive / working documents</div><div class="eng-link-list">${links || '<span class="eng-subtle">No working links</span>'}</div><textarea class="form-input" rows="3" style="margin-top:10px" placeholder="Label | https://..." onblur="updateEngagement('${esc(String(item.id))}','links',this.value,false)">${esc(item.links)}</textarea></div>
