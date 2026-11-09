@@ -15,6 +15,20 @@ Saving, clearing, leaving the page, or switching profiles cancels the current
 session. Late recognition callbacks cannot refill the draft or affect another
 contact. Existing note storage and cloud synchronization are unchanged.
 
+## Summarizing a draft
+
+After stopping dictation, Summarize sends only the current draft text to the
+existing `/api/coach` server endpoint using the app's configured Anthropic key.
+This is opt-in per click and also works for typed notes. No audio, contact
+history, or other profile data is included. The summary prioritizes memorable
+personal details, professional context, and explicit next steps in 3-4 bullets.
+
+The result is previewed without changing the draft. Use summary puts it into the
+editor; Restore raw draft restores the original rich text until the draft has
+been edited or saved. Neither action saves a contact. Responses received after
+navigation or draft changes are discarded. A timeout or provider failure leaves
+the draft intact. This feature does not transcribe uploaded audio files.
+
 ## Verification
 
 Run `node --test test/contact-dictation.test.js`. For a real microphone check on
