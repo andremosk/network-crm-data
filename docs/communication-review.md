@@ -1,5 +1,9 @@
 # Communication Review
 
+The scheduled/manual Gmail check now uses [business-aware review](business-email-review.md),
+including small group introductions and linked contact/engagement proposals. The
+normalized ingestion endpoint below remains the backward-compatible deterministic API.
+
 ## Scheduled checks on Andre's Mac
 
 Run `python3 scripts/setup_gmail_sync.py` after deploying the backend. It reuses the private `messages-sync.json` key, installs a separate LaunchAgent at 11 AM, 3 PM, and 9:15 PM local time, and leaves SMS scheduling in place. The Mac must be online; launchd coalesces missed calendar runs when it wakes. The installed helper uses a lock to prevent overlapping local runs.
@@ -8,9 +12,9 @@ Each run processes up to four review batches. Once daily it also processes up to
 
 Communication Review shows one combined in-app notification for newly seen SMS/email proposal IDs when pending data refreshes. Previously seen items do not notify again just because other items were dismissed. This is an in-app notice, not a desktop push notification.
 
-Email review prefers the plain-text MIME body and falls back to HTML text when needed. It excludes empty bodies rather than generating subject-only notes. Proposed notes contain body excerpts, not an AI-generated interpretation.
+Email review prefers the plain-text MIME body and falls back to HTML text when needed. It excludes empty bodies rather than generating subject-only notes. The Gmail checker now proposes concise AI-assessed notes grounded in exact source quotes.
 
-Review processes 25 messages per click by default. If Gmail returns more pages, the next click resumes that page in the same fixed date window. The completed checkpoint advances only after the last page; errors leave the checkpoint intact. The review status explicitly reports when more mail remains. Previously skipped messages from older checkpoints and previously queued proposals are not automatically repaired.
+Review processes 25 messages per click by default, subject to a time budget. If Gmail returns more pages, the next click resumes that page in the same fixed date window. The completed checkpoint advances only after the last page; errors leave it intact. The business-screening upgrade triggers one bounded recent-window rescan, preserving existing proposals and approval/ignore decisions.
 
 Inbound email can also qualify through a specific personal conversation opener (for example a vacation, honeymoon, new baby, job change, or retirement). For a `Proposed new time:` calendar reply, only a quoted attendee comment containing that context qualifies; plain rescheduling does not. The comment is used as evidence instead of the calendar/Zoom boilerplate. A direct human sender may pass the calendar wrapper's Auto-Submitted header, while bulk/list/no-reply exclusions and existing-contact matching still apply. Proposals require approval and do not invent follow-up dates. This affects new scans, not previously skipped mail outside the sync window.
 
@@ -42,6 +46,6 @@ The initial deterministic rules recognize reconnecting, connecting, setting up t
 
 `POST /api/crm/gmail-email-enrichment` scans the next batch of up to 100 direct Gmail conversations for contacts with no saved email address. It only proposes an email when the Gmail display name is a unique full-name match to one such contact. The equivalent private scheduler endpoint is `POST /api/automation/gmail-email-enrichment`. These proposals only save a currently blank email field when approved; they never overwrite an existing email or create a contact. Run the enrichment action again to process the next batch until it reports that the archive scan is complete.
 
-The server needs these Vercel environment variables: `GOOGLE_GMAIL_CLIENT_ID`, `GOOGLE_GMAIL_CLIENT_SECRET`, `GOOGLE_GMAIL_REFRESH_TOKEN`, and `NETWORK_CRM_GMAIL_MAILBOX`. The refresh token must have Gmail read access in addition to the existing draft-creation access. Gmail is read server-side; messages are evaluated by deterministic rules and are never sent to an LLM. The sync starts with a 14-day lookback, stores a per-mailbox checkpoint, and deduplicates by Gmail message ID.
+The server needs these Vercel environment variables: `GOOGLE_GMAIL_CLIENT_ID`, `GOOGLE_GMAIL_CLIENT_SECRET`, `GOOGLE_GMAIL_REFRESH_TOKEN`, `NETWORK_CRM_GMAIL_MAILBOX`, and the existing `ANTHROPIC_API_KEY`. The refresh token must have Gmail read access in addition to draft-creation access. Gmail is read server-side; eligible new contributions are assessed by the configured AI provider. The sync starts with a 14-day lookback, stores a per-mailbox checkpoint and per-message receipts, and deduplicates by Gmail message ID.
 
 The Mac scheduler above calls the protected automation endpoints. No Vercel cron or Gmail watch/push is configured by this setup.

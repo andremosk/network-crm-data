@@ -3,6 +3,7 @@ const { ensureSchema, getSql } = require("../../lib/crm-db");
 const { parseBody } = require("../../lib/text-summaries");
 const { createContactPayload, sanitizeProposal } = require("../../lib/communication-proposals");
 const { contactStatusPatch } = require('../../lib/review-contact-status');
+const { applyEngagement } = require('../../lib/communication-engagements');
 
 function noteDate(value) {
   const date = new Date(value);
@@ -21,7 +22,7 @@ function escapeHtml(value) {
 async function listProposals(sql) {
   return sql`
     SELECT p.id, p.source, p.source_message_id, p.recipient_email, p.occurred_at,
-           p.proposal_type, p.matched_contact_id, p.evidence, p.proposed, p.created_at,
+           p.proposal_type, p.matched_contact_id, p.evidence, p.proposed, p.review_context, p.created_at,
            COALESCE(r.payload->>'name', '') AS matched_contact_name
     FROM crm_communication_proposals p
     LEFT JOIN crm_records r
@@ -34,7 +35,7 @@ async function listProposals(sql) {
 
 async function loadPending(sql, id) {
   const rows = await sql`
-    SELECT id, proposal_type, matched_contact_id, occurred_at, proposed
+    SELECT id, proposal_type, matched_contact_id, occurred_at, proposed, review_context
     FROM crm_communication_proposals
     WHERE id = ${id} AND status = 'pending'
   `;
@@ -64,6 +65,8 @@ async function editProposal(sql, id, type, proposed) {
 
 async function applyCreate(sql, draft, proposed) {
   const template = createContactPayload(proposed, 0);
+  const clean = sanitizeProposal('create_contact', proposed);
+  if (clean.reminder) template.communicationReminders = [{ ...clean.reminder, sourceKey: draft.review_context?.messageId || `communication:${draft.id}` }];
   delete template.id;
   const rows = await sql`
     WITH target AS MATERIALIZED (
@@ -75,13 +78,16 @@ async function applyCreate(sql, draft, proposed) {
       FROM target
     ), next_id AS MATERIALIZED (
       SELECT COALESCE(MAX(record_id::BIGINT) FILTER (WHERE record_id ~ '^[0-9]+$'), 0) + 1 AS value
-      FROM crm_records CROSS JOIN id_lock
-      WHERE record_type = 'contact'
+      FROM (SELECT record_id FROM crm_records WHERE record_type = 'contact'
+        UNION ALL SELECT record_id FROM crm_deleted_records WHERE record_type = 'contact') ids CROSS JOIN id_lock
     ), inserted AS (
       INSERT INTO crm_records (record_type, record_id, payload)
       SELECT 'contact', next_id.value::TEXT,
              jsonb_set(${JSON.stringify(template)}::jsonb, '{id}', to_jsonb(next_id.value), true)
       FROM target CROSS JOIN next_id
+      WHERE NOT EXISTS (SELECT 1 FROM crm_records WHERE record_type = 'contact'
+        AND LOWER(COALESCE(payload->>'email', '')) = ${String(template.email).toLowerCase()}
+        AND COALESCE(payload->>'deleted', 'false') <> 'true' AND COALESCE(payload->>'archived', 'false') <> 'true')
       RETURNING record_id
     ), applied AS (
       UPDATE crm_communication_proposals
@@ -97,7 +103,9 @@ async function applyCreate(sql, draft, proposed) {
 
 async function applyUpdate(sql, draft, proposed) {
   const clean = sanitizeProposal("update_contact", proposed);
-  const note = clean.note ? `${noteDate(draft.occurred_at)}: <strong>Email</strong> — ${escapeHtml(clean.note)}` : "";
+  const sourceKey = draft.review_context?.messageId || `communication:${draft.id}`;
+  const noteText = [clean.note, clean.nextAction ? `Next action: ${clean.nextAction}` : '', clean.reminder ? `Reminder ${clean.reminder.date}: ${clean.reminder.text}` : ''].filter(Boolean).join(' ');
+  const note = noteText ? `${noteDate(draft.occurred_at)}: <strong>Email</strong> — ${escapeHtml(noteText)}` : "";
   const rows = await sql`
     WITH target AS MATERIALIZED (
       SELECT id, matched_contact_id
@@ -113,6 +121,7 @@ async function applyUpdate(sql, draft, proposed) {
                 ELSE (r.payload->>'notes') || E'\n' || ${note}
               END), true)
             ELSE r.payload END
+          ) || jsonb_build_object('communicationReminders', COALESCE(r.payload->'communicationReminders', '[]'::jsonb) || ${JSON.stringify(clean.reminder ? [{ ...clean.reminder, sourceKey }] : [])}::jsonb
           ) || jsonb_strip_nulls(jsonb_build_object(
             'lastContact', CASE
               WHEN ${clean.lastContact} <> '' AND ${clean.lastContact} > COALESCE(r.payload->>'lastContact', '') THEN ${clean.lastContact}
@@ -120,10 +129,11 @@ async function applyUpdate(sql, draft, proposed) {
             'email', CASE
               WHEN ${clean.email} <> '' AND COALESCE(r.payload->>'email', '') = '' THEN ${clean.email}
               ELSE NULL END,
-            'status', CASE WHEN ${clean.status || ""} = 'follow_up' THEN 'follow_up' ELSE NULL END,
-            'followUp', CASE WHEN ${clean.status || ""} = 'follow_up' THEN true ELSE NULL END,
+            'status', CASE WHEN ${Boolean(clean.reminder)} AND COALESCE(r.payload->>'followUpDate', '') <> '' THEN NULL WHEN ${clean.status || ""} = 'follow_up' THEN 'follow_up' ELSE NULL END,
+            'followUp', CASE WHEN ${Boolean(clean.reminder)} AND COALESCE(r.payload->>'followUpDate', '') <> '' THEN NULL WHEN ${clean.status || ""} = 'follow_up' THEN true ELSE NULL END,
             'followUpDate', CASE
               WHEN ${clean.status || ""} <> 'follow_up' OR ${clean.followUpDate} = '' THEN NULL
+              WHEN ${Boolean(clean.reminder)} AND COALESCE(r.payload->>'followUpDate', '') <> '' THEN NULL
               WHEN COALESCE(r.payload->>'followUpDate', '') > ${clean.followUpDate} THEN r.payload->>'followUpDate'
               ELSE ${clean.followUpDate} END
           )) || ${JSON.stringify(contactStatusPatch(clean.contactUpdate))}::jsonb,
@@ -131,6 +141,7 @@ async function applyUpdate(sql, draft, proposed) {
           updated_at = NOW()
       FROM target
       WHERE r.record_type = 'contact' AND r.record_id = target.matched_contact_id
+        AND COALESCE(r.payload->>'deleted', 'false') <> 'true' AND COALESCE(r.payload->>'archived', 'false') <> 'true'
       RETURNING r.record_id
     ), applied AS (
       UPDATE crm_communication_proposals
@@ -153,6 +164,7 @@ function createHandler(dependencies = {}) {
   const edit = dependencies.editProposal || editProposal;
   const create = dependencies.applyCreate || applyCreate;
   const update = dependencies.applyUpdate || applyUpdate;
+  const engagement = dependencies.applyEngagement || applyEngagement;
 
   return async function handler(request, response) {
     if (!auth(request)) return response.status(401).json({ error: { message: "Unauthorized" } });
@@ -184,6 +196,11 @@ function createHandler(dependencies = {}) {
         return response.status(400).json({ error: { message: "Name and email are required to create a contact." } });
       }
       if (draft.proposal_type === "no_action") return response.status(400).json({ error: { message: "This proposal has no CRM action." } });
+      if (['create_engagement', 'update_engagement'].includes(draft.proposal_type)) {
+        const engagementId = await engagement(sql, draft, proposed);
+        return response.status(engagementId ? 200 : 409).json(engagementId ? { status: 'applied', engagementId }
+          : { error: { message: 'Engagement changed, already exists, or is unavailable. Choose an existing engagement and retry.' } });
+      }
       const contactId = draft.proposal_type === "create_contact"
         ? await create(sql, draft, proposed)
         : await update(sql, draft, proposed);

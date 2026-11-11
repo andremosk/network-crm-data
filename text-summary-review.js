@@ -94,6 +94,8 @@
         .text-review-badge.visible { display:inline-flex; }
         .text-review-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:16px; }
         .text-review-header-actions { display:flex; gap:7px; align-items:center; }
+        .text-review-section-title { gap:10px; flex-wrap:wrap; overflow-wrap:anywhere; }
+        .communication-review-field { min-width:0; }
         .text-review-header-actions button[disabled] { cursor:wait; opacity:.65; }
         .email-review-status { margin:-5px 0 14px; padding:9px 11px; border:1px solid var(--border); border-radius:6px; background:var(--surface2); color:var(--muted); font-size:12px; line-height:1.45; }
         .email-review-status.error { border-color:#e6c1c1; background:#fff7f7; color:#a33f3f; }
@@ -121,6 +123,8 @@
         .communication-review-field label { display:block; margin-bottom:4px; color:var(--muted); font-size:10px; font-weight:700; text-transform:uppercase; }
         .review-follow-up-presets { display:flex; flex-wrap:wrap; gap:6px; }
         @media (max-width:700px) {
+          .text-review-header { flex-direction:column; }
+          .text-review-header-actions { flex-wrap:wrap; }
           .text-review-trigger { grid-column:auto; grid-row:auto; }
           .text-review-controls { grid-template-columns:1fr; }
           .text-review-actions { justify-content:flex-start; }
@@ -242,14 +246,16 @@
   }
 
   function proposalTypeLabel(type) {
-    return type === "create_contact" ? "Create contact" : type === "update_contact" ? "Update contact" : "No CRM action";
+    return ({create_contact:'Create contact',update_contact:'Update contact',create_engagement:'Create pursuit',update_engagement:'Update engagement'})[type] || 'No CRM action';
   }
 
   function renderProposal(item) {
     const proposed = item.proposed || {};
     const create = item.proposal_type === "create_contact";
+    const engagement = item.proposal_type.endsWith('_engagement');
+    if (engagement) return renderEngagementProposal(item);
     const displayName = create ? proposed.name : (item.matched_contact_name || "CRM contact");
-    const field = (id, label, value, extra = "") => `<div class="communication-review-field ${extra}"><label for="comm_${id}_${item.id}">${label}</label><input class="form-input" id="comm_${id}_${item.id}" value="${escapeHtml(value)}"></div>`;
+    const field = (id, label, value, extra = "") => `<div class="communication-review-field ${extra}"><label for="comm_${id}_${item.id}">${label}</label><input class="form-input" ${id.endsWith('Date') ? 'type="date"' : ''} id="comm_${id}_${item.id}" value="${escapeHtml(value)}"></div>`;
     return `<div class="text-review-row" id="communicationProposal_${item.id}">
       <div class="text-review-row-head">
         <div>
@@ -260,6 +266,7 @@
         <div class="text-review-contact">Awaiting approval</div>
       </div>
       <div class="communication-review-evidence">${escapeHtml(item.evidence)}</div>
+      ${item.review_context?.matchMethod === 'unique_name' ? '<div class="text-review-meta">Name match · verify contact before applying</div>' : ''}
       <details class="communication-review-fields" open>
         <summary>Proposed CRM fields</summary>
         <div class="communication-review-grid">
@@ -267,6 +274,8 @@
           <div class="communication-review-field"><label for="comm_tier_${item.id}">Relationship</label><select class="form-input" id="comm_tier_${item.id}">${[1,2,3,4].map((tier) => `<option value="${tier}" ${Number(proposed.tier) === tier ? "selected" : ""}>T${tier}</option>`).join("")}</select></div>` : ""}
           ${!create && proposed.email ? field("email", "Email to save", proposed.email, "wide") : ""}
           ${statusControls(`email:${item.id}`, `comm_${item.id}`, contactById(item.matched_contact_id), proposed.contactUpdate || proposed)}
+          ${proposed.reminder ? `${field('reminderDate','Referral reminder date', proposed.reminder.date)}${field('reminderText','Reminder',proposed.reminder.text, 'wide')}` : ''}
+          ${proposed.nextAction ? field('nextAction','Next action',proposed.nextAction,'wide') : ''}
           <div class="communication-review-field wide"><label for="comm_note_${item.id}">Initial note</label><textarea class="text-review-summary" id="comm_note_${item.id}">${escapeHtml(proposed.notes || proposed.note)}</textarea></div>
         </div>
       </details>
@@ -276,6 +285,31 @@
         ${item.proposal_type !== "no_action" ? `<button class="btn btn-primary btn-sm" onclick="applyCommunicationProposal(${item.id})">${create ? "Create" : "Apply"}</button>` : ""}
       </div>
     </div>`;
+  }
+
+  function renderEngagementProposal(item) {
+    const p = item.proposed || {};
+    const field = (key, label, value, textarea = false) => `<div class="communication-review-field ${textarea ? 'wide' : ''}"><label for="comm_${key}_${item.id}">${label}</label>${textarea ? `<textarea class="text-review-summary" id="comm_${key}_${item.id}">${escapeHtml(value)}</textarea>` : `<input class="form-input" ${key.endsWith('Date') ? 'type="date"' : ''} id="comm_${key}_${item.id}" value="${escapeHtml(value)}">`}</div>`;
+    return `<div class="text-review-row" id="communicationProposal_${item.id}"><div class="text-review-row-head"><div><div class="text-review-name">${escapeHtml(p.title || p.organization || 'Engagement')}</div><div class="communication-review-labels"><span class="communication-review-label">Email</span><span class="communication-review-label">${proposalTypeLabel(item.proposal_type)}</span></div></div><div class="text-review-contact">Awaiting approval</div></div>
+      <div class="communication-review-evidence">${escapeHtml(item.evidence)}</div>
+      <details class="communication-review-fields" open><summary>Proposed engagement fields</summary><div class="communication-review-grid">
+      <div class="communication-review-field wide"><label for="comm_engagementId_${item.id}">Destination</label><select class="form-input" id="comm_engagementId_${item.id}">${item.proposal_type === 'create_engagement' ? '<option value="">New pursuit</option>' : ''}${engagementChoices.map(e => `<option value="${escapeHtml(e.id)}" ${String(e.id) === String(p.engagementId) ? 'selected' : ''}>${escapeHtml(e.title)}${e.organization ? ` · ${escapeHtml(e.organization)}` : ''}</option>`).join('')}</select></div>
+      ${field('title','Title',p.title)}${field('organization','Organization',p.organization)}${field('currentState','Current state',p.currentState,true)}${field('opportunity','Opportunity / problem',p.opportunity,true)}${field('nextMilestone','Next milestone',p.nextMilestone)}${field('nextMilestoneDate','Milestone date',p.nextMilestoneDate)}${field('note','Timeline note',p.note,true)}
+      </div></details><div class="text-review-actions"><button class="btn btn-ghost btn-sm" onclick="ignoreCommunicationProposal(${item.id})">Ignore</button><button class="btn btn-ghost btn-sm" onclick="editCommunicationProposal(${item.id})">Save Edit</button><button class="btn btn-primary btn-sm" onclick="applyCommunicationProposal(${item.id})">${item.proposal_type === 'create_engagement' ? 'Create / Apply' : 'Apply'}</button></div></div>`;
+  }
+
+  function renderEmailGroups() {
+    const groups = new Map();
+    for (const item of pendingProposals) {
+      const key = item.review_context?.messageId || `legacy:${item.id}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(item);
+    }
+    return [...groups.values()].map(items => {
+      const context = items[0].review_context;
+      const url = context?.sourceUrl && /^https:\/\/mail\.google\.com\//.test(context.sourceUrl) ? context.sourceUrl : '';
+      return `<section class="text-review-section">${context?.messageId ? `<div class="text-review-section-title"><span>${escapeHtml(context.subject || 'Business email')} · ${items.length} proposed action${items.length === 1 ? '' : 's'}</span>${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">View email</a>` : ''}</div>` : ''}${items.map(renderProposal).join('')}</section>`;
+    }).join('');
   }
 
   function renderTextReviewModal() {
@@ -291,15 +325,17 @@
     ${total ? `
       ${pendingConversations.length ? `<section class="text-review-section"><div class="text-review-section-title"><span>Needs matching</span><span>${pendingConversations.length}</span></div><div class="text-review-list">${pendingConversations.map(renderConversation).join("")}</div></section>` : ""}
       ${pendingSummaries.length ? `<section class="text-review-section"><div class="text-review-section-title"><span>Summary review</span><span>${pendingSummaries.length}</span></div><div class="text-review-list">${pendingSummaries.map(item => renderSummary(item)).join("")}</div></section>` : ""}
-      ${pendingProposals.length ? `<section class="text-review-section"><div class="text-review-section-title"><span>Email proposals</span><span>${pendingProposals.length}</span></div><div class="text-review-list">${pendingProposals.map(renderProposal).join("")}</div></section>` : ""}
+      ${pendingProposals.length ? `<section class="text-review-section"><div class="text-review-section-title"><span>Email proposals</span><span>${pendingProposals.length}</span></div><div class="text-review-list">${renderEmailGroups()}</div></section>` : ""}
       <datalist id="textReviewContacts">${buildContactChoices()}</datalist>
     ` : `<div class="text-review-empty">No communications need attention.</div>`}`;
   }
 
   window.renderTextSummarySection = function renderTextSummarySection(contactId) {
     const items = summariesForContact(contactId);
-    if (!items.length) return "";
-    return `<section class="text-summary-review" aria-label="Text summaries awaiting review">
+    const reminders = contactById(contactId)?.communicationReminders || [];
+    const reminderHtml = reminders.length ? `<section class="text-summary-review"><div class="sec-title">Referral follow-ups</div>${reminders.map(reminder => `<div class="text-review-row"><strong>${escapeHtml(reminder.date)}</strong> · ${escapeHtml(reminder.text)}</div>`).join('')}</section>` : '';
+    if (!items.length) return reminderHtml;
+    return reminderHtml + `<section class="text-summary-review" aria-label="Text summaries awaiting review">
       <div class="text-summary-heading"><div><div class="sec-title" style="margin:0">Text summaries</div><div class="text-summary-subtitle">Review before adding these to Notes</div></div><span class="text-summary-count">${items.length}</span></div>
       ${items.map(item => renderSummary(item, 'textSummary')).join("")}
     </section>`;
@@ -367,7 +403,7 @@
   window.refreshEmailReview = async function refreshEmailReview() {
     if (emailReviewBusy) return;
     emailReviewBusy = "review";
-    emailReviewStatus = { kind: "info", message: "Checking a small recent batch of inbox email against your CRM contacts…" };
+    emailReviewStatus = { kind: "info", message: "Checking recent email for business and relationship updates…" };
     renderTextReviewModal();
     try {
       const response = await fetch("/api/crm/gmail-review-sync", { method: "POST" });
@@ -382,7 +418,7 @@
         kind: "info",
         message: data.proposed
           ? `${data.proposed} email proposal${data.proposed === 1 ? " is" : "s are"} ready for review. Checked ${scanned} recent email${scanned === 1 ? "" : "s"}.`
-          : `Checked ${scanned} recent email${scanned === 1 ? "" : "s"}. ${skipped} did not meet the direct relationship rules${duplicates ? `; ${duplicates} was already queued` : ""}.`
+          : `Checked ${scanned} recent email${scanned === 1 ? "" : "s"}. ${skipped} had no useful business or relationship update${duplicates ? `; ${duplicates} were already reviewed` : ""}.`
       };
       emailReviewStatus.message += more;
       if (typeof window.toast === "function") {
@@ -464,8 +500,12 @@
     const item = pendingProposals.find((candidate) => Number(candidate.id) === Number(id));
     if (!item) return null;
     const value = (name) => document.getElementById(`comm_${name}_${id}`)?.value.trim() || "";
+    if (item.proposal_type.endsWith('_engagement')) return { ...item.proposed,
+      ...Object.fromEntries(['engagementId','title','organization','currentState','opportunity','nextMilestone','nextMilestoneDate','note'].map(key => [key, value(key)])) };
     const manual = contactReviewUpdates.get(`email:${id}`) || item.proposed?.contactUpdate;
-    const common = { note: value("note"), notes: value("note"), email: value("email"), status: manual ? null : item.proposed?.status, followUpDate: manual ? '' : item.proposed?.followUpDate || '', lastContact: item.proposed?.lastContact || "", ...(manual ? {contactUpdate: manual} : {}) };
+    const common = { note: value("note"), notes: value("note"), email: value("email"), status: manual ? null : item.proposed?.status, followUpDate: manual ? '' : item.proposed?.followUpDate || '', lastContact: item.proposed?.lastContact || "", ...(manual ? {contactUpdate: manual} : {}),
+      ...(item.proposed?.reminder ? {reminder:{date:value('reminderDate'),text:value('reminderText')}} : {}),
+      ...(item.proposed?.nextAction ? {nextAction:value('nextAction')} : {}) };
     return item.proposal_type === "create_contact" ? {
       ...common, name: value("name"), email: value("email"), company: value("company"), position: value("position"), tier: Number(value("tier")) || 3
     } : common;

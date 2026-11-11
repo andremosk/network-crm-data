@@ -24,12 +24,12 @@ function gmailMessage(overrides = {}) {
   };
 }
 
-test("normalizes only direct, non-automated inbound Gmail messages", () => {
+test("normalizes small human inbound threads, including copied recipients", () => {
   const parsed = normalizedInboundMessage(gmailMessage(), "andre@example.com");
   assert.equal(parsed.sender.email, "lisa@cassidylab.com");
   assert.equal(parsed.recipients.length, 1);
   assert.match(parsed.bodyText, /You came to mind/);
-  assert.equal(normalizedInboundMessage(gmailMessage({ payload: { ...gmailMessage().payload, headers: [...gmailMessage().payload.headers, { name: "Cc", value: "other@example.com" }] } }), "andre@example.com"), null);
+  assert.equal(normalizedInboundMessage(gmailMessage({ payload: { ...gmailMessage().payload, headers: [...gmailMessage().payload.headers, { name: "Cc", value: "other@example.com" }] } }), "andre@example.com").recipients.length, 2);
   assert.equal(normalizedInboundMessage(gmailMessage({ payload: { ...gmailMessage().payload, headers: [...gmailMessage().payload.headers, { name: "List-Id", value: "newsletter.example" }] } }), "andre@example.com"), null);
 });
 
@@ -48,7 +48,7 @@ test('allows a human calendar comment through the automated wrapper guard, but r
   assert.equal(normalizedInboundMessage({ ...original, payload: { ...payload, headers: payload.headers.map(h => h.name === 'From' ? { ...h, value: 'noreply@example.com' } : h) } }, 'andre@example.com'), null);
 });
 
-test("Gmail review sync proposes only a known contact and deduplicates source messages", async () => {
+test("Gmail business review deduplicates source messages and preserves useful personal openers", async () => {
   const stored = new Set();
   const saved = [];
   const result = await runGmailReviewSync({
@@ -56,6 +56,10 @@ test("Gmail review sync proposes only a known contact and deduplicates source me
     env: { NETWORK_CRM_GMAIL_MAILBOX: "andre@example.com" },
     now: new Date("2026-08-31T15:00:00Z"),
     dependencies: {
+      loadEngagementContext: async () => [],
+      alreadyReviewed: async (_sql, id) => stored.has(id),
+      findUniqueContactByName: async () => null,
+      assessEmail: async message => ({ relevant: message.sender.email === 'lisa@cassidylab.com', actions: [{kind:'contact',personEmail:'lisa@cassidylab.com',note:'Lisa shared useful AI webinars and a personal check-in.',evidence:'You came to mind when I saw these AI webinars.'}] }),
       getAccessToken: async () => "access-token",
       loadSyncState: async () => null,
       listMessages: async () => ({ messages: [{ id: "gmail-123" }, { id: "unknown-456" }, { id: "gmail-123" }] }),
@@ -63,18 +67,17 @@ test("Gmail review sync proposes only a known contact and deduplicates source me
         ? gmailMessage({ id, payload: { ...gmailMessage().payload, headers: [{ name: "From", value: "Unknown <unknown@example.com>" }, { name: "To", value: "andre@example.com" }, { name: "Subject", value: "Checking in" }] } })
         : gmailMessage(),
       findContactByEmail: async (_sql, email) => email === "lisa@cassidylab.com" ? { id: "55", name: "Lisa Cassidy" } : null,
-      insertProposal: async (_sql, proposal) => {
-        if (stored.has(proposal.sourceHash)) return "duplicate";
-        stored.add(proposal.sourceHash);
-        saved.push(proposal);
-        return "created";
+      saveBusinessReview: async (_sql, id, proposals) => {
+        stored.add(id);
+        saved.push(...proposals);
+        return {claimed:1,inserted:proposals.length};
       },
       saveSyncState: async () => {}
     }
   });
   assert.deepEqual(result, { scanned: 3, proposed: 1, approximated: 0, duplicates: 1, skipped: 1, has_more: false });
   assert.equal(saved[0].matchedContactId, "55");
-  assert.match(saved[0].proposed.note, /Received email from Lisa Cassidy/);
+  assert.match(saved[0].proposed.note, /Lisa shared useful AI webinars/);
   assert.doesNotMatch(saved[0].proposed.note, /Forwarded message/);
 });
 
@@ -83,17 +86,19 @@ test("Gmail review makes a missing-email proposal from a unique full-name approx
   const result = await runGmailReviewSync({
     sql: {}, env: { NETWORK_CRM_GMAIL_MAILBOX: "andre@example.com" }, now: new Date("2026-08-31T15:00:00Z"),
     dependencies: {
+      loadEngagementContext: async () => [], alreadyReviewed: async () => false,
+      assessEmail: async () => ({ relevant:true, actions:[{kind:'contact',personEmail:'lisa@cassidylab.com',note:'Lisa shared an AI resource.',evidence:'You came to mind when I saw these AI webinars.'}] }),
       getAccessToken: async () => "access-token", loadSyncState: async () => null,
       listMessages: async () => ({ messages: [{ id: "gmail-123" }] }), getMessage: async () => gmailMessage(),
       findContactByEmail: async () => null,
-      findUniqueContactByName: async (_sql, name, missing) => name === "Lisa Cassidy" && missing ? { id: "55", name: "Lisa Cassidy", email: "" } : null,
-      insertProposal: async (_sql, proposal) => { saved.push(proposal); return "created"; }, saveSyncState: async () => {}
+      findUniqueContactByName: async (_sql, name) => name === "Lisa Cassidy" ? { id: "55", name: "Lisa Cassidy", email: "" } : null,
+      saveBusinessReview: async (_sql, _id, proposals) => { saved.push(...proposals); return {claimed:1,inserted:proposals.length}; }, saveSyncState: async () => {}
     }
   });
   assert.equal(result.approximated, 1);
   assert.equal(saved[0].matchedContactId, "55");
   assert.equal(saved[0].proposed.email, "lisa@cassidylab.com");
-  assert.match(saved[0].evidence, /Suggested unique name match/);
+  assert.match(saved[0].evidence, /AI webinars/);
 });
 
 test("email enrichment only proposes a blank email for a unique direct-conversation name match", async () => {
@@ -194,9 +199,10 @@ test('HTML-only email yields substantive body text and ignores script, style, an
 });
 
 test('review resumes a fixed scan window and advances checkpoint only after the last page', async () => {
-  let state = { last_successful_at: '2026-08-20T00:00:00Z' };
+  let state = { last_successful_at: '2026-08-20T00:00:00Z', review_version: 2 };
   const requests = [];
   const dependencies = {
+    loadEngagementContext: async () => [],
     getAccessToken: async () => 'token',
     loadSyncState: async () => state,
     listMessages: async (_token, since, page, until) => {
@@ -204,7 +210,7 @@ test('review resumes a fixed scan window and advances checkpoint only after the 
       return page ? { messages: [] } : { messages: [], nextPageToken: 'page-2' };
     },
     saveSyncState: async (_sql, _mailbox, checkpoint, progress) => {
-      state = { last_successful_at: checkpoint, next_page_token: progress.nextPageToken,
+      state = { review_version:2, last_successful_at: checkpoint, next_page_token: progress.nextPageToken,
         window_since: progress.since, window_until: progress.until };
     }
   };
