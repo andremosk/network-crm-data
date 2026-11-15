@@ -52,10 +52,25 @@ test('district search separates district employees from evidenced connectors and
     {id:6,name:'Charter HR',company:'Example Charter Schools',position:'Head of HR'},
     {id:7,name:'Sasha Example',notes:'Sasha agreed to meet a consultant who is seeking to expand her work with school districts; Andre to make the introduction.'}
   ], query), [], query);
-  assert.deepEqual(rows.filter(row=>row.track==='direct').map(row=>row.id), ['1']);
-  assert.deepEqual(rows.filter(row=>row.track==='connector').map(row=>row.id), ['3']);
+  assert.deepEqual(rows.filter(row=>!row.stretch && row.track==='direct').map(row=>row.id), ['1']);
+  assert.deepEqual(rows.filter(row=>!row.stretch && row.track==='connector').map(row=>row.id), ['3']);
+  assert.ok(rows.slice(2).every(row=>row.stretch && row.confidence==='Speculative' && row.scopeGap));
   assert.equal(rows.find(row=>row.id==='1').industrySource,'Inferred');
   assert.match(rows.find(row=>row.id==='1').caveat,/does not confirm/);
+});
+
+test('fills ten distinct slots without turning out-of-scope leads into strong matches', () => {
+  const query = 'owners or operations leaders of manufacturing companies';
+  const contacts = Array.from({length:20}, (_,i) => ({
+    id:i+1, name:`Lead ${i+1}`, position:'Owner', company:i===0 ? 'Example Metals' : 'Example Consulting',
+    notes:'Owner handles manufacturing operations for an unrelated partner.'
+  }));
+  const candidates = shortlist(contacts, query);
+  const rows = rank(candidates, candidates.map(c=>({id:c.id,direct:{fit:1,explicit:true,quote:c.direct.quote}})), query);
+  assert.equal(rows.length,10);
+  assert.equal(new Set(rows.map(row=>row.id)).size,10);
+  assert.equal(rows[0].id,'1');
+  assert.ok(rows.slice(1).every(row=>row.stretch && row.confidence==='Speculative'));
 });
 
 test('technology rollout is a situation, not a technology industry restriction', () => {

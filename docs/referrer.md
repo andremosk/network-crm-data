@@ -17,10 +17,11 @@ and full note histories are not sent. Search requests do not run as you type.
 Referrer infers industries from current employer names at search time, using
 known employers and recognizable name patterns. Existing industry fields take
 precedence; unrecognized employers stay unknown. No contact records are changed.
-An explicit industry or school-district ask restricts direct matches to that scope.
-Outside connectors need a note that attributes relevant access to the contact;
-an unrelated introduction is not evidence. Scoped searches may return fewer than
-ten people rather than filling the list with off-scope results.
+An explicit industry or school-district ask prioritizes direct matches in that
+scope and connectors with attributed, relevant access. Remaining slots are
+filled with separately labeled speculative stretch leads. Searches return ten
+distinct contacts when ten eligible contacts exist. An unrelated introduction
+does not count as evidence of access.
 
 Relative scores are not calibrated probabilities. Strong results require
 model-assessed explicit evidence and a verbatim snippet verified by the server.

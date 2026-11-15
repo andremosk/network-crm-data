@@ -31,8 +31,8 @@
 
   function render(items) {
     results.replaceChildren();
-    for (const [track, heading] of [['direct','Direct matches'],['connector','Potential connectors']]) {
-      const matches = items.filter(item => item.track === track);
+    for (const [track, heading] of [['direct','Direct matches'],['connector','Potential connectors'],['stretch','Stretch leads']]) {
+      const matches = items.filter(item => (item.stretch ? 'stretch' : item.track) === track);
       if (!matches.length) continue;
       const section = el('section');
       section.append(el('h3',heading));
@@ -53,6 +53,7 @@
         why.append(el('summary','Why this match?'),el('p',match.reason));
         if (match.caveat) why.append(el('p',match.caveat));
         row.append(why);
+        if (match.scopeGap) row.append(el('p',match.scopeGap));
         if (match.evidence) {
           const note = el('button',`“${match.evidence}”`,'referrer-note');
           note.type = 'button'; note.title = 'Open supporting contact note';
@@ -88,7 +89,7 @@
       const count = data.results.length;
       const scope = data.scope?.length ? ` · ${data.scope.join(' / ')}` : '';
       status.textContent = count ? `${count} suggestion${count === 1 ? '' : 's'}${scope}${data.mode === 'crm' ? ' · CRM ranking' : ''}`
-        : scope ? `No CRM contacts or documented introduction paths match${scope.replace(' · ', ' ')}.` : 'No eligible contacts in your CRM.';
+        : 'No eligible contacts in your CRM.';
     } catch (error) {
       if (pending === request) status.textContent = request.signal.aborted ? 'Search timed out. Try again.' : (error.message || 'Search failed. Try again.');
     } finally {
