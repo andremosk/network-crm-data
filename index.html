@@ -444,6 +444,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   .modal { width: 100% !important; max-width: 100vw; max-height: 92dvh; border-radius: 12px 12px 0 0; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); }
 }
 </style>
+<link rel="stylesheet" href="/referrer.css">
 </head>
 <body>
 
@@ -454,6 +455,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     <button class="view-tab active" id="tab-contacts" onclick="switchView('contacts')">👥 Contacts</button>
     <button class="view-tab" id="tab-apps" onclick="switchView('apps')">📋 Applications</button>
     <button class="view-tab" id="tab-engagements" onclick="switchView('engagements')">Engagements</button>
+    <button class="view-tab" id="referrerTrigger" type="button" hidden>Referrer</button>
   </div>
   <div class="search-wrap">
     <span class="search-icon">🔍</span>
@@ -3614,7 +3616,17 @@ renderList();
 renderSortHeaders();
 updateSyncBar('idle');
 </script>
+<dialog id="referrerDialog" class="referrer-dialog" aria-labelledby="referrerTitle">
+  <div class="referrer-head"><h2 id="referrerTitle">Referrer</h2><button type="button" class="btn btn-ghost referrer-close" aria-label="Close Referrer">&times;</button></div>
+  <form class="referrer-form" role="search">
+    <input class="form-input" type="search" aria-label="Describe the referral you’re looking for" placeholder="Leaders dealing with a restructure or tech rollout…" maxlength="600" required autocomplete="off">
+    <button class="btn btn-primary" type="submit">Search</button>
+  </form>
+  <div class="referrer-status" role="status"></div>
+  <div class="referrer-results"></div>
+</dialog>
 <script src="/engagements.js"></script>
+<script src="/referrer-ui.js"></script>
 <script src="/text-summary-review.js"></script>
 <script src="/contact-dictation.js"></script>
 <script src="/cloud-sync-core.js"></script>

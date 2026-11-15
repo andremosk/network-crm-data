@@ -1,0 +1,22 @@
+.referrer-dialog{width:min(760px,calc(100vw - 24px));max-width:none;max-height:88dvh;margin:auto;padding:22px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:auto}
+.referrer-dialog::backdrop{background:rgba(23,32,28,.4)}
+.referrer-head,.referrer-row-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.referrer-head h2{font:24px 'DM Serif Display',serif;margin:0}
+.referrer-close{width:34px;height:34px;padding:0;flex-shrink:0;font-size:20px}
+.referrer-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:14px}
+.referrer-form input{min-width:0}
+.referrer-status{font-size:12px;color:var(--muted);margin:10px 0}
+.referrer-status:empty{display:none}
+.referrer-results section+section{margin-top:18px}
+.referrer-results h3{font-size:14px;margin:0;padding:8px 0;border-bottom:1px solid var(--border)}
+.referrer-results ol{margin:0;padding-left:24px}
+.referrer-results li{padding:10px 0;border-bottom:1px solid var(--border);overflow-wrap:anywhere}
+.referrer-results p,.referrer-profile{margin:4px 0;font-size:12px;color:var(--muted);line-height:1.45}
+.referrer-contact,.referrer-note{color:var(--accent);font:inherit;text-align:left;border:0;background:transparent;padding:0;cursor:pointer;overflow-wrap:anywhere}
+.referrer-contact{font-weight:700;min-width:0}
+.referrer-note{font-size:12px;line-height:1.45}
+.referrer-contact:hover,.referrer-note:hover{text-decoration:underline}
+.referrer-confidence{font-size:11px;font-weight:700;flex-shrink:0;color:var(--muted)}
+.referrer-confidence.strong{color:var(--accent)}
+.referrer-confidence.plausible{color:#85601e}
+@media(max-width:560px){.referrer-dialog{padding:16px}.referrer-form{grid-template-columns:1fr}.referrer-form button{justify-self:end}.view-tabs{flex-wrap:wrap}}
