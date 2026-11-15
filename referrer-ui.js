@@ -47,6 +47,8 @@
         row.append(head);
         const profile = [match.position,match.company].filter(Boolean).join(' · ');
         if (profile) row.append(el('div',profile,'referrer-profile'));
+        const industry = [match.industry,match.orgType].filter(Boolean).join(' · ');
+        row.append(el('div', industry ? `${industry}${match.industrySource === 'Inferred' ? ' (inferred)' : ''}` : 'Industry unknown','referrer-profile'));
         const why = el('details',null,'referrer-why');
         why.append(el('summary','Why this match?'),el('p',match.reason));
         if (match.caveat) why.append(el('p',match.caveat));
@@ -84,7 +86,9 @@
       if (pending !== request) return;
       render(data.results);
       const count = data.results.length;
-      status.textContent = count ? `${count} suggestion${count === 1 ? '' : 's'}${data.mode === 'crm' ? ' · CRM ranking' : ''}` : 'No eligible contacts in your CRM.';
+      const scope = data.scope?.length ? ` · ${data.scope.join(' / ')}` : '';
+      status.textContent = count ? `${count} suggestion${count === 1 ? '' : 's'}${scope}${data.mode === 'crm' ? ' · CRM ranking' : ''}`
+        : scope ? `No CRM contacts or documented introduction paths match${scope.replace(' · ', ' ')}.` : 'No eligible contacts in your CRM.';
     } catch (error) {
       if (pending === request) status.textContent = request.signal.aborted ? 'Search timed out. Try again.' : (error.message || 'Search failed. Try again.');
     } finally {

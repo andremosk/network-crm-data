@@ -14,9 +14,17 @@ configuration reranks the shortlist using only contact names, company, title,
 and up to two relevant snippets per candidate. Dedicated email and phone fields
 and full note histories are not sent. Search requests do not run as you type.
 
+Referrer infers industries from current employer names at search time, using
+known employers and recognizable name patterns. Existing industry fields take
+precedence; unrecognized employers stay unknown. No contact records are changed.
+An explicit industry or school-district ask restricts direct matches to that scope.
+Outside connectors need a note that attributes relevant access to the contact;
+an unrelated introduction is not evidence. Scoped searches may return fewer than
+ten people rather than filling the list with off-scope results.
+
 Relative scores are not calibrated probabilities. Strong results require
 model-assessed explicit evidence and a verbatim snippet verified by the server.
 Role-only or weak matches can still appear, labeled as such. Without the model,
 the CRM-based shortlist still returns best-effort leads. Archived, deleted and
 do-not-contact contacts are excluded. No database migration, web research,
-bulk enrichment or automatic outreach is included.
+bulk external enrichment or automatic outreach is included.

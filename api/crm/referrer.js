@@ -1,7 +1,7 @@
 const { hasValidSession } = require('../../lib/crm-auth');
 const { getSql } = require('../../lib/crm-db');
 const { parseBody } = require('../../lib/text-summaries');
-const { shortlist, rank, judge } = require('../../lib/referrer');
+const { shortlist, rank, judge, industryScope } = require('../../lib/referrer');
 
 async function loadContacts() {
   const sql = getSql();
@@ -25,7 +25,8 @@ function createHandler({ auth = hasValidSession, load = loadContacts, assess = j
       const candidates = shortlist(await load(), query.trim());
       let judgments = [];
       try { judgments = await assess(query.trim(), candidates); } catch { /* Keep CRM-based matches available. */ }
-      return response.status(200).json({ results: rank(candidates, judgments, query.trim()), mode: judgments.length ? 'ai' : 'crm' });
+      return response.status(200).json({ results: rank(candidates, judgments, query.trim()), mode: judgments.length ? 'ai' : 'crm',
+        scope: industryScope(query).map(item => item.label) });
     } catch {
       return response.status(503).json({ error: 'Could not search contacts. Try again.' });
     }

@@ -34,11 +34,34 @@ test('CRM explanations name the matched wording, distinguish connectors, and fla
   assert.match(direct.reason, /note mentions “rolling out”/);
   assert.match(direct.caveat, /own organization.*current/);
   const connector = rows.find(row => row.id === '2');
-  assert.match(connector.reason, /possible sign.*introductions/);
+  assert.match(connector.reason, /access.*requested circle/);
   assert.match(connector.caveat, /Verify whom/);
   const fallback = rows.find(row => row.id === '3');
   assert.match(fallback.reason, /CEO/);
   assert.match(fallback.caveat, /does not confirm/);
+});
+
+test('district search separates district employees from evidenced connectors and rejects unrelated introductions', () => {
+  const query = 'school districts with an overburdened head of HR';
+  const rows = rank(shortlist([
+    {id:1,name:'District Lead',company:'Example Union Free School District',position:'Head of HR'},
+    {id:2,name:'Outside HR',company:'Netflix',position:'Head of HR'},
+    {id:3,name:'District Advisor',company:'Example Consulting',notes:'Advises school districts on change management.'},
+    {id:4,name:'Marty Banker',company:'Example Bank',notes:'Eugene introduced me to school district HR. Connected me with a chamber member.'},
+    {id:5,name:'University HR',company:'Example University',position:'Head of HR'},
+    {id:6,name:'Charter HR',company:'Example Charter Schools',position:'Head of HR'},
+    {id:7,name:'Sasha Example',notes:'Sasha agreed to meet a consultant who is seeking to expand her work with school districts; Andre to make the introduction.'}
+  ], query), [], query);
+  assert.deepEqual(rows.filter(row=>row.track==='direct').map(row=>row.id), ['1']);
+  assert.deepEqual(rows.filter(row=>row.track==='connector').map(row=>row.id), ['3']);
+  assert.equal(rows.find(row=>row.id==='1').industrySource,'Inferred');
+  assert.match(rows.find(row=>row.id==='1').caveat,/does not confirm/);
+});
+
+test('technology rollout is a situation, not a technology industry restriction', () => {
+  const { industryScope } = require('../lib/referrer');
+  assert.deepEqual(industryScope('leaders dealing with a major technology rollout'), []);
+  assert.deepEqual(industryScope('HR leaders in healthcare').map(scope=>scope.industry), ['Healthcare']);
 });
 
 test('AI cannot inject contacts or promote invented quotes to strong evidence', () => {
