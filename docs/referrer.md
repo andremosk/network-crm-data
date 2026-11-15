@@ -2,7 +2,8 @@
 
 Open **Referrer** from Network.crm, type a referral ask in plain language, and
 press Enter. Results are ranked separately as direct matches or potential
-connectors, with up to ten distinct contacts. Click a name or evidence excerpt
+connectors, with up to ten distinct contacts. Expand **Why this match?** to see
+what wording or role contributed to the ranking and what to verify. Click a name or evidence excerpt
 to open the contact; the excerpt jumps to its note when found in the current
 dataset.
 

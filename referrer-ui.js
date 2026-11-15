@@ -47,7 +47,10 @@
         row.append(head);
         const profile = [match.position,match.company].filter(Boolean).join(' · ');
         if (profile) row.append(el('div',profile,'referrer-profile'));
-        row.append(el('p',match.reason));
+        const why = el('details',null,'referrer-why');
+        why.append(el('summary','Why this match?'),el('p',match.reason));
+        if (match.caveat) why.append(el('p',match.caveat));
+        row.append(why);
         if (match.evidence) {
           const note = el('button',`“${match.evidence}”`,'referrer-note');
           note.type = 'button'; note.title = 'Open supporting contact note';

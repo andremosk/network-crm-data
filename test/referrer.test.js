@@ -27,6 +27,20 @@ test('thin queries still return ranked leads without inventing evidence', () => 
   assert.equal(rows[0].confidence,'Speculative');
 });
 
+test('CRM explanations name the matched wording, distinguish connectors, and flag what to verify', () => {
+  const query = 'leaders dealing with a major technology rollout';
+  const rows = rank(shortlist(contacts, query), [], query);
+  const direct = rows.find(row => row.id === '1');
+  assert.match(direct.reason, /note mentions “rolling out”/);
+  assert.match(direct.caveat, /own organization.*current/);
+  const connector = rows.find(row => row.id === '2');
+  assert.match(connector.reason, /possible sign.*introductions/);
+  assert.match(connector.caveat, /Verify whom/);
+  const fallback = rows.find(row => row.id === '3');
+  assert.match(fallback.reason, /CEO/);
+  assert.match(fallback.caveat, /does not confirm/);
+});
+
 test('AI cannot inject contacts or promote invented quotes to strong evidence', () => {
   const candidates = shortlist(contacts,'ERP rollout');
   const rows = rank(candidates,[
@@ -96,7 +110,7 @@ test('dialog submits a plain-language search and opens the supporting note', asy
       searches++;
       assert.equal(url,'/api/crm/referrer');
       assert.deepEqual(JSON.parse(options.body),{query:input.value});
-      return {ok:true,json:async()=>({mode:'ai',results:[{id:'1',name:'Sam Ops',track:'direct',confidence:'Strong',evidence}]})};
+      return {ok:true,json:async()=>({mode:'ai',results:[{id:'1',name:'Sam Ops',track:'direct',confidence:'Strong',evidence,reason:'The note mentions ERP.',caveat:'Verify timing.'}]})};
     }
   });
   assert.equal(trigger.hidden,false);
@@ -105,6 +119,8 @@ test('dialog submits a plain-language search and opens the supporting note', asy
   await form.handlers.submit({preventDefault(){}});
   assert.equal(status.textContent,'1 suggestion');
   const row = results.children[0].children[1].children[0];
+  assert.deepEqual(row.children.find(child => child.className === 'referrer-why').children.map(child => child.textContent),
+    ['Why this match?', 'The note mentions ERP.', 'Verify timing.']);
   row.children.at(-1).onclick();
   assert.equal(opened,1);
   assert.equal(scrolled,true);

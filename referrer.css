@@ -15,6 +15,9 @@
 .referrer-contact,.referrer-note{color:var(--accent);font:inherit;text-align:left;border:0;background:transparent;padding:0;cursor:pointer;overflow-wrap:anywhere}
 .referrer-contact{font-weight:700;min-width:0}
 .referrer-note{font-size:12px;line-height:1.45}
+.referrer-why{margin:5px 0;color:var(--muted);font-size:12px}
+.referrer-why summary{width:fit-content;cursor:pointer;color:var(--accent);font-weight:600}
+.referrer-why[open]{padding-bottom:3px}
 .referrer-contact:hover,.referrer-note:hover{text-decoration:underline}
 .referrer-confidence{font-size:11px;font-weight:700;flex-shrink:0;color:var(--muted)}
 .referrer-confidence.strong{color:var(--accent)}

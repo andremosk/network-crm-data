@@ -25,7 +25,7 @@ function createHandler({ auth = hasValidSession, load = loadContacts, assess = j
       const candidates = shortlist(await load(), query.trim());
       let judgments = [];
       try { judgments = await assess(query.trim(), candidates); } catch { /* Keep CRM-based matches available. */ }
-      return response.status(200).json({ results: rank(candidates, judgments), mode: judgments.length ? 'ai' : 'crm' });
+      return response.status(200).json({ results: rank(candidates, judgments, query.trim()), mode: judgments.length ? 'ai' : 'crm' });
     } catch {
       return response.status(503).json({ error: 'Could not search contacts. Try again.' });
     }
