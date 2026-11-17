@@ -1,10 +1,17 @@
 # Engagement Forecast
 
-Engagements opens in Cash flow view; List retains the previous overview. The default Active opportunities filter includes Pursuit, Discovery, Proposal, Active Client and On Hold, excluding closed/deleted/archived records. On Hold remains visible as red/at-risk work. All opportunities and individual stage filters can include closed records for reference. Group headers never contribute fees; child pursuits count independently, avoiding parent/child double-counting.
+Engagements opens in List view with Active Pursuits selected (Lead, Proposal, Decision Pending). Active Clients and All Engagements are separate list filters. Set status from the row dropdown; Undo reverts the last inline change using normal CRM persistence. Legacy Pursuit and Discovery display as Lead, Stalled displays as On Hold, and Closed remains a legacy value in All Engagements until explicitly reclassified. Existing Proposal records are not guessed as delivered.
+
+The list nests matching child pursuits under their parent, expanded by default.
+Parent headers remain as context if a child matches the filter but its parent
+does not. Standalone engagements appear in the same list. Searching for a
+parent includes its children that match the selected status filter.
+
+Cash flow has its own filters. Open forecast includes On Hold as red/at-risk work, but excludes Lost, Completed, and legacy Closed. All engagements includes terminal records for reference. Group headers never contribute fees; child pursuits count independently, avoiding parent/child double-counting.
 
 Client and Opportunity are the first two columns, followed by monthly Gantt cells and an Unscheduled column. The first month defaults to the current New York month. Choose the first month, move three months backward/forward, or show 6/12/18 months. Desktop client/opportunity labels stay frozen while scrolling; on narrow screens only the client label stays frozen. Bars use exact start/end days within each month; amounts use receipt dates independently. Missing run dates produce no invented bar. Receipts outside the visible months are explicitly listed in the Unscheduled column as Outside view, not moved into a different month. Click Edit plan (or a month's receipt cell) to edit dates, stage, confidence, fees and payment installments.
 
-Colors default by stage: Active Client = green/confirmed, Pursuit/Discovery/Proposal = yellow/tentative, On Hold = red/at risk. `forecastConfidence` can override that mapping with `confirmed`, `proposal`, or `at_risk`, without changing engagement stage. The footer separates monthly confirmed, proposed and at-risk receipts instead of treating them as equally certain.
+Colors default by stage: Active Client = green/confirmed, Lead/Proposal/Decision Pending = yellow/tentative, On Hold = red/at risk. `forecastConfidence` can override that mapping with `confirmed`, `proposal`, or `at_risk`, without changing engagement stage. The footer separates monthly confirmed, proposed and at-risk receipts instead of treating them as equally certain.
 
 ## Fields and persistence
 

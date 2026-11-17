@@ -46,7 +46,7 @@ test('business review SQL: atomic bundles and once-only approvals in isolated te
   assert.equal(contact.communicationReminders[0].date,'2026-12-09');
   assert.match(contact.notes,/Original note/);
   const pursuit=results[11].find(r=>r.record_type==='engagement').payload;
-  assert.equal(pursuit.status,'pursuit'); assert.equal(pursuit.notes.length,1);
+  assert.equal(pursuit.status,'lead'); assert.equal(pursuit.notes.length,1);
   assert.equal(pursuit.notes[0].sourceKey,'test-message');
   assert.deepEqual(results[12].map(r=>r.status),['applied','applied']);
 });

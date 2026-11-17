@@ -4,15 +4,18 @@
   root.EngagementCore = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const STATUSES = [
-    ['pursuit', 'Pursuit'],
-    ['discovery', 'Discovery'],
+    ['lead', 'Lead'],
     ['proposal', 'Proposal'],
+    ['decision_pending', 'Decision Pending'],
     ['active_client', 'Active Client'],
     ['on_hold', 'On Hold'],
-    ['closed', 'Closed']
+    ['lost', 'Lost'],
+    ['completed', 'Completed']
   ];
 
-  const STATUS_LABELS = Object.fromEntries(STATUSES);
+  const STATUS_LABELS = {...Object.fromEntries(STATUSES), closed: 'Closed (legacy)'};
+  const isTerminal = status => ['lost', 'completed', 'closed'].includes(status);
+  const isPursuit = status => ['lead', 'proposal', 'decision_pending'].includes(status);
 
   function dateOnly(value) {
     const date = text(value);
@@ -61,13 +64,14 @@
   function withDefaults(value) {
     const item = value || {};
     const createdDate = text(item.createdDate || item.created_date || '').slice(0, 10);
-    const rawStatus = text(item.status || 'pursuit').toLowerCase().replace(/[\s-]+/g, '_');
+    const rawStatus = text(item.status || 'lead').trim().toLowerCase().replace(/[\s-]+/g, '_');
+    const status = ['stalled', 'on_hold/stalled', 'on_hold_/_stalled'].includes(rawStatus) ? 'on_hold' : rawStatus;
     return {
       ...item,
       id: Number(item.id) || item.id,
       title: text(item.title),
       organization: text(item.organization || item.client),
-      status: STATUS_LABELS[rawStatus] ? rawStatus : 'pursuit',
+      status: Object.hasOwn(STATUS_LABELS, status) ? status : 'lead',
       currentState: text(item.currentState || item.current_state),
       opportunity: text(item.opportunity || item.problem),
       commercial: text(item.commercial || item.commercialHypothesis || item.estimate),
@@ -92,8 +96,8 @@
   function compare(a, b) {
     const left = withDefaults(a);
     const right = withDefaults(b);
-    const leftClosed = left.status === 'closed' ? 1 : 0;
-    const rightClosed = right.status === 'closed' ? 1 : 0;
+    const leftClosed = Number(isTerminal(left.status));
+    const rightClosed = Number(isTerminal(right.status));
     if (leftClosed !== rightClosed) return leftClosed - rightClosed;
     const leftMissingDate = left.nextMilestoneDate ? 0 : 1;
     const rightMissingDate = right.nextMilestoneDate ? 0 : 1;
@@ -110,7 +114,7 @@
 
   function forecastRows(items, activeOnly = true) {
     return sort(items).filter(item => !item.isGroup && !item.deleted && !item.archived &&
-      (!activeOnly || item.status !== 'closed')).map(item => {
+      (!activeOnly || !isTerminal(item.status))).map(item => {
       const knownPayments = item.payments.filter(payment => payment.amount !== null);
       const plannedTotal = knownPayments.reduce((sum, payment) => sum + Math.round(payment.amount * 100), 0) / 100;
       const expectedFees = item.expectedValue ?? (knownPayments.length ? plannedTotal : null);
@@ -242,5 +246,5 @@
     return {html, text:'Cash-flow timeline · USD\n\n' + timeline.entries.map(row => `${row.organization} / ${row.title} [${CONFIDENCE_LABELS[row.confidence]}]\nRun: ${row.projectedStartDate || 'TBD'} to ${row.projectedEndDate || 'TBD'}\n${row.cells.filter(cell => cell.receipts.length).map(cell => `${monthLabel(cell.month)}: ${amountText(cell)}`).join(' | ') || 'No dated expected receipts in view'}\nUnscheduled: ${currency(row.unscheduled)}${row.unscheduledUnknown ? ' + TBD' : ''}${row.outside.length ? '\nOutside view: ' + row.outside.map(payment => `${currency(payment.amount)} on ${payment.expectedDate}`).join('; ') : ''}`).join('\n\n'), csv:csvRows.map(row => row.map(csvCell).join(',')).join('\r\n')};
   }
 
-  return { STATUSES, STATUS_LABELS, withDefaults, sort, normalizeContactIds, dateOnly, money, payments, forecastRows, cashFlow, currency, forecastCsv, forecastRecap, CONFIDENCE_LABELS, confidenceFor, monthKeys, monthLabel, cashTimeline, cashTimelineExport };
+  return { STATUSES, STATUS_LABELS, isTerminal, isPursuit, withDefaults, sort, normalizeContactIds, dateOnly, money, payments, forecastRows, cashFlow, currency, forecastCsv, forecastRecap, CONFIDENCE_LABELS, confidenceFor, monthKeys, monthLabel, cashTimeline, cashTimelineExport };
 });

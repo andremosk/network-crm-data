@@ -16,6 +16,42 @@ test('legacy engagements retain commercial notes and get unknown financial defau
   assert.deepEqual(core.payments([null]),[]);
 });
 
+test('list nests filtered children under their group and edits child status without changing the parent', () => {
+  const items=[
+    {id:1,title:'Parent initiative',isGroup:true,status:'on_hold'},
+    {id:2,title:'Alpha project',groupId:'1',status:'lead'},
+    {id:3,title:'Beta project',groupId:'1',status:'completed'},
+    {id:4,title:'Independent project',status:'proposal'}
+  ];
+  const els=new Map();
+  const el=id=>{if(!els.has(id))els.set(id,{value:'',innerHTML:'',focus(){}});return els.get(id);};
+  const context={window:{EngagementCore:core},document:{head:{appendChild(){}},createElement:()=>({}),getElementById:el},
+    engagements:items,selectedEngagementId:null,esc:String,fmtDate:String,saveEngagements(){},toggleMobileFilters(){}};
+  vm.runInNewContext(fs.readFileSync('engagements.js','utf8'),context);Object.assign(context,context.window);
+  const view=()=>el('engagementsView').innerHTML;
+  context.renderEngagements();
+  assert.match(view(),/Parent initiative[\s\S]*id="eng-branch-1" [^>]*>[\s\S]*Status for Alpha project/);
+  assert.match(view(),/Independent project/);
+  assert.doesNotMatch(view(),/Beta project|Status for Parent initiative/);
+  assert.doesNotMatch(el('engagementsSidebar').innerHTML,/Standalone|Pursuit groups/);
+  context.toggleEngagementBranch('1');
+  assert.match(view(),/aria-expanded="false"/);
+  assert.match(view(),/id="eng-branch-1" hidden/);
+  context.toggleEngagementBranch('1');
+  el('searchInput').value='parent initiative';
+  context.renderEngagements();
+  assert.match(view(),/Alpha project/);
+  assert.doesNotMatch(view(),/Independent project|Beta project/);
+  context.setListEngagementStatus(2,'on_hold');
+  assert.equal(items[1].status,'on_hold');
+  assert.equal(items[0].status,'on_hold');
+  assert.doesNotMatch(view(),/Alpha project/);
+  context.undoEngagementStatus();
+  assert.match(view(),/Alpha project/);
+  context.setEngagementFilter('all');
+  assert.match(view(),/Status for Alpha project[\s\S]*Status for Beta project/);
+});
+
 test('cash-flow view keeps on-hold opportunities but excludes groups, closed and deleted', () => {
   const rows=core.forecastRows([sample,{id:2,isGroup:true,expectedValue:10000},{id:3,status:'on_hold'},{id:4,status:'closed'},{id:5,deleted:true},{id:6,archived:true},{id:7,groupId:'2',title:'Child'}]);
   assert.deepEqual(rows.map(row=>row.id).sort(),[1,3,7]);
@@ -53,6 +89,9 @@ test('forecast edits save through existing engagement persistence and never edit
   vm.runInNewContext(fs.readFileSync('engagements.js','utf8'),context);
   Object.assign(context,context.window);
   context.window.renderEngagements();
+  assert.match(el('engagementsSidebar').innerHTML,/Active Pursuits/);
+  assert.match(el('engagementsView').innerHTML,/Status for/);
+  context.window.setEngagementView('forecast');
   assert.match(el('engagementsView').innerHTML,/Cash-flow timeline/);
   context.window.toggleForecastPayments('1');
   assert.match(el('engagementsView').innerHTML,/Expected fees/);
@@ -117,8 +156,36 @@ test('Copy recap writes the new month-across colored timeline rather than the ol
     document:{head:{appendChild(){}},createElement:()=>({}),getElementById:el},engagements:[core.withDefaults(sample)],contacts:[],selectedEngagementId:null,
     esc:value=>String(value||''),fmtDate:value=>value||'TBD',toast(){},saveEngagements(){},toggleMobileFilters(){},Date,Set,Map};
   vm.runInNewContext(fs.readFileSync('engagements.js','utf8'),context);Object.assign(context,context.window);
+  context.window.setEngagementView('forecast');
   context.window.setCashTimelineStart('2026-11');await context.window.copyEngagementForecast();
   const html=await copied['text/html'].text();
   assert.match(html,/Cash-flow timeline/);assert.match(html,/Nov 2026/);assert.match(html,/border-top:5px/);
   assert.match(await copied['text/plain'].text(),/Cash-flow timeline/);
+});
+
+test('active pursuits exclude terminal and stalled work, with inline status edits and undo', () => {
+  const statuses = ['pursuit','discovery','proposal','decision_pending','active_client','stalled','closed','lost','completed'];
+  const items = statuses.map((status,id)=>({id:id+1,status,title:`Fixture ${status}`}));
+  const elements=new Map();
+  const el=id=>{if(!elements.has(id))elements.set(id,{value:'',innerHTML:''});return elements.get(id);};
+  let saves=0;
+  const context={window:{EngagementCore:core},document:{head:{appendChild(){}},createElement:()=>({}),getElementById:el},
+    engagements:items,selectedEngagementId:null,esc:String,fmtDate:String,saveEngagements(){saves++;},toggleMobileFilters(){}};
+  vm.runInNewContext(fs.readFileSync('engagements.js','utf8'),context);Object.assign(context,context.window);
+  const view=()=>el('engagementsView').innerHTML;
+  context.renderEngagements();
+  assert.equal(el('statShowing').textContent,4);
+  assert.match(view(),/Status for Fixture pursuit/);
+  assert.doesNotMatch(view(),/Fixture (?:active_client|stalled|closed|lost|completed)/);
+  context.setListEngagementStatus(1,'on_hold');
+  assert.equal(saves,1);assert.doesNotMatch(view(),/Fixture pursuit/);
+  context.undoEngagementStatus();
+  assert.equal(saves,2);assert.match(view(),/Fixture pursuit/);
+  context.setEngagementFilter('clients');
+  assert.equal(el('statShowing').textContent,1);
+  context.setEngagementFilter('all');
+  assert.equal(el('statShowing').textContent,9);
+  assert.match(view(),/Closed \(legacy\)/);
+  context.setEngagementView('forecast');
+  assert.match(view(),/Fixture stalled/);assert.doesNotMatch(view(),/Fixture (?:closed|lost|completed)/);
 });

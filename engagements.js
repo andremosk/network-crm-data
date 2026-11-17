@@ -1,8 +1,11 @@
 (function () {
-  let engagementFilter = 'open';
+  let engagementFilter = 'pursuits';
+  let forecastFilter = 'open';
+  let statusUndo;
+  const collapsedGroups = new Set();
   let newContactIds = [];
   let newGroupId = '';
-  let engagementView = 'forecast';
+  let engagementView = 'list';
   let forecastExpanded = new Set();
   let displayedForecast = [];
   let timelineStart = new Intl.DateTimeFormat('en-CA', {timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()).slice(0,7);
@@ -75,7 +78,14 @@
     .eng-title { font-size:13px;font-weight:650;color:var(--text); }
     .eng-subtle { font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
     .eng-status { display:inline-flex;align-items:center;width:max-content;padding:5px 8px;border-radius:6px;background:#e5f1ee;color:#176d62;font-size:11px;font-weight:650; }
-    .eng-status.closed { background:#edf0ef;color:#68736f; }
+    .eng-status.closed,.eng-status.lost,.eng-status.completed { background:#edf0ef;color:#68736f; }
+    .eng-list-status { width:100%; min-width:0; font-size:12px; }
+    .eng-list-row > div { min-width:0; }
+    .eng-title { overflow-wrap:anywhere; }
+    .eng-list-group { background:var(--surface2); }
+    .eng-branch { display:flex; align-items:center; gap:8px; min-width:0; }
+    .eng-branch-toggle { flex:0 0 26px; height:26px; padding:0; }
+    .eng-child-title { margin-left:12px; padding-left:14px; border-left:2px solid var(--border); }
     .eng-status.on_hold { background:#f4eee0;color:#86631b; }
     .eng-group-badge { display:inline-flex;align-items:center;margin-left:7px;padding:3px 6px;border:1px solid #a9d5cd;border-radius:5px;color:#176d62;background:#eef8f5;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px; }
     .eng-group-rollup { margin:8px 0 20px;border:1px solid var(--border);border-radius:7px;background:var(--surface);overflow:hidden; }
@@ -137,9 +147,17 @@
   }
 
   function statusOptions(selected) {
-    return window.EngagementCore.STATUSES.map(([value, label]) =>
+    return (selected === 'closed' ? '<option value="closed" disabled selected>Closed (legacy)</option>' : '') + window.EngagementCore.STATUSES.map(([value, label]) =>
       `<option value="${value}" ${selected === value ? 'selected' : ''}>${label}</option>`
     ).join('');
+  }
+
+  function matchesFilter(item, filter) {
+    const core = window.EngagementCore;
+    return !item.deleted && !item.archived && (
+      filter === 'all' || (filter === 'open' && !core.isTerminal(item.status))
+      || (filter === 'pursuits' && core.isPursuit(item.status))
+      || (filter === 'clients' && item.status === 'active_client'));
   }
 
   function statusBadge(status) {
@@ -203,47 +221,82 @@
 
   window.renderEngagements = function renderEngagements() {
     const query = document.getElementById('searchInput').value.toLowerCase().trim();
-    const visible = window.EngagementCore.sort(engagements).filter(item => {
-      if (item.deleted || item.archived) return false;
-      if (engagementFilter === 'open' && item.status === 'closed') return false;
-      if (engagementFilter === 'groups' && !item.isGroup) return false;
-      if (engagementFilter === 'ungrouped' && (item.isGroup || item.groupId)) return false;
-      if (!['all', 'open', 'groups', 'ungrouped'].includes(engagementFilter) && item.status !== engagementFilter) return false;
+    const filter = engagementView === 'forecast' ? forecastFilter : engagementFilter;
+    const source = window.EngagementCore.sort(engagements);
+    const groups = new Map(source.filter(item => item.isGroup && !item.deleted && !item.archived).map(item => [String(item.id), item]));
+    const matchesSearch = item => [item.title, item.organization, item.currentState, item.opportunity, item.nextMilestone]
+      .join(' ').toLowerCase().includes(query);
+    const visible = source.filter(item => {
+      if (!matchesFilter(item, filter)) return false;
       if (!query) return true;
-      return [item.title, item.organization, item.currentState, item.opportunity, item.nextMilestone]
-        .join(' ').toLowerCase().includes(query);
+      const parent = engagementView === 'list' && groups.get(item.groupId);
+      return matchesSearch(item) || (parent && matchesSearch(parent));
     });
     document.getElementById('statShowing').textContent = visible.length;
     document.getElementById('statTotal').textContent = engagements.length;
     renderEngagementSidebar();
     const view = document.getElementById('engagementsView');
     const tools = `<div class="eng-view-tools"><div role="group" aria-label="Engagement view"><button class="btn btn-ghost btn-sm" aria-pressed="${engagementView === 'forecast'}" onclick="setEngagementView('forecast')">Cash flow</button><button class="btn btn-ghost btn-sm" aria-pressed="${engagementView === 'list'}" onclick="setEngagementView('list')">List</button></div>${engagementView === 'forecast' ? '<div><button class="btn btn-ghost btn-sm" onclick="copyEngagementForecast()">Copy recap</button><button class="btn btn-ghost btn-sm" onclick="downloadEngagementForecast()" title="Download cash-flow timeline as CSV">&#8595; CSV</button></div>' : ''}</div>`;
+    const undo = statusUndo ? `<div class="eng-view-tools"><span role="status">Status updated</span><button class="btn btn-ghost btn-sm" onclick="undoEngagementStatus()">Undo</button></div>` : '';
     if (engagementView === 'forecast') {
-      displayedForecast = window.EngagementCore.forecastRows(visible, engagementFilter === 'open');
+      displayedForecast = window.EngagementCore.forecastRows(visible, false);
       document.getElementById('statShowing').textContent = displayedForecast.length;
       view.innerHTML = tools + renderForecast(displayedForecast);
       return;
     }
     if (!visible.length) {
-      view.innerHTML = tools + `<div class="empty-list"><div style="font-size:28px;color:var(--muted)">No engagements here</div></div>`;
+      view.innerHTML = tools + undo + `<div class="empty-list"><div style="font-size:28px;color:var(--muted)">No engagements here</div></div>`;
       return;
     }
-    view.innerHTML = tools + `<div class="eng-list-head"><div>Engagement</div><div>Organization</div><div>Status</div><div>Next milestone</div><div>Date</div></div>
-      ${visible.map(item => {
-        const overdue = item.nextMilestoneDate && item.nextMilestoneDate < today() && item.status !== 'closed';
-        return `<div class="eng-list-row ${String(item.id) === String(selectedEngagementId) ? 'selected' : ''}" onclick="openEngagementDetail('${esc(String(item.id))}')">
-          <div><div class="eng-title">${esc(item.title || 'Untitled engagement')}${item.isGroup ? '<span class="eng-group-badge">Group</span>' : ''}</div><div class="eng-subtle">${item.groupId && groupFor(item) ? `Part of ${esc(groupFor(item).title)} · ` : ''}${esc(item.currentState || 'No current state yet')}</div></div>
+    view.innerHTML = tools + undo + `<div class="eng-list-head"><div>Engagement</div><div>Organization</div><div>Status</div><div>Next milestone</div><div>Date</div></div>
+      ${renderEngagementBranches(visible, groups, renderRow)}`;
+
+    function renderRow(item, { child = false, expanded, count = 0, contextOnly = false } = {}) {
+        const overdue = item.nextMilestoneDate && item.nextMilestoneDate < today() && item.status !== 'on_hold' && !window.EngagementCore.isTerminal(item.status);
+        const id = esc(String(item.id));
+        const title = esc(item.title || 'Untitled engagement');
+        const toggle = count ? `<button type="button" id="eng-branch-toggle-${id}" class="btn btn-ghost eng-branch-toggle" aria-expanded="${expanded}" aria-controls="eng-branch-${id}" aria-label="${expanded ? 'Collapse' : 'Expand'} ${title}" onclick="toggleEngagementBranch('${id}')">${expanded ? '&#9662;' : '&#9656;'}</button>` : '';
+        return `<div class="eng-list-row ${item.isGroup ? 'eng-list-group' : ''} ${String(item.id) === String(selectedEngagementId) ? 'selected' : ''}" onclick="if (!event.target.closest('select,button')) openEngagementDetail('${id}')">
+          <div class="eng-branch ${child ? 'eng-child-title' : ''}">${toggle}<div style="min-width:0"><div class="eng-title">${title}${item.isGroup ? `<span class="eng-group-badge">Group${count ? ' · ' + count : ''}</span>` : ''}</div><div class="eng-subtle">${esc(item.currentState || 'No current state yet')}</div></div></div>
           <div class="eng-subtle">${esc(item.organization || '—')}</div>
-          <div>${statusBadge(item.status)}</div>
-          <div class="eng-subtle">${esc(item.nextMilestone || 'Needs a next milestone')}</div>
-          <div class="eng-date ${overdue ? 'overdue' : ''}">${fmtDate(item.nextMilestoneDate)}</div>
+          <div>${contextOnly ? '' : `<select class="form-input eng-list-status" aria-label="Status for ${title}" onchange="setListEngagementStatus('${id}',this.value)">${statusOptions(item.status)}</select>`}</div>
+          <div class="eng-subtle">${contextOnly ? '' : esc(item.nextMilestone || 'Needs a next milestone')}</div>
+          <div class="eng-date ${overdue ? 'overdue' : ''}">${contextOnly ? '' : fmtDate(item.nextMilestoneDate)}</div>
         </div>`;
-      }).join('')}`;
+    }
+  };
+
+  function renderEngagementBranches(visible, groups, renderRow) {
+    const visibleIds = new Set(visible.map(item => String(item.id)));
+    const children = new Map();
+    for (const item of visible) {
+      if (item.isGroup || !groups.has(item.groupId)) continue;
+      if (!children.has(item.groupId)) children.set(item.groupId, []);
+      children.get(item.groupId).push(item);
+    }
+    const rendered = new Set();
+    return visible.map(item => {
+      const group = item.isGroup ? item : groups.get(item.groupId);
+      if (!group) return renderRow(item);
+      const id = String(group.id);
+      if (rendered.has(id)) return '';
+      rendered.add(id);
+      const branch = children.get(id) || [];
+      const expanded = !collapsedGroups.has(id);
+      return renderRow(group, { expanded, count: branch.length, contextOnly: !visibleIds.has(id) })
+        + (branch.length ? `<div id="eng-branch-${esc(id)}" ${expanded ? '' : 'hidden'}>${branch.map(child => renderRow(child, { child: true })).join('')}</div>` : '');
+    }).join('');
+  }
+
+  window.toggleEngagementBranch = function(id) {
+    if (collapsedGroups.has(id)) collapsedGroups.delete(id);
+    else collapsedGroups.add(id);
+    renderEngagements();
+    document.getElementById(`eng-branch-toggle-${id}`)?.focus();
   };
 
   window.setEngagementView = function(value) {
     engagementView = value === 'list' ? 'list' : 'forecast';
-    if (engagementView === 'forecast' && engagementFilter === 'groups') engagementFilter = 'open';
     renderEngagements();
   };
 
@@ -355,23 +408,36 @@
 
   function renderEngagementSidebar() {
     const forecast = engagementView === 'forecast';
-    const source = engagements.filter(item => !item.deleted && !item.archived && (!forecast || !item.isGroup));
-    const filters = forecast ? [['open', 'Active opportunities'], ['all', 'All opportunities'], ...window.EngagementCore.STATUSES] : [['open', 'Open'], ['groups', 'Pursuit groups'], ['ungrouped', 'Standalone'], ['all', 'All'], ...window.EngagementCore.STATUSES];
+    const source = window.EngagementCore.sort(engagements).filter(item => !forecast || !item.isGroup);
+    const filters = forecast ? [['open', 'Open forecast'], ['all', 'All engagements']] : [['pursuits', 'Active Pursuits'], ['clients', 'Active Clients'], ['all', 'All Engagements']];
+    const selected = forecast ? forecastFilter : engagementFilter;
     document.getElementById('engagementsSidebar').innerHTML = `<div class="sidebar-section"><div class="sidebar-label">Engagements</div>
       ${filters.map(([value, label]) => {
-        const count = value === 'all' ? source.length
-          : value === 'open' ? source.filter(item => item.status !== 'closed').length
-          : value === 'groups' ? source.filter(item => item.isGroup).length
-          : value === 'ungrouped' ? source.filter(item => !item.isGroup && !item.groupId).length
-          : source.filter(item => item.status === value).length;
-        return `<button class="tier-btn ${engagementFilter === value ? 'active' : ''}" onclick="setEngagementFilter('${value}')"><span class="tier-dot" style="background:${value === 'closed' ? '#87928e' : '#2f9185'}"></span>${esc(label)}<span class="tier-count">${count}</span></button>`;
+        const count = source.filter(item => matchesFilter(item, value)).length;
+        return `<button class="tier-btn ${selected === value ? 'active' : ''}" aria-pressed="${selected === value}" onclick="setEngagementFilter('${value}')"><span class="tier-dot" style="background:#2f9185"></span>${esc(label)}<span class="tier-count">${count}</span></button>`;
       }).join('')}</div>`;
   }
 
   window.setEngagementFilter = function setEngagementFilter(value) {
-    engagementFilter = value;
+    if (engagementView === 'forecast') forecastFilter = value;
+    else engagementFilter = value;
     renderEngagements();
     toggleMobileFilters(true);
+  };
+
+  window.setListEngagementStatus = function(id, status) {
+    const item = findEngagement(id);
+    if (!item || item.status === status || !window.EngagementCore.STATUSES.some(([value]) => value === status)) return;
+    statusUndo = {id, previous: item.status, status};
+    window.updateEngagement(id, 'status', status, false);
+    renderEngagements();
+  };
+
+  window.undoEngagementStatus = function() {
+    const undo = statusUndo;
+    statusUndo = null;
+    if (undo && findEngagement(undo.id)?.status === undo.status) window.updateEngagement(undo.id, 'status', undo.previous, false);
+    renderEngagements();
   };
 
   window.openAddEngagementModal = function openAddEngagementModal(groupId = '') {
@@ -382,7 +448,7 @@
       <div class="eng-form-grid">
         <label class="form-group"><span class="form-label">Title</span><input class="form-input" id="engNewTitle" autofocus></label>
         <label class="form-group"><span class="form-label">Organization / client</span><input class="form-input" id="engNewOrg"></label>
-        <label class="form-group"><span class="form-label">Status</span><select class="form-input" id="engNewStatus">${statusOptions('pursuit')}</select></label>
+        <label class="form-group"><span class="form-label">Status</span><select class="form-input" id="engNewStatus">${statusOptions('lead')}</select></label>
         <label class="form-group"><span class="form-label">Next milestone date</span><input class="form-input" type="date" id="engNewDate"></label>
       </div>
       <label class="form-group"><span class="form-label">Current state</span><textarea class="form-input" id="engNewState" rows="3"></textarea></label>

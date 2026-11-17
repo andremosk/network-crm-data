@@ -26,7 +26,7 @@ test('business intro produces linked referral reminder and pursuit without creat
   assert.equal(rows[0].proposed.reminder.date,'2026-12-09');
   assert.match(rows[0].proposed.reminder.text,/Thank Avery/);
   assert.deepEqual(rows[1].proposed.contactIds,['907']);
-  assert.equal(rows[1].proposed.status,'pursuit');
+  assert.equal(rows[1].proposed.status,'lead');
   assert.equal(rows[1].proposed.expectedValue,undefined);
   assert.equal(rows[0].reviewContext.messageId,rows[1].reviewContext.messageId);
   assert.notEqual(rows[0].sourceHash, rows[1].sourceHash);
@@ -129,7 +129,7 @@ test('engagement approval guards claim, duplicate organizations, active targets,
   assert.ok(params.some(p=>typeof p==='string'&&p.includes('danger')));
   assert.ok(params.every(p=>typeof p!=='string'||!p.includes('<script>')));
   await applyEngagement(sql,{...draft,proposal_type:'update_engagement'},{...rows[1].proposed,engagementId:'12'});
-  assert.match(query,/sourceKey/);assert.match(query,/<> 'closed'/);
+  assert.match(query,/sourceKey/);assert.match(query,/NOT IN \('closed', 'lost', 'completed'\)/);
   assert.doesNotMatch(query,/'status', 'pursuit'/);
 });
 
@@ -137,7 +137,7 @@ test('sanitizers retain reminder intent but reject HTML, invalid dates, arbitrar
   const clean=sanitizeProposal('update_contact',{note:'A referral',reminder:{date:'2026-12-09',text:'<b>Thank Avery</b>'},nextAction:'Share outcome'});
   assert.equal(clean.reminder.text,'Thank Avery');
   const p=sanitizeProposal('create_engagement',{title:'Test',expectedValue:50000,status:'active_client',nextMilestoneDate:'2026-02-30',links:'javascript:alert(1) https://mail.google.com/mail/u/0/#all/test'});
-  assert.equal(p.expectedValue,undefined);assert.equal(p.status,'pursuit');assert.equal(p.nextMilestoneDate,'');assert.doesNotMatch(p.links,/javascript/);
+  assert.equal(p.expectedValue,undefined);assert.equal(p.status,'lead');assert.equal(p.nextMilestoneDate,'');assert.doesNotMatch(p.links,/javascript/);
 });
 
 test('assessment cache prevents repeat provider calls, and exclusion receipts do not alter contacts', async () => {

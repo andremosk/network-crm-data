@@ -79,7 +79,7 @@ test("creates an idempotent engagement with validated linked contacts", async ()
   assert.deepEqual(second.body, first.body);
   assert.equal(repository.items.size, 1);
   const saved = [...repository.items.values()][0];
-  assert.equal(saved.status, "pursuit");
+  assert.equal(saved.status, "lead");
   assert.deepEqual(saved.contactIds, ["42"]);
 });
 

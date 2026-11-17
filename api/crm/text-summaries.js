@@ -143,7 +143,7 @@ async function handler(request, response, dependencies) {
         WITH target AS (
           SELECT record_id FROM crm_records
           WHERE record_type = 'engagement' AND record_id = ${engagementId}
-            AND COALESCE(payload->>'status', '') <> 'closed'
+            AND COALESCE(payload->>'status', '') NOT IN ('closed', 'lost', 'completed')
             AND COALESCE(payload->>'deleted', 'false') <> 'true'
             AND COALESCE(payload->>'archived', 'false') <> 'true'
           FOR UPDATE
