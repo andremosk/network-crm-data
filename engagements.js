@@ -2,6 +2,7 @@
   let engagementFilter = 'pursuits';
   let forecastFilter = 'open';
   let statusUndo;
+  let closeListStatusMenu;
   const collapsedGroups = new Set();
   let newContactIds = [];
   let newGroupId = '';
@@ -79,7 +80,11 @@
     .eng-subtle { font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
     .eng-status { display:inline-flex;align-items:center;width:max-content;padding:5px 8px;border-radius:6px;background:#e5f1ee;color:#176d62;font-size:11px;font-weight:650; }
     .eng-status.closed,.eng-status.lost,.eng-status.completed { background:#edf0ef;color:#68736f; }
-    .eng-list-status { width:100%; min-width:0; font-size:12px; }
+    .eng-list-status { width:100%; min-width:0; font-size:12px; display:flex; align-items:center; justify-content:space-between; gap:4px; text-align:left; cursor:pointer; }
+    .eng-status-menu { position:fixed; z-index:90; overflow:auto; padding:4px; border:1px solid var(--border); border-radius:7px; background:var(--surface); box-shadow:var(--shadow); }
+    .eng-status-menu button { display:flex; justify-content:space-between; align-items:center; gap:8px; width:100%; min-height:30px; padding:4px 8px; border:0; border-radius:4px; background:transparent; color:var(--text); font:inherit; font-size:12px; text-align:left; cursor:pointer; }
+    .eng-status-menu button:hover,.eng-status-menu button:focus-visible { background:var(--surface2); }
+    .eng-status-menu button[aria-pressed=true] { color:var(--accent); font-weight:650; }
     .eng-list-row > div { min-width:0; }
     .eng-title { overflow-wrap:anywhere; }
     .eng-list-group { background:var(--surface2); }
@@ -220,6 +225,7 @@
   }
 
   window.renderEngagements = function renderEngagements() {
+    closeListStatusMenu?.();
     const query = document.getElementById('searchInput').value.toLowerCase().trim();
     const filter = engagementView === 'forecast' ? forecastFilter : engagementFilter;
     const source = window.EngagementCore.sort(engagements);
@@ -237,7 +243,7 @@
     renderEngagementSidebar();
     const view = document.getElementById('engagementsView');
     const tools = `<div class="eng-view-tools"><div role="group" aria-label="Engagement view"><button class="btn btn-ghost btn-sm" aria-pressed="${engagementView === 'forecast'}" onclick="setEngagementView('forecast')">Cash flow</button><button class="btn btn-ghost btn-sm" aria-pressed="${engagementView === 'list'}" onclick="setEngagementView('list')">List</button></div>${engagementView === 'forecast' ? '<div><button class="btn btn-ghost btn-sm" onclick="copyEngagementForecast()">Copy recap</button><button class="btn btn-ghost btn-sm" onclick="downloadEngagementForecast()" title="Download cash-flow timeline as CSV">&#8595; CSV</button></div>' : ''}</div>`;
-    const undo = statusUndo ? `<div class="eng-view-tools"><span role="status">Status updated</span><button class="btn btn-ghost btn-sm" onclick="undoEngagementStatus()">Undo</button></div>` : '';
+    const undo = statusUndo ? `<div class="eng-view-tools"><span role="status">Status updated</span><button id="eng-status-undo" class="btn btn-ghost btn-sm" onclick="undoEngagementStatus()">Undo</button></div>` : '';
     if (engagementView === 'forecast') {
       displayedForecast = window.EngagementCore.forecastRows(visible, false);
       document.getElementById('statShowing').textContent = displayedForecast.length;
@@ -259,7 +265,7 @@
         return `<div class="eng-list-row ${item.isGroup ? 'eng-list-group' : ''} ${String(item.id) === String(selectedEngagementId) ? 'selected' : ''}" onclick="if (!event.target.closest('select,button')) openEngagementDetail('${id}')">
           <div class="eng-branch ${child ? 'eng-child-title' : ''}">${toggle}<div style="min-width:0"><div class="eng-title">${title}${item.isGroup ? `<span class="eng-group-badge">Group${count ? ' · ' + count : ''}</span>` : ''}</div><div class="eng-subtle">${esc(item.currentState || 'No current state yet')}</div></div></div>
           <div class="eng-subtle">${esc(item.organization || '—')}</div>
-          <div>${contextOnly ? '' : `<select class="form-input eng-list-status" aria-label="Status for ${title}" onchange="setListEngagementStatus('${id}',this.value)">${statusOptions(item.status)}</select>`}</div>
+          <div>${contextOnly ? '' : `<button type="button" class="form-input eng-list-status" id="eng-status-${id}" aria-label="Status for ${title}: ${esc(window.EngagementCore.STATUS_LABELS[item.status])}" aria-expanded="false" onclick="openListStatusMenu(this,'${id}')">${esc(window.EngagementCore.STATUS_LABELS[item.status])}<span aria-hidden="true">&#9662;</span></button>`}</div>
           <div class="eng-subtle">${contextOnly ? '' : esc(item.nextMilestone || 'Needs a next milestone')}</div>
           <div class="eng-date ${overdue ? 'overdue' : ''}">${contextOnly ? '' : fmtDate(item.nextMilestoneDate)}</div>
         </div>`;
@@ -423,6 +429,71 @@
     else engagementFilter = value;
     renderEngagements();
     toggleMobileFilters(true);
+  };
+
+  window.openListStatusMenu = function(trigger, id) {
+    const wasOpen = trigger.getAttribute('aria-expanded') === 'true';
+    closeListStatusMenu?.();
+    const item = findEngagement(id);
+    if (wasOpen || !item) return;
+    const core = window.EngagementCore;
+    const current = core.withDefaults(item).status;
+    const menu = document.createElement('div');
+    menu.className = 'eng-status-menu';
+    menu.id = 'eng-list-status-menu';
+    menu.setAttribute('role', 'group');
+    menu.setAttribute('aria-label', 'Engagement status');
+    for (const [value, label] of core.STATUSES) {
+      const option = document.createElement('button');
+      option.type = 'button';
+      option.textContent = value === current ? label + ' \u2713' : label;
+      option.setAttribute('aria-pressed', String(value === current));
+      option.onclick = () => {
+        closeListStatusMenu();
+        window.setListEngagementStatus(id, value);
+        (document.getElementById('eng-status-' + id) || document.getElementById('eng-status-undo'))?.focus();
+      };
+      menu.append(option);
+    }
+    document.body.append(menu);
+    const rect = trigger.getBoundingClientRect();
+    const viewport = document.documentElement;
+    const width = Math.min(viewport.clientWidth - 16, Math.max(164, rect.width));
+    const below = Math.max(0, viewport.clientHeight - rect.bottom - 12);
+    const above = Math.max(0, rect.top - 12);
+    const upward = menu.scrollHeight > below && above > below;
+    Object.assign(menu.style, {
+      width: width + 'px',
+      left: Math.max(8, Math.min(rect.left, viewport.clientWidth - width - 8)) + 'px',
+      maxHeight: (upward ? above : below) + 'px',
+      ...(upward ? {bottom: (viewport.clientHeight - rect.top + 4) + 'px'} : {top: (rect.bottom + 4) + 'px'})
+    });
+    trigger.setAttribute('aria-expanded', 'true');
+    trigger.setAttribute('aria-controls', menu.id);
+
+    function outside(event) { if (!menu.contains(event.target) && !trigger.contains(event.target)) closeListStatusMenu(); }
+    function keydown(event) {
+      if (event.key === 'Escape') { event.preventDefault(); closeListStatusMenu(); trigger.focus(); }
+    }
+    function scrolled(event) { if (!menu.contains(event.target)) closeListStatusMenu(); }
+    closeListStatusMenu = () => {
+      closeListStatusMenu = null;
+      menu.remove();
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.removeAttribute('aria-controls');
+      document.removeEventListener('pointerdown', outside);
+      document.removeEventListener('focusin', outside);
+      document.removeEventListener('keydown', keydown);
+      document.removeEventListener('scroll', scrolled, true);
+      window.removeEventListener('resize', close);
+    };
+    function close() { closeListStatusMenu?.(); }
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('focusin', outside);
+    document.addEventListener('keydown', keydown);
+    document.addEventListener('scroll', scrolled, true);
+    window.addEventListener('resize', close);
+    (menu.querySelector('[aria-pressed=true]') || menu.firstElementChild).focus();
   };
 
   window.setListEngagementStatus = function(id, status) {

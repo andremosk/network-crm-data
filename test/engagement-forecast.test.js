@@ -163,6 +163,32 @@ test('Copy recap writes the new month-across colored timeline rather than the ol
   assert.match(await copied['text/plain'].text(),/Cash-flow timeline/);
 });
 
+test('row status menu stays anchored near the bottom edge and supports Escape', () => {
+  const listeners = new Map();
+  const node = () => ({style:{}, attrs:{}, children:[], scrollHeight:220,
+    setAttribute(k,v){this.attrs[k]=v;}, getAttribute(k){return this.attrs[k];}, removeAttribute(k){delete this.attrs[k];},
+    append(child){this.children.push(child);}, remove(){this.removed=true;},
+    querySelector(){return this.children.find(child=>child.attrs['aria-pressed']==='true');},
+    get firstElementChild(){return this.children[0];}, focus(){this.focused=true;}});
+  const trigger=node(), body=node();
+  trigger.getBoundingClientRect=()=>({left:680,width:130,top:660,bottom:696});
+  const win={EngagementCore:core,addEventListener(){},removeEventListener(){}};
+  const context={window:win,engagements:[{id:1,status:'closed'}],
+    document:{body,documentElement:{clientWidth:820,clientHeight:720},head:{appendChild(){}},createElement:node,
+      addEventListener(k,v){listeners.set(k,v);},removeEventListener(k){listeners.delete(k);}}};
+  vm.runInNewContext(fs.readFileSync('engagements.js','utf8'),context);
+  win.openListStatusMenu(trigger,'1');
+  const menu=body.firstElementChild;
+  assert.equal(menu.style.bottom,'64px');
+  assert.equal(menu.style.left,'648px');
+  assert.equal(menu.children.length,7);
+  assert.equal(trigger.attrs['aria-expanded'],'true');
+  listeners.get('keydown')({key:'Escape',preventDefault(){}});
+  assert.equal(menu.removed,true);
+  assert.equal(trigger.attrs['aria-expanded'],'false');
+  assert.equal(trigger.focused,true);
+});
+
 test('active pursuits exclude terminal and stalled work, with inline status edits and undo', () => {
   const statuses = ['pursuit','discovery','proposal','decision_pending','active_client','stalled','closed','lost','completed'];
   const items = statuses.map((status,id)=>({id:id+1,status,title:`Fixture ${status}`}));
