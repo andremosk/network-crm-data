@@ -68,6 +68,23 @@
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   }
 
+  function emailTimestamps(item) {
+    const stamp = value => {
+      if (!value) return 'Unknown';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return 'Unknown';
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York', year:'numeric', month:'short', day:'numeric',
+        hour:'numeric', minute:'2-digit', timeZoneName:'short'
+      }).format(date);
+    };
+    const received = item.occurred_at;
+    const queued = item.created_at;
+    const older = received && queued && new Date(queued) - new Date(received) > 86400000;
+    return `<div class="text-review-meta">Email received: ${escapeHtml(stamp(received))}</div>
+      <div class="text-review-meta">Added to review: ${escapeHtml(stamp(queued))}${older ? ' · Older email surfaced during review' : ''}</div>`;
+  }
+
   function allContacts() {
     try {
       return Array.isArray(contacts) ? contacts : [];
@@ -260,7 +277,8 @@
       <div class="text-review-row-head">
         <div>
           <div class="text-review-name">${escapeHtml(displayName)}</div>
-          <div class="text-review-meta">${escapeHtml(formatDate(item.occurred_at))}${item.recipient_email ? ` · ${escapeHtml(item.recipient_email)}` : ""}</div>
+          ${emailTimestamps(item)}
+          ${item.recipient_email ? `<div class="text-review-meta">${escapeHtml(item.recipient_email)}</div>` : ''}
           <div class="communication-review-labels"><span class="communication-review-label">Email</span><span class="communication-review-label">${proposalTypeLabel(item.proposal_type)}</span></div>
         </div>
         <div class="text-review-contact">Awaiting approval</div>
@@ -291,6 +309,7 @@
     const p = item.proposed || {};
     const field = (key, label, value, textarea = false) => `<div class="communication-review-field ${textarea ? 'wide' : ''}"><label for="comm_${key}_${item.id}">${label}</label>${textarea ? `<textarea class="text-review-summary" id="comm_${key}_${item.id}">${escapeHtml(value)}</textarea>` : `<input class="form-input" ${key.endsWith('Date') ? 'type="date"' : ''} id="comm_${key}_${item.id}" value="${escapeHtml(value)}">`}</div>`;
     return `<div class="text-review-row" id="communicationProposal_${item.id}"><div class="text-review-row-head"><div><div class="text-review-name">${escapeHtml(p.title || p.organization || 'Engagement')}</div><div class="communication-review-labels"><span class="communication-review-label">Email</span><span class="communication-review-label">${proposalTypeLabel(item.proposal_type)}</span></div></div><div class="text-review-contact">Awaiting approval</div></div>
+      ${emailTimestamps(item)}
       <div class="communication-review-evidence">${escapeHtml(item.evidence)}</div>
       <details class="communication-review-fields" open><summary>Proposed engagement fields</summary><div class="communication-review-grid">
       <div class="communication-review-field wide"><label for="comm_engagementId_${item.id}">Destination</label><select class="form-input" id="comm_engagementId_${item.id}">${item.proposal_type === 'create_engagement' ? '<option value="">New pursuit</option>' : ''}${engagementChoices.map(e => `<option value="${escapeHtml(e.id)}" ${String(e.id) === String(p.engagementId) ? 'selected' : ''}>${escapeHtml(e.title)}${e.organization ? ` · ${escapeHtml(e.organization)}` : ''}</option>`).join('')}</select></div>

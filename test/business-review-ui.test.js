@@ -12,7 +12,7 @@ function harness() {
   const shared={messageId:'source-123',subject:'Introduction: Jamie and Andre',sourceUrl:'https://mail.google.com/mail/u/0/#all/source-123'};
   const proposals=[{id:1,proposal_type:'update_contact',matched_contact_id:'907',matched_contact_name:'Avery Chen',evidence:'I am making an introduction.',review_context:shared,
     proposed:{note:'Avery referred Andre.',status:'follow_up',followUpDate:'2026-12-09',reminder:{date:'2026-12-09',text:'Thank Avery and share outcome.'}}},
-    {id:2,proposal_type:'create_engagement',evidence:'Jamie needs AI training.',review_context:shared,
+    {id:2,proposal_type:'create_engagement',occurred_at:'2026-11-10T14:40:24Z',created_at:'2026-11-18T02:15:09Z',evidence:'Jamie needs AI training.',review_context:shared,
       proposed:{title:'Orbit Five AI training',organization:'Orbit Five',currentState:'Warm introduction',opportunity:'Team AI training',note:'Referral from Avery',nextMilestone:'Discovery call',contactIds:['907'],links:shared.sourceUrl}}];
   const context={console,Date,contacts:[{id:907,name:'Avery Chen',status:'follow_up',followUpDate:'2026-11-15',communicationReminders:[{date:'2026-12-09',text:'Thank Avery'}]}],
     window:{toast(){}},document:{getElementById:id=>id==='engagementSmsReview'?null:element(id)},localStorage:{getItem:()=> '[]',setItem(){}},
@@ -32,6 +32,9 @@ test('one email groups separately reviewable contact and engagement actions with
   assert.match(html,/New pursuit/);assert.match(html,/Existing client work/);
   assert.match(html,/ignoreCommunicationProposal\(1\)/);assert.match(html,/ignoreCommunicationProposal\(2\)/);
   assert.equal(h.requests.length,0);
+  assert.match(html,/Email received: Nov 10, 2026, 9:40 AM EST/);
+  assert.match(html,/Added to review: Nov 17, 2026, 9:15 PM EST/);
+  assert.match(html,/Older email surfaced during review/);
 });
 
 test('engagement edits preserve linked contacts/source but do not save live engagement', async()=>{
