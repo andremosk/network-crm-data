@@ -135,6 +135,7 @@ test('engagement approval guards claim, duplicate organizations, active targets,
   assert.ok(params.some(p=>typeof p==='string'&&p.includes('danger')));
   assert.ok(params.every(p=>typeof p!=='string'||!p.includes('<script>')));
   await applyEngagement(sql,{...draft,proposal_type:'update_engagement'},{...rows[1].proposed,engagementId:'12'});
+  assert.match(query,/'updatedDate', \?::text/);
   assert.match(query,/sourceKey/);assert.match(query,/NOT IN \('closed', 'lost', 'completed'\)/);
   assert.doesNotMatch(query,/'status', 'pursuit'/);
 });

@@ -6,6 +6,49 @@ const { applyUpdate } = require('../api/crm/communication-proposals');
 const { applyEngagement } = require('../lib/communication-engagements');
 const { ensureSchema } = require('../lib/crm-db');
 
+test('apply a new-pursuit email to an existing engagement exactly once', {skip: !process.env.CRM_SQL_INTEGRATION}, async () => {
+  const db = neon(process.env.DATABASE_URL);
+  const capture = async draft => {
+    let op;
+    await applyEngagement(async (strings,...values) => {
+      op = {text: strings.reduce((text,part,index) => text + (index ? `$${index}` : '') + part, ''), values};
+      return [];
+    }, draft, {engagementId:'501',note:'Discussed four dashboards & timing.',currentState:'Discovery underway',
+      nextMilestone:'Assess integration',nextMilestoneDate:'2026-11-25'});
+    return {_capture:true,...op};
+  };
+  const draft = {id:1,proposal_type:'create_engagement',occurred_at:'2026-11-18T16:06:00Z',review_context:{messageId:'fictional-existing-project'}};
+  const original = {id:501,title:'Existing project',organization:'Fictional organization',status:'active_client',
+    commercialHypothesis:'Keep existing terms',notes:[{id:'old-note',date:'2026-11-01',html:'Prior context'}]};
+  // Temporary tables shadow real records for this transaction and disappear on commit.
+  const queries = [
+    db.query('CREATE TEMP TABLE crm_records (LIKE public.crm_records INCLUDING ALL) ON COMMIT DROP'),
+    db.query("CREATE TEMP TABLE crm_communication_proposals (id bigint PRIMARY KEY,status text DEFAULT 'pending',proposed jsonb,reviewed_at timestamptz) ON COMMIT DROP"),
+    db.query("INSERT INTO crm_records (record_type,record_id,payload) VALUES ('engagement','501',$1::jsonb)",[JSON.stringify(original)]),
+    db.query('INSERT INTO crm_communication_proposals (id) VALUES (1),(2)'),
+    await capture(draft),
+    await capture(draft),
+    await capture({...draft,id:2}),
+    db.query("SELECT payload,version FROM crm_records WHERE record_id='501'"),
+    db.query('SELECT status FROM crm_communication_proposals ORDER BY id')
+  ];
+  const results = await db.transaction(queries.map(query => query._capture ? db.query(query.text,query.values) : query));
+  assert.deepEqual(results[4],[{engagement_id:'501'}]);
+  assert.deepEqual(results[5],[]);
+  assert.deepEqual(results[6],[]);
+  const saved = results[7][0];
+  assert.equal(Number(saved.version),2);
+  assert.equal(saved.payload.status,'active_client');
+  assert.equal(saved.payload.title,original.title);
+  assert.equal(saved.payload.commercialHypothesis,original.commercialHypothesis);
+  assert.equal(saved.payload.currentState,'Discovery underway');
+  assert.equal(saved.payload.updatedDate,'2026-11-18');
+  assert.equal(saved.payload.notes.length,2);
+  assert.equal(saved.payload.notes[1].html,'Discussed four dashboards &amp; timing.');
+  assert.equal(saved.payload.notes[1].sourceKey,'fictional-existing-project');
+  assert.deepEqual(results[8].map(row=>row.status),['applied','pending']);
+});
+
 test('business review SQL: atomic bundles and once-only approvals in isolated temporary tables', { skip: !process.env.CRM_SQL_INTEGRATION }, async () => {
   const db = neon(process.env.DATABASE_URL);
   const capture = async fn => {
