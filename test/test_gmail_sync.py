@@ -20,6 +20,8 @@ class GmailSyncTests(unittest.TestCase):
             return {"scanned": 20, "proposed": 1, "completed": True}
         state = MODULE.sync(request, {}, "2026-10-23")
         self.assertEqual(len(calls), 5)
+        self.assertEqual(calls[0][1], {})
+        self.assertEqual(calls[1][1], {"catchUp": True})
         self.assertEqual(state["lastEnrichmentDate"], "2026-10-23")
         calls.clear()
         MODULE.sync(request, state, "2026-10-23")

@@ -92,6 +92,9 @@ their configured batch size. Receipt checks and automated-mail exclusions are
 batched to reduce database traffic. A failed scan checkpoint is never skipped.
 Network waits overlap in a bounded pool: two messages for normal checks, three
 for catch-up. All in-flight work finishes before a checkpoint is committed.
+The Mac helper starts with a normal light check. When more pages remain, its
+remaining three calls use catch-up mode; the existing schedule and four-call cap
+are unchanged.
 
 ## Verification
 

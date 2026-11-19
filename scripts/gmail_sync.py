@@ -12,13 +12,17 @@ from messages_sync import APP_DIR, DEFAULT_CONFIG, api_request, read_json, write
 def run_pages(request, path, payload, more_field, limit):
     totals = {"scanned": 0, "proposed": 0}
     more = False
+    request_payload = dict(payload)
     for _ in range(limit):
-        result = request(path, payload)
+        result = request(path, request_payload)
         for key in totals:
             totals[key] += int(result.get(key) or 0)
         more = bool(result.get("has_more")) if more_field == "has_more" else not result.get("completed", True)
         if not more:
             break
+        if more_field == "has_more":
+            # Keep the first check light, but drain a real backlog in larger bounded pages.
+            request_payload = {**payload, "catchUp": True}
     return totals, more
 
 
