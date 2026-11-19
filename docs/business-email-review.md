@@ -90,6 +90,8 @@ The private scheduler route also accepts `{"catchUp":true}` for bounded
 100-message pages (still subject to the same time limit). Normal checks retain
 their configured batch size. Receipt checks and automated-mail exclusions are
 batched to reduce database traffic. A failed scan checkpoint is never skipped.
+Network waits overlap in a bounded pool: two messages for normal checks, three
+for catch-up. All in-flight work finishes before a checkpoint is committed.
 
 ## Verification
 

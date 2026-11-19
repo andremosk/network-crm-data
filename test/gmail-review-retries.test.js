@@ -73,3 +73,20 @@ test('batch cache and bulk exclusions preserve existing decisions and avoid per-
   assert.match(calls[1].text,/FROM unnest/);
   assert.match(calls[1].text,/review_version < EXCLUDED.review_version/);
 });
+
+test('catch-up overlaps at most three assessments and waits for them before completing the checkpoint', async()=>{
+  const s=setup();
+  s.setList(Array.from({length:10},(_,index)=>({id:'mail-'+index})));
+  let active=0, peak=0;
+  s.deps.assessEmail=async()=>{
+    active++; peak=Math.max(peak,active);
+    await new Promise(resolve=>setImmediate(resolve));
+    active--;
+    return {relevant:false,actions:[]};
+  };
+  const result=await runGmailReviewSync({sql:{},env:{NETWORK_CRM_GMAIL_MAILBOX:'andre@example.invalid'},dependencies:s.deps,now:s.now,catchUp:true});
+  assert.equal(result.scanned,10);
+  assert.equal(active,0);
+  assert.equal(peak,3);
+  assert.equal(s.checkpoints.at(-1),s.now.toISOString());
+});
