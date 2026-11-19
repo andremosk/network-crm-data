@@ -101,6 +101,20 @@ mail exclusions are persisted even if another message fetch fails, so the next
 run does not waste quota fetching those messages again. The page remains pending
 until every message is processed or durably queued for assessment retry.
 
+## Reading Original Emails
+
+Each email group in Communication Review has a Full email disclosure. Expanding
+it uses the session-protected, read-only `/api/crm/communication-email?proposalId=…`
+route to retrieve that pending proposal's original Gmail message. It includes
+headers, the full text body, signatures and quoted history, including inline text
+bodies stored separately by Gmail. HTML is converted to text and escaped by the UI;
+images and file attachments remain available through Open in Gmail. This also
+works for previously queued proposals. Bodies are fetched on demand, cached only
+in page memory and never stored in CRM records or sent to the screening model.
+The endpoint accepts a proposal ID, not an arbitrary caller-selected Gmail ID,
+and sends `Cache-Control: private, no-store`. Screening and proposed notes stay
+concise; opening the full email does not apply any action or mark it read.
+
 ## Verification
 
 `node --test test/*.test.js` covers routing, grounding, dedupe, approval, UI,

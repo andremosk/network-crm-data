@@ -1,5 +1,8 @@
 (function () {
   let pendingSummaries = [];
+  const fullEmails = new Map();
+  const loadingEmails = new Set();
+  const openEmails = new Set();
   let engagementChoices = [];
   const summaryDestinations = new Map();
   const contactReviewUpdates = new Map();
@@ -133,6 +136,10 @@
         .communication-review-labels { display:flex; flex-wrap:wrap; gap:6px; margin-top:5px; }
         .communication-review-label { padding:2px 7px; border:1px solid var(--border); border-radius:4px; color:var(--muted); font-size:10px; font-weight:700; text-transform:uppercase; }
         .communication-review-evidence { margin-top:10px; color:var(--text); font-size:13px; line-height:1.55; }
+        .communication-full-email { margin:12px 0; border:1px solid var(--border); border-radius:6px; padding:12px; }
+        .communication-full-email summary { cursor:pointer; font-weight:600; font-size:13px; }
+        .communication-email-headers { margin:12px 0; font-size:12px; line-height:1.6; overflow-wrap:anywhere; }
+        .communication-email-body { white-space:pre-wrap; overflow-wrap:anywhere; font-size:13px; line-height:1.65; }
         .communication-review-fields { margin-top:10px; padding:12px; border:1px solid var(--border); border-radius:7px; background:var(--surface2); }
         .communication-review-fields summary { cursor:pointer; color:var(--muted); font-size:11px; font-weight:700; }
         .communication-review-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
@@ -317,6 +324,34 @@
       </div></details><div class="text-review-actions"><button class="btn btn-ghost btn-sm" onclick="ignoreCommunicationProposal(${item.id})">Ignore</button><button class="btn btn-ghost btn-sm" onclick="editCommunicationProposal(${item.id})">Save Edit</button><button class="btn btn-primary btn-sm" onclick="applyCommunicationProposal(${item.id})">${item.proposal_type === 'create_engagement' ? 'Create / Apply' : 'Apply'}</button></div></div>`;
   }
 
+  window.loadFullReviewEmail = async function(id, details) {
+    if (!details.open) { openEmails.delete(id); return; }
+    openEmails.add(id);
+    const slot = document.getElementById(`fullReviewEmail_${id}`);
+    if (!slot) return;
+    if (fullEmails.has(id)) { slot.innerHTML = fullEmails.get(id); return; }
+    if (loadingEmails.has(id)) return;
+    loadingEmails.add(id);
+    slot.innerHTML = '<div class="text-review-meta" role="status">Loading full email…</div>';
+    try {
+      const response = await fetch(`/api/crm/communication-email?proposalId=${encodeURIComponent(id)}`, {cache:'no-store'});
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error?.message || 'Could not load the full email.');
+      const email = data.email;
+      const date = new Date(email.receivedAt);
+      const received = Number.isNaN(date.getTime()) ? '' : date.toLocaleString('en-US', {timeZone:'America/New_York',timeZoneName:'short'});
+      const headers = [['From',email.from],['To',email.to],['Cc',email.cc],['Received',received],['Subject',email.subject]]
+        .filter(([,value]) => value).map(([label,value]) => `<div><strong>${label}:</strong> ${escapeHtml(value)}</div>`).join('');
+      const html = `<div class="communication-email-headers">${headers}</div><div class="communication-email-body">${escapeHtml(email.body || '(No text body)')}</div>`;
+      fullEmails.set(id,html);
+      const current = document.getElementById(`fullReviewEmail_${id}`);
+      if (current) current.innerHTML = html;
+    } catch (error) {
+      const current = document.getElementById(`fullReviewEmail_${id}`);
+      if (current) current.innerHTML = `<div class="text-review-meta" role="alert">${escapeHtml(error.message)}</div><button class="btn btn-ghost btn-sm" onclick="loadFullReviewEmail(${id},{open:true})">Retry</button>`;
+    } finally { loadingEmails.delete(id); }
+  };
+
   function renderEmailGroups() {
     const groups = new Map();
     for (const item of pendingProposals) {
@@ -327,7 +362,9 @@
     return [...groups.values()].map(items => {
       const context = items[0].review_context;
       const url = context?.sourceUrl && /^https:\/\/mail\.google\.com\//.test(context.sourceUrl) ? context.sourceUrl : '';
-      return `<section class="text-review-section">${context?.messageId ? `<div class="text-review-section-title"><span>${escapeHtml(context.subject || 'Business email')} · ${items.length} proposed action${items.length === 1 ? '' : 's'}</span>${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">View email</a>` : ''}</div>` : ''}${items.map(renderProposal).join('')}</section>`;
+      const id = items[0].id;
+      const source = `<details class="communication-full-email" ${openEmails.has(id) ? 'open' : ''} ontoggle="loadFullReviewEmail(${id},this)"><summary>Full email</summary><div id="fullReviewEmail_${id}">${fullEmails.get(id) || ''}</div></details>`;
+      return `<section class="text-review-section">${context?.messageId ? `<div class="text-review-section-title"><span>${escapeHtml(context.subject || 'Business email')} · ${items.length} proposed action${items.length === 1 ? '' : 's'}</span>${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">Open in Gmail</a>` : ''}</div>` : ''}${source}${items.map(renderProposal).join('')}</section>`;
     }).join('');
   }
 

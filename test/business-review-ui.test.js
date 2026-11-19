@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 
 function harness() {
-  const elements=new Map(),requests=[];
+  const elements=new Map(),requests=[],emailReads=[];
   const element=id=>{
     if(!elements.has(id)) elements.set(id,{value:'',innerHTML:'',classList:{contains:()=>id==='textReviewModal',add(){},remove(){},toggle(){}}});
     return elements.get(id);
@@ -17,24 +17,41 @@ function harness() {
   const context={console,Date,contacts:[{id:907,name:'Avery Chen',status:'follow_up',followUpDate:'2026-11-15',communicationReminders:[{date:'2026-12-09',text:'Thank Avery'}]}],
     window:{toast(){}},document:{getElementById:id=>id==='engagementSmsReview'?null:element(id)},localStorage:{getItem:()=> '[]',setItem(){}},
     fetch:async(url,options)=>{
+      if(url.includes('communication-email')) {emailReads.push(url);return {ok:true,json:async()=>({email:{from:'Avery <avery@example.invalid>',to:'Andre',subject:'Introduction',receivedAt:'2026-11-18T16:00:00Z',body:'Whole email\nSignature\n> Quoted reply <script>unsafe</script>'}})};}
       if(options?.method==='PATCH'){requests.push(JSON.parse(options.body));return {ok:true,json:async()=>({status:'pending',proposal:{}})};}
       return {ok:true,json:async()=>url.includes('communication-proposals')?{proposals}:{summaries:[],conversations:[],engagements:[{id:'12',title:'Existing client work',organization:'Orbit Five'}]}};
     }};
   vm.runInNewContext(fs.readFileSync('text-summary-review.js','utf8'),context);
-  return {context,element,requests};
+  return {context,element,requests,emailReads};
 }
 
 test('one email groups separately reviewable contact and engagement actions with source link', async()=>{
   const h=harness();await h.context.window.loadTextSummaries();
   const html=h.element('textReviewContent').innerHTML;
   assert.match(html,/Introduction: Jamie and Andre.*2 proposed actions/);
-  assert.match(html,/View email/);assert.match(html,/Referral reminder date/);assert.match(html,/Create pursuit/);
+  assert.match(html,/Open in Gmail/);assert.match(html,/Referral reminder date/);assert.match(html,/Create pursuit/);
+  assert.equal((html.match(/<summary>Full email<\/summary>/g)||[]).length,1);
   assert.match(html,/New pursuit/);assert.match(html,/Existing client work/);
   assert.match(html,/ignoreCommunicationProposal\(1\)/);assert.match(html,/ignoreCommunicationProposal\(2\)/);
   assert.equal(h.requests.length,0);
   assert.match(html,/Email received: Nov 10, 2026, 9:40 AM EST/);
   assert.match(html,/Added to review: Nov 17, 2026, 9:15 PM EST/);
   assert.match(html,/Older email surfaced during review/);
+});
+
+test('whole email loads only on expansion, escapes HTML, and is cached without touching draft edits', async()=>{
+  const h=harness();await h.context.window.loadTextSummaries();
+  assert.equal(h.emailReads.length,0);
+  h.element('comm_note_2').value='Unsaved edit';
+  await h.context.window.loadFullReviewEmail(1,{open:true});
+  const html=h.element('fullReviewEmail_1').innerHTML;
+  assert.match(html,/Whole email\nSignature\n&gt; Quoted reply &lt;script&gt;unsafe&lt;\/script&gt;/);
+  assert.match(html,/From:/);
+  assert.doesNotMatch(html,/<script>/);
+  assert.equal(h.element('comm_note_2').value,'Unsaved edit');
+  await h.context.window.loadFullReviewEmail(1,{open:false});
+  await h.context.window.loadFullReviewEmail(1,{open:true});
+  assert.equal(h.emailReads.length,1);assert.equal(h.requests.length,0);
 });
 
 test('engagement edits preserve linked contacts/source but do not save live engagement', async()=>{
