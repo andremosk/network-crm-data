@@ -1,6 +1,6 @@
 const { messagesTokenIsValid } = require("../../lib/crm-auth");
 const { ensureSchema, getSql } = require("../../lib/crm-db");
-const { getBearerToken } = require("../../lib/text-summaries");
+const { getBearerToken, parseBody } = require("../../lib/text-summaries");
 const { runGmailReviewSync } = require("../../lib/gmail-review-sync");
 
 function createHandler(dependencies = {}) {
@@ -17,7 +17,7 @@ function createHandler(dependencies = {}) {
     try {
       const sql = sqlFactory();
       await schema(sql);
-      const result = await sync({ sql });
+      const result = await sync({ sql, catchUp: parseBody(request)?.catchUp === true });
       return response.status(200).json({ status: "completed", ...result });
     } catch (error) {
       console.error("Automated Gmail review sync error:", error);

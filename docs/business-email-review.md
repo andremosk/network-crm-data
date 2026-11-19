@@ -83,6 +83,11 @@ batch within the same time budget. Provider failures never apply CRM records.
 The successful checkpoint can be current while separate retry items remain;
 the manual-check response reports their count explicitly.
 
+The private scheduler route also accepts `{"catchUp":true}` for bounded
+100-message pages (still subject to the same time limit). Normal checks retain
+their configured batch size. Receipt checks and automated-mail exclusions are
+batched to reduce database traffic. A failed scan checkpoint is never skipped.
+
 ## Verification
 
 `node --test test/*.test.js` covers routing, grounding, dedupe, approval, UI,

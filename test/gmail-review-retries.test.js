@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { runGmailReviewSync } = require('../lib/gmail-review-sync');
 const { deferReview, loadRetries } = require('../lib/gmail-review-retries');
+const { reviewedIds, saveExclusions } = require('../lib/gmail-review-sync');
 
 function setup() {
   const receipts=new Set(), failures=new Map(), actions=[], checkpoints=[];
@@ -60,4 +61,14 @@ test('retry queue is mailbox-scoped, content-free and uses bounded backoff', asy
   assert.match(calls[0].text,/ON CONFLICT \(mailbox_email, message_id\)/);
   assert.match(calls[1].text,/ORDER BY next_attempt_at LIMIT 250/);
   assert.deepEqual(calls[0].values,['andre@example.invalid','message-123']);
+});
+
+test('batch cache and bulk exclusions preserve existing decisions and avoid per-message round trips', async()=>{
+  const calls=[];
+  const sql=async(strings,...values)=>{calls.push({text:strings.join('?'),values});return [{id:'seen'}];};
+  assert.equal((await reviewedIds(sql,['seen','new'])).has('seen'),true);
+  await saveExclusions(sql,['new']);
+  assert.match(calls[0].text,/UNION SELECT source_message_id/);
+  assert.match(calls[1].text,/FROM unnest/);
+  assert.match(calls[1].text,/review_version < EXCLUDED.review_version/);
 });
