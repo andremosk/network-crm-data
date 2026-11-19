@@ -143,7 +143,7 @@ test('sanitizers retain reminder intent but reject HTML, invalid dates, arbitrar
 test('assessment cache prevents repeat provider calls, and exclusion receipts do not alter contacts', async () => {
   let calls=0, receipts=0;
   const deps={getAccessToken:async()=> 'token',loadSyncState:async()=>({review_version:2,last_successful_at:'2026-11-09T00:00:00Z'}),
-    loadEngagementContext:async()=>[],listMessages:async()=>({messages:[{id:'seen'},{id:'noise'}]}),
+    loadEngagementContext:async()=>[], loadRetries:async()=>[],retryCount:async()=>0,listMessages:async()=>({messages:[{id:'seen'},{id:'noise'}]}),
     alreadyReviewed:async(_sql,id)=>id==='seen',
     getMessage:async()=>({id:'noise',internalDate:'1794268676000',payload:{mimeType:'text/plain',headers:[{name:'From',value:'Avery <avery@example.org>'},{name:'To',value:'andre@example.com'}],body:{data:Buffer.from('Little league practice is at six.').toString('base64url')}}}),
     findContactByEmail:async()=>null,findUniqueContactByName:async()=>null,
@@ -153,16 +153,19 @@ test('assessment cache prevents repeat provider calls, and exclusion receipts do
   assert.equal(calls,1);assert.equal(receipts,1);assert.equal(result.duplicates,1);assert.equal(result.skipped,1);
 });
 
-test('upgrade resets only the bounded window, and AI failure retains the successful checkpoint', async () => {
+test('upgrade resets only the bounded window, and AI failure is durably deferred without blocking the cursor', async () => {
   let window, saved=[];
   const deps={getAccessToken:async()=> 'token',loadSyncState:async()=>({review_version:1,last_successful_at:'2026-11-09T00:00:00Z'}),
-    loadEngagementContext:async()=>[],alreadyReviewed:async()=>false,
+    loadEngagementContext:async()=>[],loadRetries:async()=>[],retryCount:async()=>1,alreadyReviewed:async()=>false,
+    deferReview:async(_sql,_mailbox,id)=>assert.equal(id,'failed'),
     listMessages:async(_token,since,page,until)=>{window={since,page,until};return{messages:[{id:'failed'}]};},
     getMessage:async()=>({id:'failed',internalDate:'1794268676000',payload:{mimeType:'text/plain',headers:[{name:'From',value:'Avery <avery@example.org>'},{name:'To',value:'andre@example.com'}],body:{data:Buffer.from('We have a project opportunity.').toString('base64url')}}}),
     findContactByEmail:async()=>null,findUniqueContactByName:async()=>null,assessEmail:async()=>{throw new Error('provider down');},
     saveSyncState:async(_sql,_mailbox,checkpoint,progress)=>saved.push({checkpoint,progress})};
-  await assert.rejects(runGmailReviewSync({sql:{},now:new Date('2026-11-10T15:00:00Z'),env:{NETWORK_CRM_GMAIL_MAILBOX:'andre@example.com'},dependencies:deps}),/provider down/);
+  const result=await runGmailReviewSync({sql:{},now:new Date('2026-11-10T15:00:00Z'),env:{NETWORK_CRM_GMAIL_MAILBOX:'andre@example.com'},dependencies:deps});
+  assert.equal(result.deferred,1);assert.equal(result.retry_pending,1);
   assert.equal(window.since,'2026-10-27T15:00:00.000Z');
-  assert.equal(saved.length,1);assert.equal(saved[0].checkpoint,null);
+  assert.equal(saved.length,2);assert.equal(saved[0].checkpoint,null);
+  assert.equal(saved[1].checkpoint,'2026-11-10T15:00:00.000Z');
   assert.equal(saved[0].progress.since,window.since);
 });

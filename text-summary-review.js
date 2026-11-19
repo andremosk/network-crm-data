@@ -440,6 +440,7 @@
           : `Checked ${scanned} recent email${scanned === 1 ? "" : "s"}. ${skipped} had no useful business or relationship update${duplicates ? `; ${duplicates} were already reviewed` : ""}.`
       };
       emailReviewStatus.message += more;
+      if (data.retry_pending) emailReviewStatus.message += ` ${Number(data.retry_pending)} email(s) awaiting another assessment attempt; they are not discarded.`;
       if (typeof window.toast === "function") {
         if (data.proposed) {
           window.toast(`${data.proposed} email proposal${data.proposed === 1 ? "" : "s"} ready for review (${scanned} checked)`);

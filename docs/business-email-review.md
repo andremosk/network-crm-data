@@ -73,6 +73,16 @@ receipts survive retries. The one-time rescan can take several scheduled batches
 Local code changes do not activate the rollout until deployed. No changes to
 contacts, engagements, tokens or the installed schedule are needed for rollout.
 
+### Assessment retries
+
+An AI timeout, malformed assessment or ungrounded action now goes into a separate
+mailbox-scoped retry queue, without storing message content or making it a
+permanent exclusion. The normal scan can advance. Retries back off for 15 minutes,
+one hour, six hours and then daily; up to two due retry messages are added per
+batch within the same time budget. Provider failures never apply CRM records.
+The successful checkpoint can be current while separate retry items remain;
+the manual-check response reports their count explicitly.
+
 ## Verification
 
 `node --test test/*.test.js` covers routing, grounding, dedupe, approval, UI,

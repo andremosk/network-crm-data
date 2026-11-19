@@ -56,7 +56,7 @@ test("Gmail business review deduplicates source messages and preserves useful pe
     env: { NETWORK_CRM_GMAIL_MAILBOX: "andre@example.com" },
     now: new Date("2026-08-31T15:00:00Z"),
     dependencies: {
-      loadEngagementContext: async () => [],
+      loadEngagementContext: async () => [], loadRetries:async()=>[], retryCount:async()=>0,
       alreadyReviewed: async (_sql, id) => stored.has(id),
       findUniqueContactByName: async () => null,
       assessEmail: async message => ({ relevant: message.sender.email === 'lisa@cassidylab.com', actions: [{kind:'contact',personEmail:'lisa@cassidylab.com',note:'Lisa shared useful AI webinars and a personal check-in.',evidence:'You came to mind when I saw these AI webinars.'}] }),
@@ -86,7 +86,7 @@ test("Gmail review makes a missing-email proposal from a unique full-name approx
   const result = await runGmailReviewSync({
     sql: {}, env: { NETWORK_CRM_GMAIL_MAILBOX: "andre@example.com" }, now: new Date("2026-08-31T15:00:00Z"),
     dependencies: {
-      loadEngagementContext: async () => [], alreadyReviewed: async () => false,
+      loadEngagementContext: async () => [], loadRetries:async()=>[], retryCount:async()=>0, alreadyReviewed: async () => false,
       assessEmail: async () => ({ relevant:true, actions:[{kind:'contact',personEmail:'lisa@cassidylab.com',note:'Lisa shared an AI resource.',evidence:'You came to mind when I saw these AI webinars.'}] }),
       getAccessToken: async () => "access-token", loadSyncState: async () => null,
       listMessages: async () => ({ messages: [{ id: "gmail-123" }] }), getMessage: async () => gmailMessage(),
@@ -202,7 +202,7 @@ test('review resumes a fixed scan window and advances checkpoint only after the 
   let state = { last_successful_at: '2026-08-20T00:00:00Z', review_version: 2 };
   const requests = [];
   const dependencies = {
-    loadEngagementContext: async () => [],
+    loadEngagementContext: async () => [], loadRetries:async()=>[], retryCount:async()=>0,
     getAccessToken: async () => 'token',
     loadSyncState: async () => state,
     listMessages: async (_token, since, page, until) => {
