@@ -65,8 +65,9 @@ engagement proposal types, and a screening-version checkpoint. On the first run
 of version 2 the scanner rechecks only the configured initial window (14 days by
 default, maximum 60), then returns to incremental scanning. Checkpoints paginate
 a fixed time window. The existing batch size and Mac schedule are unchanged.
-Excluded and proposed messages are cached; AI/provider failures are not cached
-as exclusions and do not advance the successful checkpoint. A 40-second soft
+Excluded and proposed messages are cached; assessment failures are queued for
+retry, not cached as exclusions. Storage or Gmail failures do not advance the
+successful checkpoint. A 40-second soft
 budget stops starting new work; a provider call has a 20-second timeout. Completed
 receipts survive retries. The one-time rescan can take several scheduled batches.
 
@@ -95,6 +96,10 @@ for catch-up. All in-flight work finishes before a checkpoint is committed.
 The Mac helper starts with a normal light check. When more pages remain, its
 remaining three calls use catch-up mode; the existing schedule and four-call cap
 are unchanged.
+Gmail rate-limit responses retry twice with bounded backoff. Completed automated
+mail exclusions are persisted even if another message fetch fails, so the next
+run does not waste quota fetching those messages again. The page remains pending
+until every message is processed or durably queued for assessment retry.
 
 ## Verification
 
