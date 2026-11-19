@@ -83,6 +83,9 @@ batch within the same time budget. Provider failures never apply CRM records.
 The successful checkpoint can be current while separate retry items remain;
 the manual-check response reports their count explicitly.
 
+Retry assessments use the existing Sonnet model rather than repeating the same
+Haiku extraction. Normal new messages remain on the cheaper Haiku path.
+
 The private scheduler route also accepts `{"catchUp":true}` for bounded
 100-message pages (still subject to the same time limit). Normal checks retain
 their configured batch size. Receipt checks and automated-mail exclusions are

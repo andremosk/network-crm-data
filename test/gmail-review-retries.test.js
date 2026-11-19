@@ -17,7 +17,8 @@ function setup() {
       mimeType:'text/plain',body:{data:Buffer.from('Interested in a discovery project.').toString('base64url')}
     }}),
     findContactByEmail:async()=>({id:'12',name:'Example Person',email:'person@example.invalid'}),
-    assessEmail:async message=>{
+    assessEmail:async (message,_context,_env,_fetch,options)=>{
+      if (!fail && message.sourceMessageId === 'bad') assert.equal(options.retry,true);
       if(message.sourceMessageId==='bad'&&fail)return {relevant:true,actions:[]};
       return {relevant:true,category:'business',actions:[{kind:'contact',personEmail:'person@example.invalid',note:'A discovery opportunity.',evidence:'Interested in a discovery project.'}]};
     },
