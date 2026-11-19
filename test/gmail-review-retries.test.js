@@ -64,6 +64,19 @@ test('retry queue is mailbox-scoped, content-free and uses bounded backoff', asy
   assert.deepEqual(calls[0].values,['andre@example.invalid','message-123']);
 });
 
+test('a Gmail fetch failure preserves completed exclusions without advancing the page', async()=>{
+  const s=setup(), saved=[];
+  s.setList([{id:'automatic'},{id:'limited'}]);
+  s.deps.getMessage=async(_token,id)=>{
+    if(id==='limited') throw Error('Quota exceeded');
+    return {id,payload:{headers:[{name:'From',value:'no-reply@example.invalid'}]}};
+  };
+  s.deps.saveExclusions=async(_sql,ids)=>saved.push(...ids);
+  await assert.rejects(runGmailReviewSync({sql:{},env:{NETWORK_CRM_GMAIL_MAILBOX:'andre@example.invalid'},dependencies:s.deps,now:s.now}),/Quota exceeded/);
+  assert.deepEqual(saved,['automatic']);
+  assert.deepEqual(s.checkpoints,['2026-11-17T20:00:00Z']);
+});
+
 test('batch cache and bulk exclusions preserve existing decisions and avoid per-message round trips', async()=>{
   const calls=[];
   const sql=async(strings,...values)=>{calls.push({text:strings.join('?'),values});return [{id:'seen'}];};

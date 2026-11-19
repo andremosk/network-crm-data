@@ -3,6 +3,24 @@ const test = require("node:test");
 
 const { normalizedInboundMessage, runGmailEmailEnrichment, runGmailReviewSync } = require("../lib/gmail-review-sync");
 
+test('Gmail rate limits retry with bounded backoff; permission errors do not retry', async () => {
+  const { gmailRequest } = require('../lib/gmail-review-sync');
+  const waits = [];
+  let calls = 0;
+  const limited = { ok: false, status: 429, json: async () => ({error: {message: 'Quota exceeded'}}) };
+  const value = await gmailRequest('test', '/messages', async () => ++calls < 3 ? limited
+    : {ok: true, json: async () => ({messages: []})}, async ms => waits.push(ms));
+  assert.deepEqual(value, {messages: []});
+  assert.deepEqual(waits, [1000, 2000]);
+  calls = 0;
+  await assert.rejects(gmailRequest('test', '/messages', async () => { calls++; return limited; }, async () => {}), /Quota exceeded/);
+  assert.equal(calls, 3);
+  calls = 0;
+  await assert.rejects(gmailRequest('test', '/messages', async () => { calls++; return {ok: false, status: 403,
+    json: async () => ({error: {message: 'Permission denied'}})}; }, async () => {}), /Permission denied/);
+  assert.equal(calls, 1);
+});
+
 function encoded(value) {
   return Buffer.from(value, "utf8").toString("base64url");
 }
