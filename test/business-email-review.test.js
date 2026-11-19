@@ -86,6 +86,12 @@ test('group mail to a known alias is eligible; bulk and messages without Andre r
   assert.equal(normalizedInboundMessage({...raw,payload:{...raw.payload,headers:[...raw.payload.headers,{name:'List-Id',value:'bulk'}]}},'andre@example.com',['andre@work.example']),null);
 });
 
+test('provider failure diagnostics retain only a status code, never the provider body', async () => {
+  await assert.rejects(assessEmail(message,context,{ANTHROPIC_API_KEY:'test'},async()=>({
+    ok:false,status:429,json:async()=>({error:{message:'private provider detail'}})
+  })), error => error.code === 'provider_429' && !error.message.includes('private'));
+});
+
 test('AI failures, malformed JSON and truncated output fail for retry, not permanent exclusion', async () => {
   for(const data of [{error:{}},{stop_reason:'max_tokens',content:[]},{content:[{type:'text',text:'not json'}]}]) {
     await assert.rejects(assessEmail(message,context,{ANTHROPIC_API_KEY:'test'},async()=>({ok:true,json:async()=>data})),/assessment/);
