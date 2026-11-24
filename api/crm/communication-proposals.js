@@ -4,6 +4,7 @@ const { parseBody } = require("../../lib/text-summaries");
 const { createContactPayload, sanitizeProposal } = require("../../lib/communication-proposals");
 const { contactStatusPatch } = require('../../lib/review-contact-status');
 const { applyEngagement } = require('../../lib/communication-engagements');
+const {applyProfileUpdate} = require('../../lib/profile-updates');
 
 function noteDate(value) {
   const date = new Date(value);
@@ -86,7 +87,8 @@ async function applyCreate(sql, draft, proposed) {
              jsonb_set(${JSON.stringify(template)}::jsonb, '{id}', to_jsonb(next_id.value), true)
       FROM target CROSS JOIN next_id
       WHERE NOT EXISTS (SELECT 1 FROM crm_records WHERE record_type = 'contact'
-        AND LOWER(COALESCE(payload->>'email', '')) = ${String(template.email).toLowerCase()}
+        AND (LOWER(COALESCE(payload->>'email', '')) = ${String(template.email).toLowerCase()}
+          OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(CASE WHEN jsonb_typeof(payload->'emailAliases')='array' THEN payload->'emailAliases' ELSE '[]'::jsonb END) a WHERE LOWER(a.value)=${String(template.email).toLowerCase()}))
         AND COALESCE(payload->>'deleted', 'false') <> 'true' AND COALESCE(payload->>'archived', 'false') <> 'true')
       RETURNING record_id
     ), applied AS (
@@ -165,6 +167,7 @@ function createHandler(dependencies = {}) {
   const create = dependencies.applyCreate || applyCreate;
   const update = dependencies.applyUpdate || applyUpdate;
   const engagement = dependencies.applyEngagement || applyEngagement;
+  const profile = dependencies.applyProfileUpdate || applyProfileUpdate;
 
   return async function handler(request, response) {
     if (!auth(request)) return response.status(401).json({ error: { message: "Unauthorized" } });
@@ -188,6 +191,11 @@ function createHandler(dependencies = {}) {
         return response.status(ignored ? 200 : 404).json(ignored ? { status: "ignored" } : { error: { message: "Pending proposal not found." } });
       }
       const proposed = sanitizeProposal(draft.proposal_type, body.proposed || draft.proposed);
+      if(draft.proposed?.profileUpdate) {
+        if(!proposed.profileUpdate) return response.status(400).json({error:{message:'Profile update fields are required.'}});
+        // The browser can edit suggested values, never the saved comparison baseline.
+        proposed.profileUpdate.expected=draft.proposed.profileUpdate.expected;
+      } else if(proposed.profileUpdate) return response.status(400).json({error:{message:'This is not a profile update proposal.'}});
       if (body.action === "edit") {
         const edited = await edit(sql, id, draft.proposal_type, proposed);
         return response.status(edited ? 200 : 404).json(edited ? { status: "pending", proposal: edited.proposed } : { error: { message: "Pending proposal not found." } });
@@ -196,6 +204,10 @@ function createHandler(dependencies = {}) {
         return response.status(400).json({ error: { message: "Name and email are required to create a contact." } });
       }
       if (draft.proposal_type === "no_action") return response.status(400).json({ error: { message: "This proposal has no CRM action." } });
+      if(proposed.profileUpdate) {
+        const contactId=await profile(sql,draft,proposed);
+        return response.status(contactId?200:409).json(contactId?{status:'applied',contactId}:{error:{message:'Profile changed, address belongs to another contact, or this suggestion was already applied. Review the contact before retrying.'}});
+      }
       if (['create_engagement', 'update_engagement'].includes(draft.proposal_type)) {
         const engagementId = await engagement(sql, draft, proposed);
         return response.status(engagementId ? 200 : 409).json(engagementId ? { status: 'applied', engagementId }
@@ -208,8 +220,9 @@ function createHandler(dependencies = {}) {
         ? { status: "applied", contactId }
         : { error: { message: "This proposal could not be applied." } });
     } catch (error) {
+      if(error.code==='23505' && error.constraint==='crm_profile_pending_values_idx') return response.status(409).json({error:{message:'An identical profile suggestion is already pending for this contact.'}});
       console.error("Communication review error:", error);
-      return response.status(error.statusCode === 400 ? 400 : 500).json({ error: { message: error.message || "Communication review failed." } });
+      return response.status([400,409].includes(error.statusCode) ? error.statusCode : 500).json({ error: { message: error.message || "Communication review failed." } });
     }
   };
 }

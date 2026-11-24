@@ -115,8 +115,10 @@ test("Gmail review makes a missing-email proposal from a unique full-name approx
   });
   assert.equal(result.approximated, 1);
   assert.equal(saved[0].matchedContactId, "55");
-  assert.equal(saved[0].proposed.email, "lisa@cassidylab.com");
-  assert.match(saved[0].evidence, /AI webinars/);
+  assert.equal(saved[0].proposed.profileUpdate.values.email, "lisa@cassidylab.com");
+  assert.equal(saved[0].proposed.profileUpdate.emailMode,'primary');
+  assert.match(saved[1].evidence, /AI webinars/);
+  assert.equal(saved[1].proposed.email,'');
 });
 
 test("email enrichment only proposes a blank email for a unique direct-conversation name match", async () => {

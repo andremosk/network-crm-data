@@ -24,7 +24,8 @@ async function findByEmail(sql, email) {
   if (!email) return [];
   const rows = await sql`
     SELECT record_id, payload, version FROM crm_records
-    WHERE record_type = 'contact' AND LOWER(COALESCE(payload->>'email', '')) = ${normalizeEmail(email)}
+    WHERE record_type = 'contact' AND (LOWER(COALESCE(payload->>'email', '')) = ${normalizeEmail(email)}
+      OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(CASE WHEN jsonb_typeof(payload->'emailAliases')='array' THEN payload->'emailAliases' ELSE '[]'::jsonb END) a WHERE LOWER(a.value)=${normalizeEmail(email)}))
   `;
   return rows.map(recordFromRow).filter(active);
 }

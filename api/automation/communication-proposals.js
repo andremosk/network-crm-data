@@ -2,21 +2,7 @@ const { messagesTokenIsValid } = require("../../lib/crm-auth");
 const { ensureSchema, getSql } = require("../../lib/crm-db");
 const { getBearerToken, parseBody } = require("../../lib/text-summaries");
 const { analyzeOutboundEmail, normalizeEmail } = require("../../lib/communication-proposals");
-
-async function findContactByEmail(sql, email) {
-  const rows = await sql`
-    SELECT record_id, payload
-    FROM crm_records
-    WHERE record_type = 'contact'
-      AND LOWER(COALESCE(payload->>'email', '')) = ${normalizeEmail(email)}
-      AND COALESCE((payload->>'deleted')::boolean, false) = false
-      AND COALESCE((payload->>'archived')::boolean, false) = false
-    ORDER BY updated_at DESC
-    LIMIT 1
-  `;
-  if (!rows.length) return null;
-  return { id: rows[0].record_id, ...rows[0].payload };
-}
+const {findContactByEmail} = require('../../lib/profile-updates');
 
 async function insertProposal(sql, proposal) {
   const rows = await sql`

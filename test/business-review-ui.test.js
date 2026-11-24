@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
-function harness() {
+function harness({profile=false}={}) {
   const elements=new Map(),requests=[],emailReads=[];
   const element=id=>{
     if(!elements.has(id)) elements.set(id,{value:'',innerHTML:'',classList:{contains:()=>id==='textReviewModal',add(){},remove(){},toggle(){}}});
@@ -21,6 +21,13 @@ function harness() {
       if(options?.method==='PATCH'){requests.push(JSON.parse(options.body));return {ok:true,json:async()=>({status:'pending',proposal:{}})};}
       return {ok:true,json:async()=>url.includes('communication-proposals')?{proposals}:{summaries:[],conversations:[],engagements:[{id:'12',title:'Existing client work',organization:'Orbit Five'}]}};
     }};
+  if(profile) {
+    proposals.push({id:3,proposal_type:'update_contact',matched_contact_id:'907',matched_contact_name:'Avery Chen',review_context:shared,evidence:'Vice President, New Company',
+      proposed:{profileUpdate:{values:{company:'New Company',position:'Vice President',email:'new@example.invalid'},expected:{company:'Old Company',position:'Director',email:'old@example.invalid'},selected:['company','position','email'],roleMode:'additional',emailMode:'additional'}}});
+    context.contacts[0].emailAliases=['alias@example.invalid'];
+    context.contacts[0].additionalRoles=[{company:'Side Company',position:'Advisor',source:{confirmedAt:'2026-11-24T14:00:00Z',observedAt:'2026-11-23T14:00:00Z'}}];
+    context.contacts[0].profileHistory=[{before:{company:'Original Company'},after:{company:'Old Company'},confirmedAt:'2026-11-24T14:00:00Z'}];
+  }
   vm.runInNewContext(fs.readFileSync('text-summary-review.js','utf8'),context);
   return {context,element,requests,emailReads};
 }
@@ -68,4 +75,22 @@ test('approved referral reminder is readable from contact profile without pendin
   const h=harness();await h.context.window.loadTextSummaries();
   const html=h.context.window.renderTextSummarySection(907);
   assert.match(html,/Referral follow-ups/);assert.match(html,/2026-12-09/);assert.match(html,/Thank Avery/);
+});
+
+test('profile review compares fields, chooses primary/additional destinations and submits only checked fields', async()=>{
+  const h=harness({profile:true});await h.context.window.loadTextSummaries();
+  const html=h.element('textReviewContent').innerHTML;
+  assert.match(html,/Profile update/);assert.match(html,/Saved when proposed: Old Company/);
+  assert.match(html,/Additional role/);assert.match(html,/Primary email/);
+  h.element('comm_profileSelect_company_3').checked=true;
+  h.element('comm_profileSelect_position_3').checked=false;
+  h.element('comm_profileSelect_email_3').checked=true;
+  for(const [key,value] of Object.entries({profile_company:'Edited Company',profile_position:'Vice President',profile_email:'new@example.invalid',roleMode:'primary',emailMode:'additional'}))h.element(`comm_${key}_3`).value=value;
+  await h.context.window.editCommunicationProposal(3);
+  const p=h.requests[0].proposed.profileUpdate;
+  assert.deepEqual(Array.from(p.selected),['company','email']);assert.equal(p.values.company,'Edited Company');
+  assert.equal(p.roleMode,'primary');assert.equal(p.emailMode,'additional');assert.equal(p.expected.company,'Old Company');
+  const details=h.context.window.renderTextSummarySection(907);
+  assert.match(details,/alias@example.invalid/);assert.match(details,/Advisor · Side Company/);
+  assert.match(details,/Previous profile values/);assert.match(details,/Original Company/);assert.match(details,/observed/);
 });
