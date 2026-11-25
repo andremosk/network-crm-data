@@ -16,6 +16,11 @@ SPEC.loader.exec_module(MODULE)
 
 
 class MessagesSyncTests(unittest.TestCase):
+    def test_confirmed_group_number_match_is_reused_for_direct_sms(self):
+        contacts = [{"id": "1", "name": "Dan Example", "phone": ""}, {"id": "2", "name": "Old Number Owner", "phone": "+15555550111"}]
+        indexes = MODULE.build_indexes(contacts, [{"participant_key": "phone:+15555550111", "contact_id": "1"}])
+        self.assertEqual(MODULE.match_contact(["+15555550111"], indexes)["id"], "1")
+
     def test_failed_group_is_retained_privately_and_does_not_block_other_conversations(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

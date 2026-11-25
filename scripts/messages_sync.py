@@ -89,7 +89,7 @@ def parse_export(text):
     return messages
 
 
-def build_indexes(contacts):
+def build_indexes(contacts, confirmed=()):
     indexes = {"name": {}, "email": {}, "phone": {}}
     for contact in contacts:
         for field, normalizer in (
@@ -111,6 +111,14 @@ def build_indexes(contacts):
             for alias in {normalize_name(alias) for alias in aliases if isinstance(alias, str)}:
                 if alias and alias != normalize_name(contact.get("name") or contact.get("normalizedName")):
                     indexes["name"].setdefault(alias, []).append(contact)
+    by_id = {str(contact["id"]): contact for contact in contacts}
+    for match in confirmed:
+        key = str(match.get("participant_key") or "")
+        contact = by_id.get(str(match.get("contact_id")))
+        if contact and key.startswith("phone:"):
+            indexes["phone"][normalize_phone(key[6:])] = [contact]
+        elif contact and key.startswith("email:"):
+            indexes["email"][normalize_email(key[6:])] = [contact]
     return indexes
 
 
@@ -367,7 +375,7 @@ def main():
             except (RuntimeError, TimeoutError, urllib.error.URLError):
                 defer_group(retry["payload"], retry)
     contacts = directory.get("contacts", [])
-    indexes = build_indexes(contacts)
+    indexes = build_indexes(contacts, directory.get("participantMatches", []))
     contacts_by_id = {str(contact["id"]): contact for contact in contacts}
     decisions = {item.get("key"): item for item in directory.get("conversationDecisions", []) if item.get("key")}
     existing_unmatched = read_json(args.unmatched_report, {}).get("unmatched", [])

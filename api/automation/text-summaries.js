@@ -1,7 +1,7 @@
 const { ensureSchema, getSql } = require("../../lib/crm-db");
 const { messagesTokenIsValid } = require("../../lib/crm-auth");
 const { suggestEngagement, activeEngagements } = require("../../lib/sms-routing");
-const {ingestGroup} = require('../../lib/group-sms');
+const {ingestGroup,loadParticipantMatches} = require('../../lib/group-sms');
 const {
   cleanTranscript,
   getBearerToken,
@@ -88,6 +88,7 @@ function createHandler(dependencies = {}) {
 }
 
 async function handler(request, response, dependencies) {
+  response.setHeader('Cache-Control','private, no-store');
   if (!(dependencies.auth || messagesTokenIsValid)(getBearerToken(request))) {
     return response.status(401).json({ error: { message: "Unauthorized" } });
   }
@@ -100,11 +101,11 @@ async function handler(request, response, dependencies) {
     const sql = (dependencies.getSql || getSql)();
     await (dependencies.ensureSchema || ensureSchema)(sql);
     if (request.method === 'GET') {
-      const [contacts, decisions] = await Promise.all([
+      const [contacts, decisions, participantMatches] = await Promise.all([
         contactDirectory(sql),
-        conversationDecisions(sql)
+        conversationDecisions(sql),loadParticipantMatches(sql)
       ]);
-      return response.status(200).json({ contacts, conversationDecisions: decisions });
+      return response.status(200).json({ contacts, conversationDecisions: decisions,participantMatches });
     }
 
     const body = parseBody(request);
