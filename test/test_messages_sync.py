@@ -16,6 +16,40 @@ SPEC.loader.exec_module(MODULE)
 
 
 class MessagesSyncTests(unittest.TestCase):
+    def test_failed_group_is_retained_privately_and_does_not_block_other_conversations(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "exporter").touch()
+            (root / "config.json").write_text(json.dumps({"token": "synthetic", "exporter": str(root / "exporter")}))
+            now = dt.datetime.now().astimezone()
+            stamp = (now - dt.timedelta(minutes=5)).strftime("%b %d, %Y  %I:%M:%S %p")
+            requests = []
+            def api(url, token, path, method="GET", payload=None):
+                if method == "GET":
+                    return {"contacts": [], "conversationDecisions": []}
+                requests.append(payload)
+                if len(requests) == 1:
+                    raise RuntimeError("assessment unavailable")
+                return {"status": "pending", "proposals": 1}
+            def export(command, **kwargs):
+                target = Path(command[command.index("--export-path") + 1])
+                (target / "Dan & Pat.txt").write_text(stamp + "\nDan Example\nWe have a project opportunity for you.\n")
+                return types.SimpleNamespace(returncode=0)
+            args = ["messages_sync.py", "--config", str(root / "config.json"), "--state", str(root / "state.json"),
+                    "--receipts", str(root / "receipts.json"), "--unmatched-report", str(root / "unmatched.json")]
+            with patch("sys.argv", args), patch.object(MODULE, "api_request", side_effect=api), patch.object(MODULE.subprocess, "run", side_effect=export):
+                MODULE.main()
+                retries = json.loads((root / "receipts-group-retries.json").read_text())
+                self.assertEqual(len(retries), 1)
+                self.assertEqual(next(iter(retries.values()))["payload"]["messages"][0]["body"], "We have a project opportunity for you.")
+                self.assertEqual(json.loads((root / "state.json").read_text())["groupAttributionVersion"], 2)
+                for retry in retries.values():
+                    retry["nextAttemptAt"] = "2020-01-01T00:00:00Z"
+                MODULE.write_private_json(root / "receipts-group-retries.json", retries)
+                MODULE.main()
+            self.assertTrue(requests[1]["retryAssessment"])
+            self.assertEqual(json.loads((root / "receipts-group-retries.json").read_text()), {})
+
     def test_group_handles_are_paired_only_by_exact_raw_export_evidence(self):
         when = dt.datetime(2026, 11, 24, 14, 0, tzinfo=dt.timezone.utc)
         message = {"at": when, "sender": "Dan Example", "body": "Yes, please make the introduction."}

@@ -58,6 +58,16 @@ hold fingerprints, not message bodies. Normal one-to-one behavior and the
 installed schedule are preserved. Review API access requires a CRM session;
 ingestion retains the existing protected automation token.
 
+The model cites short message references which the server maps back to stable
+fingerprints. A failed assessment gets one stronger-model attempt. If it still
+fails or the request times out, the collector retains the original group payload
+in its private, mode-600 `messages-sync-group-retries.json` file and continues with
+unrelated conversations. Up to two due payloads retry per scheduled run with a
+15-minute, one-hour, six-hour, then daily backoff. Payloads are removed on success
+or confirmed dedupe; they are never silently discarded as irrelevant. Deferred
+payloads retain their source text locally until this succeeds. No extra polling
+schedule is added.
+
 ## Checks
 
 - `node --test` and `python3 -m unittest discover -s test -p 'test_messages_sync.py'`

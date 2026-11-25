@@ -20,6 +20,7 @@ DEFAULT_CONFIG = APP_DIR / "messages-sync.json"
 DEFAULT_STATE = APP_DIR / "messages-sync-state.json"
 DEFAULT_UNMATCHED = APP_DIR / "messages-sync-unmatched.json"
 DEFAULT_RECEIPTS = APP_DIR / "messages-sync-receipts.json"
+DEFAULT_GROUP_RETRIES = APP_DIR / "messages-sync-group-retries.json"
 DEFAULT_EXPORTER = APP_DIR / "bin" / "imessage-exporter"
 SELF_NAME = "Andre"
 TIMESTAMP = re.compile(
@@ -335,12 +336,43 @@ def main():
             key[:16], str(contact["id"]) if contact else "unmatched", outcome, isoformat(now)))
 
     directory = api_request(base_url, token, "/api/automation/text-summaries")
+    group_retry_path = DEFAULT_GROUP_RETRIES if args.receipts == DEFAULT_RECEIPTS else args.receipts.with_name(args.receipts.stem + "-group-retries.json")
+    try:
+        group_retries = json.loads(group_retry_path.read_text(encoding="utf-8"))
+        if not isinstance(group_retries, dict):
+            raise ValueError("Invalid group retry queue")
+    except FileNotFoundError:
+        group_retries = {}
+    except (ValueError, json.JSONDecodeError):
+        raise RuntimeError("Group retry queue could not be read; no messages discarded.")
+    retry_proposals = 0
+    def defer_group(payload, previous=None):
+        previous = previous or {}
+        attempts = int(previous.get("attempts") or 0) + 1
+        delay = [15, 60, 360, 1440][min(attempts - 1, 3)]
+        group_retries[payload["sourceKey"]] = {"payload": payload, "attempts": attempts,
+            "nextAttemptAt": isoformat(now + dt.timedelta(minutes=delay))}
+        write_private_json(group_retry_path, group_retries)
+    if not args.dry_run:
+        due = sorted(group_retries.values(), key=lambda item: item.get("nextAttemptAt", ""))
+        for retry in [item for item in due if item.get("nextAttemptAt", "") <= isoformat(now)][:2]:
+            try:
+                retried = api_request(base_url, token, "/api/automation/text-summaries", "POST", {**retry["payload"], "retryAssessment": True})
+                if retried.get("status") not in ("pending", "duplicate", "skipped"):
+                    raise RuntimeError("Unexpected group retry response")
+                group_retries.pop(retry["payload"]["sourceKey"], None)
+                if retried.get("status") == "pending":
+                    retry_proposals += int(retried.get("proposals") or 1)
+                write_private_json(group_retry_path, group_retries)
+            except (RuntimeError, TimeoutError, urllib.error.URLError):
+                defer_group(retry["payload"], retry)
     contacts = directory.get("contacts", [])
     indexes = build_indexes(contacts)
     contacts_by_id = {str(contact["id"]): contact for contact in contacts}
     decisions = {item.get("key"): item for item in directory.get("conversationDecisions", []) if item.get("key")}
     existing_unmatched = read_json(args.unmatched_report, {}).get("unmatched", [])
     stats = {"files": 0, "matched": 0, "unmatched": 0, "ignored": 0, "group": 0, "submitted": 0, "skipped": 0, "filtered": 0}
+    stats["submitted"] = retry_proposals
     unmatched = []
     unmatched_observations = []
 
@@ -389,14 +421,20 @@ def main():
                 if raw_index is None:
                     raw_index = raw_group_index(command, folder)
                 attributed = group_payload(all_messages, stem, raw_index)
-                response = api_request(base_url, token, "/api/automation/text-summaries", "POST", {
+                payload = {
                     "isGroup": True, "threadKey": key, "threadTitle": stem,
                     "participants": other_senders,
                     "sourceKey": conversation_key("group\n" + key + "\n" + transcript),
                     "startedAt": isoformat(messages[0]["at"]), "endedAt": isoformat(messages[-1]["at"]),
                     "messageCount": len(messages), "transcript": transcript,
                     **attributed,
-                })
+                }
+                try:
+                    response = api_request(base_url, token, "/api/automation/text-summaries", "POST", payload)
+                except (RuntimeError, TimeoutError, urllib.error.URLError):
+                    defer_group(payload)
+                    record_outcome(key, all_messages, "group_deferred")
+                    continue
                 outcome = response.get("status")
                 if outcome not in ("pending", "duplicate", "skipped"):
                     raise RuntimeError("Unexpected group SMS import outcome; checkpoint not advanced.")
@@ -487,7 +525,7 @@ def main():
             if value.get("checkedAt", "") >= isoformat(now - dt.timedelta(days=7))}
         write_private_json(args.receipts, receipts)
         write_private_json(args.state, {"lastCompletedAt": isoformat(now), "groupAttributionVersion": 2})
-    print("Messages sync: {matched} matched, {submitted} awaiting review, {skipped} skipped, {unmatched} unmatched, {filtered} unfamiliar personal threads filtered locally, {ignored} ignored, {group} low-signal group threads filtered.".format(**stats))
+    print("Messages sync: {matched} matched, {submitted} awaiting review, {skipped} skipped, {unmatched} unmatched, {filtered} unfamiliar personal threads filtered locally, {ignored} ignored, {group} low-signal group threads filtered. {} group assessments queued for retry.".format(len(group_retries), **stats))
 
 
 if __name__ == "__main__":

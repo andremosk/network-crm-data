@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict');
-const {prepareGroup,matchMembers,validateUpdates,saveGroup,ingestGroup}=require('../lib/group-sms');
+const {prepareGroup,matchMembers,validateUpdates,saveGroup,ingestGroup,summarizeGroup}=require('../lib/group-sms');
 const {isSkipSummary}=require('../lib/text-summaries');
 const review=require('../api/crm/text-summaries');
 const body={threadKey:'a'.repeat(64),threadTitle:'Dan and Pat',sourceKey:'group-example',startedAt:'2026-11-24T14:00:00Z',endedAt:'2026-11-24T14:02:00Z',
@@ -78,6 +78,25 @@ test('participant match review validates roster membership and does not write CR
   assert.ok(queries.every(q=>!q.includes('UPDATE crm_records')));
   const wrong=response();await handler({method:'PATCH',body:{resource:'participant',id:12,participantKey:'phone:+15555559999',contactId:'1'}},wrong);
   assert.equal(wrong.code,400);
+});
+test('group model uses short citation references and maps them back without logging private parse failures',async()=>{
+  const p=prepared();
+  const result=await summarizeGroup({...p,newIds:[p.messages[1].id]},{ANTHROPIC_API_KEY:'test'},async(_url,options)=>{
+    const content=JSON.parse(JSON.parse(options.body).messages[0].content);
+    assert.equal(content.messages[1].id,'m2');assert.equal(content.messages[1].senderKey,'p1');assert.deepEqual(content.newMessageIds,['m2']);
+    return {ok:true,json:async()=>({content:[{type:'text',text:JSON.stringify({updates:[{participantKey:'p1',evidence:[{messageId:'m2',quote:p.messages[1].body}]}]})}]})};
+  });
+  assert.equal(result.updates[0].evidence[0].messageId,p.messages[1].id);
+  assert.equal(result.updates[0].participantKey,p.members[0].key);
+  await assert.rejects(summarizeGroup({...p,newIds:[]},{ANTHROPIC_API_KEY:'test'},async()=>({ok:true,json:async()=>({content:[{type:'text',text:'PRIVATE MESSAGE CONTENT'}]})})),error=>!error.message.includes('PRIVATE'));
+});
+test('an ungrounded first assessment gets one stronger-model attempt before any receipt is committed',async()=>{
+  const p=prepared(),attempts=[];let commits=0;
+  const result=await ingestGroup(async()=>[],body,{isGroup:true,threadKey:body.threadKey,title:body.threadTitle},contacts,{
+    loadParticipantMatches:async()=>[],summarizeGroup:async args=>{attempts.push(args.retry);const value=assessment(p);if(!args.retry)value.updates[0].evidence[1].quote='Invented quote';return value;},
+    saveGroup:async()=>{commits++;return [{claimed:1,inserted:1}];}
+  });
+  assert.deepEqual(attempts,[false,true]);assert.equal(commits,1);assert.equal(result.status,'pending');
 });
 
 test('group receipts and participant proposals persist atomically; legacy pending noise is superseded, reviewed records are preserved', {skip:!process.env.CRM_SQL_INTEGRATION},async()=>{
