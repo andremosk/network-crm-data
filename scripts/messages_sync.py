@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import re
+import sqlite3
 import subprocess
 import tempfile
 import urllib.error
@@ -102,6 +103,9 @@ def build_indexes(contacts):
             if value:
                 indexes[field].setdefault(value, []).append(contact)
         aliases = contact.get("smsAliases", [])
+        for address in contact.get("emailAliases", []) or []:
+            if isinstance(address, str) and normalize_email(address) != normalize_email(contact.get("email")):
+                indexes["email"].setdefault(normalize_email(address), []).append(contact)
         if isinstance(aliases, list):
             for alias in {normalize_name(alias) for alias in aliases if isinstance(alias, str)}:
                 if alias and alias != normalize_name(contact.get("name") or contact.get("normalizedName")):
@@ -210,6 +214,76 @@ def select_unseen(messages, since, receipt):
     return [item for item in messages if message_key(item) not in seen]
 
 
+def address_handles(value):
+    return re.findall(r"[\w.+-]+@[\w.-]+|\+?\d[\d() .-]{6,}\d", str(value or ""))
+
+
+def participant_identity(handle="", label=""):
+    if "@" in handle:
+        return "email:" + normalize_email(handle)
+    if handle and re.fullmatch(r"[+\d(). -]+", handle) and len(re.sub(r"\D", "", handle)) >= 7:
+        return "phone:" + normalize_phone(handle)
+    return "label:" + conversation_key(normalize_name(label or handle))
+
+
+def raw_group_index(command, folder):
+    """Use the same exporter without Contacts substitution to retain actual sender handles."""
+    database = Path(folder) / "empty-contacts.sqlite3"
+    sqlite3.connect(database).close()
+    raw_folder = Path(folder) / "raw-handles"
+    raw_folder.mkdir(mode=0o700)
+    raw_command = list(command)
+    raw_command[raw_command.index("--export-path") + 1] = str(raw_folder)
+    raw_command.extend(["--contacts-path", str(database)])
+    result = subprocess.run(raw_command, capture_output=True, text=True, timeout=300)
+    if result.returncode:
+        # Do not invent a name-to-number pairing if raw metadata is unavailable.
+        return {}
+    index = {}
+    for path in raw_folder.rglob("*.txt"):
+        for message in parse_export(path.read_text(encoding="utf-8", errors="replace")):
+            key = (isoformat(message["at"]), conversation_key(message["body"]))
+            index.setdefault(key, set()).add(message["sender"])
+    return index
+
+
+def group_payload(messages, stem, raw_index):
+    members, structured = {}, []
+    def add(handle, label):
+        key = participant_identity(handle, label)
+        old = members.get(key)
+        if not old or old["label"] == old["handle"]:
+            members[key] = {"handle": handle, "label": label or handle}
+        return key
+    for handle in address_handles(stem):
+        add(handle, handle)
+    size = 0
+    bounded = []
+    for message in reversed(messages):
+        if len(bounded) >= 300 or size + len(message["body"]) > 24000:
+            break
+        bounded.append(message)
+        size += len(message["body"])
+    if not bounded:
+        raise RuntimeError("Group message exceeds the review window; no checkpoint advanced.")
+    for message in reversed(bounded):
+        self_message = normalize_name(message["sender"]) == normalize_name(SELF_NAME)
+        handle = ""
+        if not self_message:
+            found = address_handles(message["sender"])
+            if len(found) == 1:
+                handle = found[0]
+            else:
+                candidates = raw_index.get((isoformat(message["at"]), conversation_key(message["body"])), set())
+                handles = {sender for sender in candidates if participant_identity(sender).startswith(("phone:", "email:"))}
+                if len(handles) == 1:
+                    handle = next(iter(handles))
+            add(handle, message["sender"])
+        structured.append({"at": isoformat(message["at"]), "senderHandle": handle,
+                           "senderLabel": message["sender"], "isSelf": self_message, "body": message["body"]})
+    return {"members": list(members.values()), "messages": structured}
+
+
 def main():
     parser = argparse.ArgumentParser(description="Create Network.crm text-summary drafts.")
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
@@ -231,6 +305,7 @@ def main():
 
     now = dt.datetime.now().astimezone()
     state = read_json(args.state, {})
+    replay_groups = state.get("groupAttributionVersion", 1) < 2
     since_text = state.get("lastCompletedAt")
     try:
         since = dt.datetime.fromisoformat(since_text.replace("Z", "+00:00")) if since_text else None
@@ -279,7 +354,9 @@ def main():
         if result.returncode != 0:
             raise SystemExit("Could not read Messages. Check Full Disk Access. " + result.stderr[-800:])
 
-        for path in Path(folder).rglob("*.txt"):
+        paths = list(Path(folder).rglob("*.txt"))
+        raw_index = None
+        for path in paths:
             stats["files"] += 1
             all_messages = [item for item in parse_export(path.read_text(encoding="utf-8", errors="replace")) if item["at"] > scan_since]
             if not all_messages:
@@ -287,38 +364,44 @@ def main():
             stem = re.sub(r" - \d+$", "", path.stem)
             key = conversation_key(stem)
             messages = select_unseen(all_messages, since, conversation_receipts.get(key, {"seen": []} if receipt_baseline_exists else None))
+            other_senders = sorted({item["sender"] for item in all_messages if normalize_name(item["sender"]) != normalize_name(SELF_NAME)})
+            is_group = is_likely_group(stem, other_senders, indexes)
+            if is_group and replay_groups:
+                messages = all_messages
             if not messages:
                 if key not in conversation_receipts:
                     record_outcome(key, all_messages, "baseline")
                 continue
-            other_senders = sorted({item["sender"] for item in all_messages if normalize_name(item["sender"]) != normalize_name(SELF_NAME)})
             labels = other_senders or [stem]
-            is_group = is_likely_group(stem, other_senders, indexes)
             decision = decisions.get(key, {})
             if decision.get("status") == "ignored":
                 stats["ignored"] += 1
                 record_outcome(key, all_messages, "ignored")
                 continue
             if is_group:
-                if not has_business_context(messages):
+                if not has_business_context(all_messages):
                     stats["group"] += 1
                     record_outcome(key, all_messages, "group_no_business_signal")
                     continue
                 transcript = "\n\n".join("{}\n{}: {}".format(item["at"].isoformat(), item["sender"], item["body"]) for item in messages)[-24000:]
                 if args.dry_run:
                     continue
+                if raw_index is None:
+                    raw_index = raw_group_index(command, folder)
+                attributed = group_payload(all_messages, stem, raw_index)
                 response = api_request(base_url, token, "/api/automation/text-summaries", "POST", {
                     "isGroup": True, "threadKey": key, "threadTitle": stem,
                     "participants": other_senders,
                     "sourceKey": conversation_key("group\n" + key + "\n" + transcript),
                     "startedAt": isoformat(messages[0]["at"]), "endedAt": isoformat(messages[-1]["at"]),
                     "messageCount": len(messages), "transcript": transcript,
+                    **attributed,
                 })
                 outcome = response.get("status")
                 if outcome not in ("pending", "duplicate", "skipped"):
                     raise RuntimeError("Unexpected group SMS import outcome; checkpoint not advanced.")
                 record_outcome(key, all_messages, "group_" + outcome)
-                stats["submitted" if outcome == "pending" else "skipped"] += 1
+                stats["submitted" if outcome == "pending" else "skipped"] += int(response.get("proposals") or 1) if outcome == "pending" else 1
                 continue
             observation = {
                 "key": key,
@@ -403,7 +486,7 @@ def main():
         receipts["conversations"] = {key: value for key, value in conversation_receipts.items()
             if value.get("checkedAt", "") >= isoformat(now - dt.timedelta(days=7))}
         write_private_json(args.receipts, receipts)
-        write_private_json(args.state, {"lastCompletedAt": isoformat(now)})
+        write_private_json(args.state, {"lastCompletedAt": isoformat(now), "groupAttributionVersion": 2})
     print("Messages sync: {matched} matched, {submitted} awaiting review, {skipped} skipped, {unmatched} unmatched, {filtered} unfamiliar personal threads filtered locally, {ignored} ignored, {group} low-signal group threads filtered.".format(**stats))
 
 

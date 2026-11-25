@@ -16,6 +16,27 @@ SPEC.loader.exec_module(MODULE)
 
 
 class MessagesSyncTests(unittest.TestCase):
+    def test_group_handles_are_paired_only_by_exact_raw_export_evidence(self):
+        when = dt.datetime(2026, 11, 24, 14, 0, tzinfo=dt.timezone.utc)
+        message = {"at": when, "sender": "Dan Example", "body": "Yes, please make the introduction."}
+        key = (MODULE.isoformat(when), MODULE.conversation_key(message["body"]))
+        result = MODULE.group_payload([message], "+15555550111, +15555550222", {key: {"+15555550111"}})
+        self.assertEqual(result["messages"][0]["senderHandle"], "+15555550111")
+        self.assertEqual(result["members"][0]["label"], "Dan Example")
+        self.assertEqual(result["members"][1]["label"], "+15555550222")
+        ambiguous = MODULE.group_payload([message], "+15555550111, +15555550222", {key: {"+15555550111", "+15555550222"}})
+        self.assertEqual(ambiguous["messages"][0]["senderHandle"], "")
+        self.assertEqual(len(ambiguous["members"]), 3)
+
+    def test_group_context_keeps_whole_messages_and_owner_identity(self):
+        when = dt.datetime(2026, 11, 24, 14, 0, tzinfo=dt.timezone.utc)
+        messages = [{"at": when, "sender": "Andre", "body": "Can I introduce you to Lisa?"},
+                    {"at": when + dt.timedelta(minutes=1), "sender": "+15555550111", "body": "Yes, please."}]
+        result = MODULE.group_payload(messages, "+15555550111, +15555550222", {})
+        self.assertTrue(result["messages"][0]["isSelf"])
+        self.assertEqual(result["messages"][1]["senderHandle"], "+15555550111")
+        self.assertEqual(result["messages"][0]["body"], messages[0]["body"])
+
     def test_group_run_queues_business_without_matching_and_dedupes_second_run(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

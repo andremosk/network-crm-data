@@ -20,32 +20,34 @@ function fixture(factory, results, dependencies = {}) {
   return { handler, calls };
 }
 
-test('group ingestion queues an unassigned summary with speakers; never edits contacts', async () => {
-  let summarized;
-  const {handler, calls} = fixture(ingest.createHandler, [[], [{id: '91'}]], {summarizeTranscript: async args => {
-    summarized = args; return 'Samantha agreed to ask about an introduction.';
-  }});
+test('legacy group collector is upgraded to independent speaker proposals without guessing phone matches', async () => {
+  let summarized,saved;
+  const {handler, calls} = fixture(ingest.createHandler, [[], [], [], [], []], {summarizeGroup: async args => {
+    summarized = args;
+    const speaker=args.messages.find(m=>m.senderLabel==='Samantha Example');
+    return {updates:[{participantKey:speaker.senderKey,relevant:true,category:'business',summary:'Samantha agreed to ask about an introduction.',evidence:[{messageId:speaker.id,quote:speaker.body}]}]};
+  },saveGroup:async(_sql,args)=>{saved=args;return [{claimed:1,inserted:1}];}});
   const res = response();
   await handler({method: 'POST', body: payload}, res);
   assert.equal(res.statusCode, 200);
   assert.equal(res.body.status, 'pending');
-  assert.equal(summarized.group.title, group.title);
-  assert.equal(summarized.engagement, undefined);
-  assert.equal(calls[1].values[0], null);
-  assert.deepEqual(JSON.parse(calls[1].values.at(-1)), group);
+  assert.equal(summarized.members[0].label,'Samantha Example');
+  assert.equal(saved.drafts[0].contact_id,null);
+  assert.equal(saved.drafts[0].context.analysisVersion,2);
+  assert.equal(saved.drafts[0].context.title,group.title);
   assert.ok(calls.every(call => !/UPDATE crm_records|INSERT INTO crm_records/.test(call.query)));
 });
 
 test('group ingestion dedupes before summarizing and preserves skip decisions', async () => {
-  const duplicate = fixture(ingest.createHandler, [[{id: '91'}]], {summarizeTranscript: () => { throw Error('Must not call'); }});
+  const duplicate = fixture(ingest.createHandler, [[], [{source_key: 'root'}]], {summarizeGroup: () => { throw Error('Must not call'); }});
   const res = response();
   await duplicate.handler({method: 'POST', body: payload}, res);
   assert.equal(res.body.status, 'duplicate');
-  const skip = fixture(ingest.createHandler, [[]], {summarizeTranscript: async () => 'SKIP'});
+  const skip = fixture(ingest.createHandler, [[],[],[],[],[]], {summarizeGroup: async () => ({updates:[]}),saveGroup:async()=>[{claimed:1,inserted:0}]});
   const skipped = response();
   await skip.handler({method: 'POST', body: payload}, skipped);
   assert.equal(skipped.body.status, 'skipped');
-  assert.equal(skip.calls.length, 1);
+  assert.ok(skip.calls.every(call=>!call.query.includes('UPDATE crm_records')));
 });
 
 test('group input cannot auto-assign a contact or omit identity', async () => {

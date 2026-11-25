@@ -1,6 +1,7 @@
 const { ensureSchema, getSql } = require("../../lib/crm-db");
 const { messagesTokenIsValid } = require("../../lib/crm-auth");
 const { suggestEngagement, activeEngagements } = require("../../lib/sms-routing");
+const {ingestGroup} = require('../../lib/group-sms');
 const {
   cleanTranscript,
   getBearerToken,
@@ -10,12 +11,16 @@ const {
   parseBody,
   sourceKeyFor,
   summarizeTranscript,
+  isSkipSummary,
   validDate
 } = require("../../lib/text-summaries");
 
 async function contactDirectory(sql) {
   const rows = await sql`
-    SELECT record_id, payload
+    SELECT record_id, jsonb_build_object(
+      'name',COALESCE(NULLIF(payload->>'name',''),concat_ws(' ',payload->>'firstName',payload->>'lastName')),
+      'email',payload->>'email','phone',payload->>'phone','emailAliases',payload->'emailAliases','smsAliases',payload->'smsAliases'
+    ) AS payload
     FROM crm_records
     WHERE record_type = 'contact'
       AND COALESCE((payload->>'deleted')::boolean, false) = false
@@ -26,6 +31,7 @@ async function contactDirectory(sql) {
     name: row.payload.name || [row.payload.firstName, row.payload.lastName].filter(Boolean).join(" "),
     normalizedName: normalizeName(row.payload.name || [row.payload.firstName, row.payload.lastName].filter(Boolean).join(" ")),
     email: normalizeEmail(row.payload.email),
+    emailAliases:Array.isArray(row.payload.emailAliases)?row.payload.emailAliases:[],
     phone: normalizePhone(row.payload.phone),
     smsAliases: Array.isArray(row.payload.smsAliases)
       ? row.payload.smsAliases.filter(alias => typeof alias === 'string').map(normalizeName).filter(Boolean)
@@ -119,14 +125,18 @@ async function handler(request, response, dependencies) {
       participants: [...new Set((Array.isArray(body.participants) ? body.participants : [])
         .filter(name => typeof name === 'string').map(name => name.trim().slice(0, 120)).filter(Boolean))].slice(0, 30)
     } : null;
-    if (isGroup && (!/^[a-f0-9]{64}$/.test(group.threadKey) || !group.title || !group.participants.length || body.contactId)) {
+    if (isGroup && (!/^[a-f0-9]{64}$/.test(group.threadKey) || !group.title || (!group.participants.length && !(Array.isArray(body.members) && body.members.length)) || body.contactId!=null)) {
       return response.status(400).json({ error: { message: 'Group proposals need a thread identity and speakers, not an automatic contact match.' } });
     }
-    if ((!isGroup && !body.contactId) || !body.sourceKey || !transcript || !startedAt || !endedAt || endedAt < startedAt) {
+    if ((!isGroup && String(body.contactId??'')==='') || !body.sourceKey || (!transcript && !(isGroup && Array.isArray(body.messages) && body.messages.length)) || !startedAt || !endedAt || endedAt < startedAt) {
       return response.status(400).json({ error: { message: "Missing or invalid text-summary fields." } });
     }
 
     const sourceKey = sourceKeyFor(body.sourceKey);
+    if(isGroup) {
+      const result=await ingestGroup(sql,body,group,await contactDirectory(sql),dependencies);
+      return response.status(200).json(result);
+    }
     const existing = await sql`SELECT id, status FROM crm_text_summaries WHERE source_key = ${sourceKey}`;
     if (existing.length) return response.status(200).json({ status: "duplicate", id: existing[0].id });
 
@@ -142,7 +152,7 @@ async function handler(request, response, dependencies) {
     const engagementId = isGroup ? null : suggestEngagement({ ...contacts[0].payload, id: contacts[0].record_id }, transcript, engagements);
     const engagement = engagements.find(item => String(item.id) === engagementId);
     const summary = await (dependencies.summarizeTranscript || summarizeTranscript)({ contactName, transcript, startedAt, endedAt, engagement, group });
-    if (!summary || summary.toUpperCase() === "SKIP") {
+    if (!summary || isSkipSummary(summary)) {
       return response.status(200).json({ status: "skipped" });
     }
 

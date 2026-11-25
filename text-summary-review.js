@@ -234,7 +234,9 @@
 
   function destinationControl(item) {
     const selected = destinationFor(item);
-    return `<label class="form-group"><span class="form-label">Save to</span><select class="form-input" aria-label="Note destination" onchange="setTextSummaryDestination(${item.id},this.value,this)"><option value="contact" ${selected === 'contact' ? 'selected' : ''}>Contact notes</option>${engagementChoices.map(engagement => `<option value="engagement:${escapeHtml(engagement.id)}" ${selected === `engagement:${engagement.id}` ? 'selected' : ''}>Engagement: ${escapeHtml(engagement.title || engagement.organization)}</option>`).join('')}</select></label>${item.conversation_context?.isGroup ? `<label class="form-group" data-group-contact style="${selected === 'contact' ? '' : 'display:none'}"><span class="form-label">Contact</span><input class="form-input" id="groupContact_${item.id}" list="textReviewContacts" placeholder="Choose a contact" aria-label="Group note contact"></label>` : ''}`;
+    const match=contactById(item.contact_id);
+    const choice=match?`${match.name || 'Unknown'}${match.company?` — ${match.company}`:''} [${match.id}]`:'';
+    return `<label class="form-group"><span class="form-label">Save to</span><select class="form-input" aria-label="Note destination" onchange="setTextSummaryDestination(${item.id},this.value,this)"><option value="contact" ${selected === 'contact' ? 'selected' : ''}>Contact notes</option>${engagementChoices.map(engagement => `<option value="engagement:${escapeHtml(engagement.id)}" ${selected === `engagement:${engagement.id}` ? 'selected' : ''}>Engagement: ${escapeHtml(engagement.title || engagement.organization)}</option>`).join('')}</select></label>${item.conversation_context?.isGroup ? `<label class="form-group" data-group-contact style="${selected === 'contact' ? '' : 'display:none'}"><span class="form-label">Contact</span><input class="form-input" id="groupContact_${item.id}" list="textReviewContacts" placeholder="Choose a contact" aria-label="Group note contact" value="${escapeHtml(choice)}"></label>` : ''}`;
   }
 
   window.setTextSummaryDestination = function(id, value, select) {
@@ -250,18 +252,21 @@
   function renderSummary(item, prefix = 'textReviewSummary') {
     const contact = contactById(item.contact_id);
     const group = item.conversation_context?.isGroup ? item.conversation_context : null;
+    const participant=group?.analysisVersion===2?group.members?.find(member=>member.key===group.participantKey):null;
     return `<div class="text-review-row">
       <div class="text-review-row-head">
         <div>
-          <div class="text-review-name">${escapeHtml(group ? group.title : contact?.name || "CRM contact")}</div>
-          <div class="text-review-meta">${escapeHtml(formatDate(item.conversation_ended_at))} · ${Number(item.message_count) || 0} messages</div>
-          ${group ? `<div class="text-review-meta">Speakers: ${escapeHtml(group.participants.join(', '))}</div>` : ''}
+          <div class="text-review-name" id="smsParticipantName_${item.id}">${escapeHtml(participant?participant.contactName || participant.label:group ? group.title : contact?.name || "CRM contact")}</div>
+          <div class="text-review-meta">${escapeHtml(formatDate(item.conversation_ended_at))} · ${participant?(group.evidenceMessages || []).length:Number(item.message_count) || 0} ${participant?'source messages':'messages'}</div>
+          ${participant?`<div class="text-review-meta">${escapeHtml(participant.handle || participant.label)} · ${smsMatchLabel(participant.matchMethod)}</div>`:group ? `<div class="text-review-meta">Speakers: ${escapeHtml(group.participants.join(', '))}</div>` : ''}
           <div class="communication-review-labels"><span class="communication-review-label">${group ? 'Group SMS' : 'SMS'}</span></div>
         </div>
         <div class="text-review-contact">${group ? 'Choose destination' : 'Ready for Notes'}</div>
       </div>
       ${destinationControl(item)}
       <div class="communication-review-grid" data-review-contact-status style="${destinationFor(item) === 'contact' ? '' : 'display:none'}">${statusControls(`sms:${item.id}`, `${prefix}_${item.id}`, contact)}</div>
+      ${participant && /^(phone:|email:)/.test(participant.key)?`<label class="text-review-meta"><input type="checkbox" id="rememberSmsParticipant_${item.id}" checked> Remember number/address match when saving to contact</label>`:''}
+      ${participant?`<details class="communication-full-email"><summary>Messages used for this update</summary>${(group.evidenceMessages || []).map(message=>`<div class="communication-review-evidence"><strong>${escapeHtml(message.senderKey==='self'?'Andre':group.members.find(member=>member.key===message.senderKey)?.contactName || message.senderLabel)}</strong><div class="text-review-meta">${escapeHtml(formatDate(message.at))}</div><div class="communication-email-body">${escapeHtml(message.body)}</div></div>`).join('')}</details>`:''}
       <textarea class="text-review-summary" id="${prefix}_${item.id}" aria-label="Edit text summary">${escapeHtml(item.summary)}</textarea>
       <div class="text-review-actions">
         <button class="btn btn-ghost btn-sm" onclick="dismissTextSummary(${item.id})">Dismiss</button>
@@ -269,6 +274,56 @@
       </div>
     </div>`;
   }
+
+  function smsMatchLabel(method) {
+    return ({confirmed:'Confirmed match',number_or_email:'Phone / email match',name:'Name suggestion',ambiguous:'Ambiguous match',unmatched:'Needs a match'})[method] || 'Needs a match';
+  }
+
+  function renderSmsGroups() {
+    const groups=new Map();
+    for(const item of pendingSummaries) {
+      const context=item.conversation_context;
+      const key=context?.analysisVersion===2?context.rootSourceKey:`single:${item.id}`;
+      if(!groups.has(key))groups.set(key,[]);groups.get(key).push(item);
+    }
+    return [...groups.values()].map(items=>{
+      const first=items[0],context=first.conversation_context;
+      if(context?.analysisVersion!==2)return items.map(item=>renderSummary(item)).join('');
+      return `<section class="text-review-section"><div class="text-review-section-title">${escapeHtml(context.title)} · ${items.length} participant update${items.length===1?'':'s'}</div>
+        <details class="communication-full-email" open><summary>Participants & contact matches</summary>${context.members.map((member,index)=>{
+          const contact=contactById(member.contactId),choice=contact?`${contact.name}${contact.company?` — ${contact.company}`:''} [${contact.id}]`:'';
+          return `<div class="text-review-row"><strong>${escapeHtml(member.label)}</strong>${member.handle && member.handle!==member.label?` <span class="text-review-meta">${escapeHtml(member.handle)}</span>`:''}<div class="text-review-meta" id="smsMemberStatus_${first.id}_${index}">${smsMatchLabel(member.matchMethod)} · ${member.messageCount || 0} new message${member.messageCount===1?'':'s'}</div><div class="text-review-controls"><input class="form-input" id="smsMemberMatch_${first.id}_${index}" list="textReviewContacts" value="${escapeHtml(choice)}" placeholder="Choose contact" aria-label="Contact for ${escapeHtml(member.label)}"><button class="btn btn-ghost btn-sm" onclick="matchSmsParticipant(${first.id},${index})" title="${/^(phone:|email:)/.test(member.key)?'Confirm participant identity':'No raw number or address in this export'}" ${/^(phone:|email:)/.test(member.key)?'':'disabled'}>Save match</button></div></div>`;
+        }).join('')}</details>${items.map(item=>renderSummary(item)).join('')}</section>`;
+    }).join('');
+  }
+
+  window.matchSmsParticipant=async function(id,index) {
+    try {
+      const member=pendingSummaries.find(item=>Number(item.id)===Number(id))?.conversation_context?.members?.[index];
+      if(!member || !/^(phone:|email:)/.test(member.key))return;
+      buildContactChoices();
+      const contactId=contactChoices.get(document.getElementById(`smsMemberMatch_${id}_${index}`)?.value || '');
+      if(contactId==null)throw Error('Choose an existing contact for this participant.');
+      await patchReview({resource:'participant',id,participantKey:member.key,contactId:String(contactId)});
+      const contact=contactById(contactId),choice=`${contact.name}${contact.company?` — ${contact.company}`:''} [${contact.id}]`;
+      // Update only identity controls; do not replace any draft summary editors.
+      for(const item of pendingSummaries) {
+        const context=item.conversation_context;
+        context?.members?.forEach((entry,position)=>{
+          if(entry.key!==member.key)return;
+          Object.assign(entry,{contactId:String(contactId),contactName:contact.name,matchMethod:'confirmed'});
+          const input=document.getElementById(`smsMemberMatch_${item.id}_${position}`);if(input)input.value=choice;
+          const status=document.getElementById(`smsMemberStatus_${item.id}_${position}`);if(status)status.textContent=`Confirmed match · ${entry.messageCount || 0} new message${entry.messageCount===1?'':'s'}`;
+        });
+        if(context?.participantKey===member.key) {
+          item.contact_id=String(contactId);
+          const input=document.getElementById(`groupContact_${item.id}`);if(input)input.value=choice;
+          const name=document.getElementById(`smsParticipantName_${item.id}`);if(name)name.textContent=contact.name;
+        }
+      }
+      window.toast?.('Participant match saved');
+    } catch(error){window.toast?.(error.message);}
+  };
 
   function proposalTypeLabel(type) {
     return ({create_contact:'Create contact',update_contact:'Update contact',create_engagement:'Create pursuit',update_engagement:'Update engagement'})[type] || 'No CRM action';
@@ -399,7 +454,7 @@
     ${emailReviewStatus ? `<div class="email-review-status ${emailReviewStatus.kind === "error" ? "error" : ""}" id="emailReviewStatus">${escapeHtml(emailReviewStatus.message)}</div>` : ""}
     ${total ? `
       ${pendingConversations.length ? `<section class="text-review-section"><div class="text-review-section-title"><span>Needs matching</span><span>${pendingConversations.length}</span></div><div class="text-review-list">${pendingConversations.map(renderConversation).join("")}</div></section>` : ""}
-      ${pendingSummaries.length ? `<section class="text-review-section"><div class="text-review-section-title"><span>Summary review</span><span>${pendingSummaries.length}</span></div><div class="text-review-list">${pendingSummaries.map(item => renderSummary(item)).join("")}</div></section>` : ""}
+      ${pendingSummaries.length ? `<section class="text-review-section"><div class="text-review-section-title"><span>Summary review</span><span>${pendingSummaries.length}</span></div><div class="text-review-list">${renderSmsGroups()}</div></section>` : ""}
       ${pendingProposals.length ? `<section class="text-review-section"><div class="text-review-section-title"><span>Email proposals</span><span>${pendingProposals.length}</span></div><div class="text-review-list">${renderEmailGroups()}</div></section>` : ""}
       <datalist id="textReviewContacts">${buildContactChoices()}</datalist>
     ` : `<div class="text-review-empty">No communications need attention.</div>`}`;
@@ -683,8 +738,8 @@
     setTimeout(() => window.reviewTextConversation(key, "match", contactId), 2200);
   };
 
-  async function reviewSummary(id, action, summary, engagementId, contactId, contactUpdate) {
-    const data = await patchReview({ id, action, summary, engagementId, contactId, contactUpdate });
+  async function reviewSummary(id, action, summary, engagementId, contactId, contactUpdate,rememberParticipant) {
+    const data = await patchReview({ id, action, summary, engagementId, contactId, contactUpdate,rememberParticipant });
     pendingSummaries = pendingSummaries.filter((item) => Number(item.id) !== Number(id));
     updateBadge();
     renderTextReviewModal();
@@ -703,9 +758,10 @@
       if (item?.conversation_context?.isGroup && !engagementId) {
         buildContactChoices();
         contactId = contactChoices.get(document.getElementById(`groupContact_${id}`)?.value || '');
-        if (!contactId) throw new Error('Choose a contact from the list or select an engagement.');
+        if (contactId==null) throw new Error('Choose a contact from the list or select an engagement.');
       }
-      await reviewSummary(id, "approve", summary, engagementId, contactId, engagementId ? undefined : contactReviewUpdates.get(`sms:${id}`));
+      await reviewSummary(id, "approve", summary, engagementId, contactId, engagementId ? undefined : contactReviewUpdates.get(`sms:${id}`),
+        !engagementId && Boolean(document.getElementById(`rememberSmsParticipant_${id}`)?.checked));
       if (typeof window.refreshCloudState === "function") await window.refreshCloudState();
       if (!document.getElementById("textReviewModal")?.classList.contains("open")) {
         if (engagementId && typeof window.openEngagementDetail === 'function') {
