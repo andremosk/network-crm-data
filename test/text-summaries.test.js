@@ -28,14 +28,17 @@ test("automation endpoint rejects unauthenticated requests before database acces
   const handler = require("../api/automation/text-summaries");
   let statusCode;
   let responseBody;
+  const headers={};
   await handler(
     { method: "GET", headers: {} },
     {
+      setHeader(key,value) {headers[key]=value;},
       status(code) { statusCode = code; return this; },
       json(body) { responseBody = body; return this; }
     }
   );
   assert.equal(statusCode, 401);
+  assert.equal(headers['Cache-Control'],'private, no-store');
   assert.equal(responseBody.error.message, "Unauthorized");
 });
 
